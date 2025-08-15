@@ -6,6 +6,8 @@ We really appreciate and value contributions to Deimos. Please take time to revi
 
 Before starting development, please [create an issue](https://github.com/BlocSoc-iitr/Deimos/issues/new/choose) to open the discussion, validate that the PR is wanted, and coordinate overall implementation details.
 
+While adding a new application please follow the [Application integration guide](APP_INTEGRATION_GUIDE.md)
+
 ## Creating Pull Requests (PRs)
 
 As a contributor, you are expected to fork this repository, work on your own fork and then submit pull requests. The pull requests will be reviewed and eventually merged into the main repo. See ["Fork-a-Repo"](https://help.github.com/articles/fork-a-repo/) for how this works.
