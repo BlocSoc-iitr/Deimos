@@ -1,0 +1,5 @@
+build_mode = "release"
+target_adapters = ["halo2"]
+target_platforms = ["android"]
+ios = ["aarch64-apple-ios"]
+android = ["aarch64-linux-android"]
