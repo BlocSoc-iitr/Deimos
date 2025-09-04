@@ -25,7 +25,7 @@ As a contributor, you are expected to fork this repository, work on your own for
 
 2. Branch out from `dev` into `fix/some-bug-short-description-#123` (ex: `fix/typos-in-docs-#123`):
 
-   (Postfixing #123 will associate your PR with the issue #123 and make everyone's life easier =D)
+   (Postfixing #123 will associate your PR with the issue #123 and make every,one's life easier =D)
 
    ```sh
    git checkout -b fix/some-bug-short-description-#123
