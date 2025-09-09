@@ -2,11 +2,7 @@ name: Circuit Validation
 
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-      - ready_for_review
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '**/*.circom'
       - '**/*.nr'
@@ -18,32 +14,32 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  detect-and-validate-circuits:
+  validate-circuits:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+            fetch-depth: 0
 
-      - name: Install system dependencies
+      - name: Install system dependencies (cached)
         uses: awalsh128/cache-apt-pkgs-action@v1
         with:
           packages: curl xz-utils build-essential cmake m4 nasm libstdc++6 protobuf-compiler nodejs npm git
           version: 1.0
 
-      - name: Install Rust toolchain
+      - name: Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: 18
 
-      - name: Cache Circom installation
+      - name: Cache Circom
         id: cache-circom
         uses: actions/cache@v4
         with:
@@ -55,17 +51,18 @@ jobs:
       - name: Install Circom
         if: steps.cache-circom.outputs.cache-hit != 'true'
         run: |
+          set -e
           git clone https://github.com/iden3/circom.git ~/circom
           cd ~/circom
-          git checkout v2.1.6
-          cargo build --release
-          cargo install --path circom
+            git checkout v2.1.6
+            cargo build --release
+            cargo install --path circom
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: Install snarkjs
         run: npm install -g snarkjs
 
-      - name: Cache Noir installation
+      - name: Cache Noir
         id: cache-noir
         uses: actions/cache@v4
         with:
@@ -76,290 +73,118 @@ jobs:
         if: steps.cache-noir.outputs.cache-hit != 'true'
         run: |
           curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
-          export PATH="$HOME/.nargo/bin:$PATH"
           ~/.nargo/bin/noirup
-
-      - name: Add Noir to PATH
-        run: echo "$HOME/.nargo/bin" >> $GITHUB_PATH
-
-      - name: Verify tools installation
-        run: |
-          echo "Circom version:"
-          circom --version || echo "Circom not found"
-          echo "Snarkjs version:"
-          snarkjs --version || echo "Snarkjs not found"
-          echo "Nargo version:"
-          nargo --version || echo "Nargo not found"
+          echo "$HOME/.nargo/bin" >> $GITHUB_PATH
 
       - name: Detect changed circuit files
-        id: detect-circuits
+        id: detect
         run: |
-          echo "Detecting changed files in PR..."
-          
-          # Get all changed files in this PR
-          git fetch origin ${{ github.base_ref }}
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
-          
-          echo "All changed files:"
+          set -e
+          git fetch --no-tags --prune --depth=1 origin "${{ github.base_ref }}"
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD || true)
+          echo "Changed files:"
           echo "$CHANGED_FILES"
-          
-          # Detect Circom circuits
+
           CIRCOM_FILES=$(echo "$CHANGED_FILES" | grep -E '\.circom$' || true)
-          CIRCOM_COUNT=$(echo "$CIRCOM_FILES" | wc -l)
-          if [ -z "$CIRCOM_FILES" ]; then
-            CIRCOM_COUNT=0
-          fi
-          
-          # Detect Noir circuits and projects
-          NOIR_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(nr|toml)$' | grep -v 'Cargo.toml' || true)
-          NOIR_COUNT=$(echo "$NOIR_FILES" | wc -l)
-          if [ -z "$NOIR_FILES" ]; then
-            NOIR_COUNT=0
-          fi
-          
-          echo "Found $CIRCOM_COUNT Circom files"
-          echo "Found $NOIR_COUNT Noir-related files"
-          
-          # Save to outputs
+          NOIR_FILES_RAW=$(echo "$CHANGED_FILES" | grep -E '(\.nr$|/(nargo|Nargo)\.toml$)' || true)
+
+          # Count
+          if [ -n "$CIRCOM_FILES" ]; then CIRCOM_COUNT=$(echo "$CIRCOM_FILES" | wc -l | tr -d ' '); else CIRCOM_COUNT=0; fi
+          if [ -n "$NOIR_FILES_RAW" ]; then NOIR_FILE_COUNT=$(echo "$NOIR_FILES_RAW" | wc -l | tr -d ' '); else NOIR_FILE_COUNT=0; fi
+
+          echo "Circom files detected: $CIRCOM_COUNT"
+          echo "Noir related files detected: $NOIR_FILE_COUNT"
+
+          # Derive Noir project roots (dirs containing nargo.toml)
+          NOIR_PROJECTS=()
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            if [[ "$f" =~ (nargo|Nargo)\.toml$ ]]; then
+              NOIR_PROJECTS+=("$(dirname "$f")")
+            elif [[ "$f" =~ \.nr$ ]]; then
+              d=$(dirname "$f")
+              while [ "$d" != "." ] && [ "$d" != "/" ]; do
+                if [ -f "$d/nargo.toml" ] || [ -f "$d/Nargo.toml" ]; then
+                  NOIR_PROJECTS+=("$d"); break
+                fi
+                d=$(dirname "$d")
+              done
+            fi
+          done <<< "$NOIR_FILES_RAW"
+
+          # Unique
+          NOIR_PROJECTS_UNIQUE=$(printf '%s\n' "${NOIR_PROJECTS[@]}" | sort -u)
+
+          # Outputs
           {
             echo "circom_files<<EOF"
             echo "$CIRCOM_FILES"
             echo "EOF"
-            echo "noir_files<<EOF"
-            echo "$NOIR_FILES"
+            echo "noir_projects<<EOF"
+            echo "$NOIR_PROJECTS_UNIQUE"
             echo "EOF"
             echo "circom_count=$CIRCOM_COUNT"
-            echo "noir_count=$NOIR_COUNT"
-          } >> $GITHUB_OUTPUT
+            echo "noir_project_count=$(echo \"$NOIR_PROJECTS_UNIQUE\" | sed '/^$/d' | wc -l | tr -d ' ')"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Build and validate Circom circuits
-        if: steps.detect-circuits.outputs.circom_count > 0
+      - name: Compile Circom circuits
+        if: steps.detect.outputs.circom_count != '0'
         run: |
-          echo "🔧 Building and validating Circom circuits..."
-          
-          SUCCESS_COUNT=0
-          TOTAL_COUNT=0
-          FAILED_FILES=""
-          
-          while IFS= read -r file; do
-            if [ -n "$file" ] && [ -f "$file" ]; then
-              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-              echo "Processing: $file"
-              
-              TOTAL_COUNT=$((TOTAL_COUNT + 1))
-              
-              # Get directory and filename info
-              DIR=$(dirname "$file")
-              BASENAME=$(basename "$file" .circom)
-              OUTPUT_DIR="$DIR/build_temp"
-              
-              # Create temporary output directory
-              mkdir -p "$OUTPUT_DIR"
-              
-              echo "🔨 Compiling circuit..."
-              
-              # Compile the circuit
-              if circom "$file" --r1cs --wasm --sym -o "$OUTPUT_DIR" --include "$DIR" --include "benchmarking-suite/frameworks/circom/circuits/circomlib/circuits"; then
-                echo "Compilation successful!"
-                
-                # Verify expected outputs exist
-                if [ -f "$OUTPUT_DIR/${BASENAME}.r1cs" ]; then
-                  echo "R1CS file generated"
-                else
-                  echo "R1CS file missing"
-                  FAILED_FILES="$FAILED_FILES\n  - $file (R1CS missing)"
-                  continue
-                fi
-                
-                if [ -d "$OUTPUT_DIR/${BASENAME}_js" ]; then
-                  echo "JavaScript witness generator created"
-                  
-                  # Look for input files in common locations
-                  INPUT_CANDIDATES=(
-                    "$DIR/input.json"
-                    "$DIR/inputs/input.json"
-                    "$(dirname "$DIR")/inputs/$(basename "$DIR")/input.json"
-                    "benchmarking-suite/frameworks/circom/inputs/$(basename "$BASENAME")/input.json"
-                  )
-                  
-                  INPUT_FOUND=""
-                  for input_file in "${INPUT_CANDIDATES[@]}"; do
-                    if [ -f "$input_file" ]; then
-                      INPUT_FOUND="$input_file"
-                      break
-                    fi
-                  done
-                  
-                  if [ -n "$INPUT_FOUND" ]; then
-                    echo "Found input file: $INPUT_FOUND"
-                    echo "Testing witness generation..."
-                    
-                    cd "$OUTPUT_DIR/${BASENAME}_js"
-                    if node generate_witness.js "${BASENAME}.wasm" "$GITHUB_WORKSPACE/$INPUT_FOUND" witness.wtns; then
-                      echo "Witness generation successful!"
-                    else
-                      echo "Witness generation failed (but compilation succeeded)"
-                    fi
-                    cd "$GITHUB_WORKSPACE"
-                  else
-                    echo "No input file found, skipping witness generation test"
-                    echo "   Looked in: ${INPUT_CANDIDATES[*]}"
-                  fi
-                  
-                  SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-                else
-                  echo "JavaScript witness generator missing"
-                  FAILED_FILES="$FAILED_FILES\n  - $file (JS generator missing)"
-                fi
-                
-                # Cleanup temporary files
-                rm -rf "$OUTPUT_DIR"
-                
-              else
-                echo "Compilation failed!"
-                FAILED_FILES="$FAILED_FILES\n  - $file (compilation failed)"
-              fi
-              
-              echo ""
+          set -e
+          echo "${{ steps.detect.outputs.circom_files }}" | while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            [ ! -f "$file" ] && continue
+            echo "---- Circom: $file"
+            out_dir=$(mktemp -d)
+            if ! circom "$file" --r1cs --wasm --sym -o "$out_dir" --include "$(dirname "$file")" --include benchmarking-suite/frameworks/circom/circuits/circomlib/circuits; then
+              echo "FAILED: $file"
+              exit 1
             fi
-          done <<< "${{ steps.detect-circuits.outputs.circom_files }}"
-          
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Circom Validation Summary:"
-          echo "   Total circuits: $TOTAL_COUNT"
-          echo "   Successful: $SUCCESS_COUNT"
-          echo "   Failed: $((TOTAL_COUNT - SUCCESS_COUNT))"
-          
-          if [ $SUCCESS_COUNT -eq $TOTAL_COUNT ]; then
-            echo "All Circom circuits validated successfully!"
-          else
-            echo "Some circuits failed validation:"
-            echo -e "$FAILED_FILES"
-            exit 1
-          fi
-
-      - name: Build and validate Noir circuits
-        if: steps.detect-circuits.outputs.noir_count > 0
-        run: |
-          echo "🔧 Building and validating Noir circuits..."
-          
-          # Find Noir projects
-          NOIR_PROJECTS=()
-          
-          while IFS= read -r file; do
-            if [ -n "$file" ]; then
-              if [[ "$file" == *"nargo.toml" ]] || [[ "$file" == *"Nargo.toml" ]]; then
-                PROJECT_DIR=$(dirname "$file")
-                NOIR_PROJECTS+=("$PROJECT_DIR")
-              elif [[ "$file" == *".nr" ]]; then
-                # For .nr files, find the nearest nargo.toml
-                current_dir=$(dirname "$file")
-                while [[ "$current_dir" != "." && "$current_dir" != "/" ]]; do
-                  if [[ -f "$current_dir/nargo.toml" ]] || [[ -f "$current_dir/Nargo.toml" ]]; then
-                    NOIR_PROJECTS+=("$current_dir")
-                    break
-                  fi
-                  current_dir=$(dirname "$current_dir")
-                done
-              fi
-            fi
-          done <<< "${{ steps.detect-circuits.outputs.noir_files }}"
-          
-          # Remove duplicates
-          UNIQUE_PROJECTS=($(printf "%s\n" "${NOIR_PROJECTS[@]}" | sort -u))
-          
-          if [ ${#UNIQUE_PROJECTS[@]} -eq 0 ]; then
-            echo "ℹNo Noir projects found to validate"
-            exit 0
-          fi
-          
-          SUCCESS_COUNT=0
-          TOTAL_COUNT=${#UNIQUE_PROJECTS[@]}
-          FAILED_PROJECTS=""
-          
-          for project_dir in "${UNIQUE_PROJECTS[@]}"; do
-            if [ -d "$project_dir" ]; then
-              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-              echo "Processing Noir project: $project_dir"
-              
-              cd "$project_dir"
-              
-              # Verify it's a valid Noir project
-              if [[ -f "nargo.toml" ]] || [[ -f "Nargo.toml" ]]; then
-                echo "Checking project structure..."
-                
-                if nargo check; then
-                  echo "Project check passed!"
-                  
-                  echo "Compiling project..."
-                  if nargo compile; then
-                    echo "compilation successful!"
-                    SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-                  else
-                    echo "Compilation failed!"
-                    FAILED_PROJECTS="$FAILED_PROJECTS\n  - $project_dir (compilation failed)"
-                  fi
-                else
-                  echo "Project check failed!"
-                  FAILED_PROJECTS="$FAILED_PROJECTS\n  - $project_dir (check failed)"
-                fi
-              else
-                echo "No nargo.toml found, skipping..."
-              fi
-              
-              cd "$GITHUB_WORKSPACE"
-              echo ""
-            fi
+            base=$(basename "$file" .circom)
+            test -f "$out_dir/$base.r1cs" || { echo "Missing R1CS for $file"; exit 1; }
+            echo "OK: $file"
           done
-          
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo " Noir Validation Summary:"
-          echo "   Total projects: $TOTAL_COUNT"
-          echo "   Successful: $SUCCESS_COUNT"
-          echo "   Failed: $((TOTAL_COUNT - SUCCESS_COUNT))"
-          
-          if [ $SUCCESS_COUNT -eq $TOTAL_COUNT ]; then
-            echo " All Noir projects validated successfully!"
-          else
-            echo " Some projects failed validation:"
-            echo -e "$FAILED_PROJECTS"
-            exit 1
-          fi
 
-      - name: Generate validation summary
+      - name: Compile Noir projects
+        if: steps.detect.outputs.noir_project_count != '0'
+        run: |
+          set -e
+          echo "${{ steps.detect.outputs.noir_projects }}" | while IFS= read -r proj; do
+            [ -z \"$proj\" ] && continue
+            [ ! -d \"$proj\" ] && continue
+            echo \"---- Noir project: $proj\"
+            cd \"$proj\"
+            if ! nargo check; then
+              echo \"Check failed: $proj\"; exit 1
+            fi
+            if ! nargo compile; then
+              echo \"Compile failed: $proj\"; exit 1
+            fi
+            cd \"$GITHUB_WORKSPACE\"
+            echo \"OK: $proj\"
+          done
+
+      - name: Summary
         if: always()
         run: |
-          echo "##  Circuit Validation Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          echo "### Detection Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Circom circuits found:** ${{ steps.detect-circuits.outputs.circom_count }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Noir files found:** ${{ steps.detect-circuits.outputs.noir_count }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ steps.detect-circuits.outputs.circom_count }}" -gt 0 ]; then
-            echo "### Circom Files Processed" >> $GITHUB_STEP_SUMMARY
-            while IFS= read -r file; do
-              if [ -n "$file" ]; then
-                echo "- \`$file\`" >> $GITHUB_STEP_SUMMARY
-              fi
-            done <<< "${{ steps.detect-circuits.outputs.circom_files }}"
-            echo "" >> $GITHUB_STEP_SUMMARY
+          echo \"## Circuit Validation\" >> $GITHUB_STEP_SUMMARY
+          echo \"PR: #${{ github.event.number }}\" >> $GITHUB_STEP_SUMMARY
+          echo \"\" >> $GITHUB_STEP_SUMMARY
+          echo \"- Circom files: ${{ steps.detect.outputs.circom_count }}\" >> $GITHUB_STEP_SUMMARY
+            echo \"- Noir projects: ${{ steps.detect.outputs.noir_project_count }}\" >> $GITHUB_STEP_SUMMARY
+          echo \"\" >> $GITHUB_STEP_SUMMARY
+          if [ \"${{ steps.detect.outputs.circom_count }}\" != \"0\" ]; then
+            echo \"### Circom Files\" >> $GITHUB_STEP_SUMMARY
+            echo '${{ steps.detect.outputs.circom_files }}' | sed '/^$/d;s/^/- `&`/' >> $GITHUB_STEP_SUMMARY
+            echo \"\" >> $GITHUB_STEP_SUMMARY
           fi
-          
-          if [ "${{ steps.detect-circuits.outputs.noir_count }}" -gt 0 ]; then
-            echo "### ⚡ Noir Files Processed" >> $GITHUB_STEP_SUMMARY
-            while IFS= read -r file; do
-              if [ -n "$file" ]; then
-                echo "- \`$file\`" >> $GITHUB_STEP_SUMMARY
-              fi
-            done <<< "${{ steps.detect-circuits.outputs.noir_files }}"
-            echo "" >> $GITHUB_STEP_SUMMARY
+          if [ \"${{ steps.detect.outputs.noir_project_count }}\" != \"0\" ]; then
+            echo \"### Noir Projects\" >> $GITHUB_STEP_SUMMARY
+            echo '${{ steps.detect.outputs.noir_projects }}' | sed '/^$/d;s/^/- `&`/' >> $GITHUB_STEP_SUMMARY
+            echo \"\" >> $GITHUB_STEP_SUMMARY
           fi
-          
-          echo "### Validation Results" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ job.status }}" == "success" ]; then
-            echo "**All circuits validated successfully!**" >> $GITHUB_STEP_SUMMARY
+          if [ \"${{ job.status }}\" = success ]; then
+            echo \"✅ All validations passed\" >> $GITHUB_STEP_SUMMARY
           else
-            echo "**Some circuits failed validation. Check the logs above for details.**" >> $GITHUB_STEP_SUMMARY
+            echo \"❌ Some validations failed\" >> $GITHUB_STEP_SUMMARY
           fi
