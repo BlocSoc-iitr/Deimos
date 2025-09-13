@@ -150,18 +150,18 @@ jobs:
         run: |
           set -e
           echo "${{ steps.detect.outputs.noir_projects }}" | while IFS= read -r proj; do
-            [ -z \"$proj\" ] && continue
-            [ ! -d \"$proj\" ] && continue
-            echo \"---- Noir project: $proj\"
-            cd \"$proj\"
+            [ -z "$proj" ] && continue
+            [ ! -d "$proj" ] && continue
+            echo "---- Noir project: $proj"
+            cd "$proj"
             if ! nargo check; then
-              echo \"Check failed: $proj\"; exit 1
+              echo "Check failed: $proj"; exit 1
             fi
             if ! nargo compile; then
-              echo \"Compile failed: $proj\"; exit 1
+              echo "Compile failed: $proj"; exit 1
             fi
-            cd \"$GITHUB_WORKSPACE\"
-            echo \"OK: $proj\"
+            cd "$GITHUB_WORKSPACE"
+            echo "OK: $proj"
           done
 
       - name: Summary
@@ -171,7 +171,7 @@ jobs:
           echo \"PR: #${{ github.event.number }}\" >> $GITHUB_STEP_SUMMARY
           echo \"\" >> $GITHUB_STEP_SUMMARY
           echo \"- Circom files: ${{ steps.detect.outputs.circom_count }}\" >> $GITHUB_STEP_SUMMARY
-            echo \"- Noir projects: ${{ steps.detect.outputs.noir_project_count }}\" >> $GITHUB_STEP_SUMMARY
+          echo \"- Noir projects: ${{ steps.detect.outputs.noir_project_count }}\" >> $GITHUB_STEP_SUMMARY
           echo \"\" >> $GITHUB_STEP_SUMMARY
           if [ \"${{ steps.detect.outputs.circom_count }}\" != \"0\" ]; then
             echo \"### Circom Files\" >> $GITHUB_STEP_SUMMARY
