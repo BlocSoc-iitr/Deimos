@@ -131,7 +131,7 @@ jobs:
             [ ! -f "$file" ] && continue
             echo "---- Circom: $file"
             out_dir=$(mktemp -d)
-            if ! circom "$file" --r1cs --wasm --sym -o "$out_dir" --include "$(dirname "$file")" --include benchmarking-suite/frameworks/circom/circuits/circomlib/circuits; then
+            if ! circom "$file" --r1cs --wasm --sym -o "$out_dir" -l "$(dirname "$file")" -l benchmarking-suite/frameworks/circom/circuits/circomlib/circuits; then
               echo "FAILED: $file"
               exit 1
             fi
