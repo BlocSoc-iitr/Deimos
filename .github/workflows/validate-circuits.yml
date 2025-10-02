@@ -2,12 +2,7 @@ name: Circuit Validation
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - '**/*.circom'
-      - '**/*.nr'
-      - '**/nargo.toml'
-      - '**/Nargo.toml'
       - 'benchmarking-suite/frameworks/**'
 
 env:
