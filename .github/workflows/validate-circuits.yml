@@ -1,0 +1,185 @@
+name: Circuit Validation
+
+on:
+  pull_request:
+    paths:
+      - 'benchmarking-suite/frameworks/**'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  validate-circuits:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+            fetch-depth: 0
+
+      - name: Install system dependencies (cached)
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: curl xz-utils build-essential cmake m4 nasm libstdc++6 protobuf-compiler nodejs npm git
+          version: 1.0
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Cache Circom
+        id: cache-circom
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/circom
+            ~/circom
+          key: ${{ runner.os }}-circom-v2.1.6
+
+      - name: Install Circom
+        if: steps.cache-circom.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          git clone https://github.com/iden3/circom.git ~/circom
+          cd ~/circom
+            git checkout v2.1.6
+            cargo build --release
+            cargo install --path circom
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install snarkjs
+        run: npm install -g snarkjs
+
+      - name: Cache Noir
+        id: cache-noir
+        uses: actions/cache@v4
+        with:
+          path: ~/.nargo
+          key: ${{ runner.os }}-noir-latest
+
+      - name: Install Noir
+        if: steps.cache-noir.outputs.cache-hit != 'true'
+        run: |
+          curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
+          ~/.nargo/bin/noirup
+          echo "$HOME/.nargo/bin" >> $GITHUB_PATH
+
+      - name: Detect changed circuit files
+        id: detect
+        run: |
+          set -e
+          git fetch --no-tags --prune --depth=1 origin "${{ github.base_ref }}"
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD || true)
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          CIRCOM_FILES=$(echo "$CHANGED_FILES" | grep -E '\.circom$' || true)
+          NOIR_FILES_RAW=$(echo "$CHANGED_FILES" | grep -E '(\.nr$|/(nargo|Nargo)\.toml$)' || true)
+
+          # Count
+          if [ -n "$CIRCOM_FILES" ]; then CIRCOM_COUNT=$(echo "$CIRCOM_FILES" | wc -l | tr -d ' '); else CIRCOM_COUNT=0; fi
+          if [ -n "$NOIR_FILES_RAW" ]; then NOIR_FILE_COUNT=$(echo "$NOIR_FILES_RAW" | wc -l | tr -d ' '); else NOIR_FILE_COUNT=0; fi
+
+          echo "Circom files detected: $CIRCOM_COUNT"
+          echo "Noir related files detected: $NOIR_FILE_COUNT"
+
+          # Derive Noir project roots (dirs containing nargo.toml)
+          NOIR_PROJECTS=()
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            if [[ "$f" =~ (nargo|Nargo)\.toml$ ]]; then
+              NOIR_PROJECTS+=("$(dirname "$f")")
+            elif [[ "$f" =~ \.nr$ ]]; then
+              d=$(dirname "$f")
+              while [ "$d" != "." ] && [ "$d" != "/" ]; do
+                if [ -f "$d/nargo.toml" ] || [ -f "$d/Nargo.toml" ]; then
+                  NOIR_PROJECTS+=("$d"); break
+                fi
+                d=$(dirname "$d")
+              done
+            fi
+          done <<< "$NOIR_FILES_RAW"
+
+          # Unique
+          NOIR_PROJECTS_UNIQUE=$(printf '%s\n' "${NOIR_PROJECTS[@]}" | sort -u)
+
+          # Outputs
+          {
+            echo "circom_files<<EOF"
+            echo "$CIRCOM_FILES"
+            echo "EOF"
+            echo "noir_projects<<EOF"
+            echo "$NOIR_PROJECTS_UNIQUE"
+            echo "EOF"
+            echo "circom_count=$CIRCOM_COUNT"
+            echo "noir_project_count=$(echo \"$NOIR_PROJECTS_UNIQUE\" | sed '/^$/d' | wc -l | tr -d ' ')"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Compile Circom circuits
+        if: steps.detect.outputs.circom_count != '0'
+        run: |
+          set -e
+          echo "${{ steps.detect.outputs.circom_files }}" | while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            [ ! -f "$file" ] && continue
+            echo "---- Circom: $file"
+            out_dir=$(mktemp -d)
+            if ! circom "$file" --r1cs --wasm --sym -o "$out_dir" -l "$(dirname "$file")" -l benchmarking-suite/frameworks/circom/circuits/circomlib/circuits; then
+              echo "FAILED: $file"
+              exit 1
+            fi
+            base=$(basename "$file" .circom)
+            test -f "$out_dir/$base.r1cs" || { echo "Missing R1CS for $file"; exit 1; }
+            echo "OK: $file"
+          done
+
+      - name: Compile Noir projects
+        if: steps.detect.outputs.noir_project_count != '0'
+        run: |
+          set -e
+          echo "${{ steps.detect.outputs.noir_projects }}" | while IFS= read -r proj; do
+            [ -z "$proj" ] && continue
+            [ ! -d "$proj" ] && continue
+            echo "---- Noir project: $proj"
+            cd "$proj"
+            if ! nargo check; then
+              echo "Check failed: $proj"; exit 1
+            fi
+            if ! nargo compile; then
+              echo "Compile failed: $proj"; exit 1
+            fi
+            cd "$GITHUB_WORKSPACE"
+            echo "OK: $proj"
+          done
+
+      - name: Summary
+        if: always()
+        run: |
+          echo \"## Circuit Validation\" >> $GITHUB_STEP_SUMMARY
+          echo \"PR: #${{ github.event.number }}\" >> $GITHUB_STEP_SUMMARY
+          echo \"\" >> $GITHUB_STEP_SUMMARY
+          echo \"- Circom files: ${{ steps.detect.outputs.circom_count }}\" >> $GITHUB_STEP_SUMMARY
+          echo \"- Noir projects: ${{ steps.detect.outputs.noir_project_count }}\" >> $GITHUB_STEP_SUMMARY
+          echo \"\" >> $GITHUB_STEP_SUMMARY
+          if [ \"${{ steps.detect.outputs.circom_count }}\" != \"0\" ]; then
+            echo \"### Circom Files\" >> $GITHUB_STEP_SUMMARY
+            echo '${{ steps.detect.outputs.circom_files }}' | sed '/^$/d;s/^/- `&`/' >> $GITHUB_STEP_SUMMARY
+            echo \"\" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ \"${{ steps.detect.outputs.noir_project_count }}\" != \"0\" ]; then
+            echo \"### Noir Projects\" >> $GITHUB_STEP_SUMMARY
+            echo '${{ steps.detect.outputs.noir_projects }}' | sed '/^$/d;s/^/- `&`/' >> $GITHUB_STEP_SUMMARY
+            echo \"\" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ \"${{ job.status }}\" = success ]; then
+            echo \"✅ All validations passed\" >> $GITHUB_STEP_SUMMARY
+          else
+            echo \"❌ Some validations failed\" >> $GITHUB_STEP_SUMMARY
+          fi
