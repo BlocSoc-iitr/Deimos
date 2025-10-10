@@ -3,7 +3,7 @@ pragma circom 2.0.0;
 include "../circomlib/circuits/mimc.circom";
 include "./mimc256.circom";
 
-template MultiMIMC256(N) {
+template Main(N) {
     signal input in[N];
     signal output out[32];
 
@@ -13,7 +13,7 @@ template MultiMIMC256(N) {
     }
     mimc.k <== 0;
 
-    component hashToBytes = HashToBytes();
+    component hashToBytes = HashToBytes(32);
 
     hashToBytes.in <== mimc.out;
 
@@ -22,4 +22,4 @@ template MultiMIMC256(N) {
     }
 }
 
-component main = MultiMIMC256(32);
+component main {public[in]} = Main(32);

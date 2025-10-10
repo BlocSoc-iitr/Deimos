@@ -13,15 +13,15 @@ void Bits2Num_3_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string
 void Bits2Num_3_run(uint ctx_index,Circom_CalcWit* ctx);
 void HashToBytes_4_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string componentName,uint componentFather);
 void HashToBytes_4_run(uint ctx_index,Circom_CalcWit* ctx);
-void MultiMIMC256_5_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string componentName,uint componentFather);
-void MultiMIMC256_5_run(uint ctx_index,Circom_CalcWit* ctx);
+void MainMultiMIMC256_5_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string componentName,uint componentFather);
+void MainMultiMIMC256_5_run(uint ctx_index,Circom_CalcWit* ctx);
 Circom_TemplateFunction _functionTable[6] = { 
 MiMC7_0_run,
 MultiMiMC7_1_run,
 Num2Bits_2_run,
 Bits2Num_3_run,
 HashToBytes_4_run,
-MultiMIMC256_5_run };
+MainMultiMIMC256_5_run };
 Circom_TemplateFunction _functionTableParallel[6] = { 
 NULL,
 NULL,
@@ -1624,7 +1624,7 @@ void HashToBytes_4_run(uint ctx_index,Circom_CalcWit* ctx){
 FrElement* circuitConstants = ctx->circuitConstants;
 FrElement* signalValues = ctx->signalValues;
 FrElement expaux[2];
-FrElement lvar[2];
+FrElement lvar[3];
 u64 mySignalStart = ctx->componentMemory[ctx_index].signalStart;
 std::string myTemplateName = ctx->componentMemory[ctx_index].templateName;
 std::string myComponentName = ctx->componentMemory[ctx_index].componentName;
@@ -1636,6 +1636,12 @@ std::string* listOfTemplateMessages = ctx->listOfTemplateMessages;
 uint sub_component_aux;
 uint index_multiple_eq;
 int cmp_index_ref_load = -1;
+{
+PFrElement aux_dest = &lvar[0];
+// load src
+// end load src
+Fr_copy(aux_dest,&circuitConstants[33]);
+}
 {
 std::string new_cmp_name = "num2bits";
 Num2Bits_2_create(mySignalStart+321,32+ctx_index+1,ctx,new_cmp_name,myId);
@@ -1668,30 +1674,30 @@ assert(!(ctx->componentMemory[mySubcomponents[cmp_index_ref]].inputCounter));
 Num2Bits_2_run(mySubcomponents[cmp_index_ref],ctx);
 }
 {
-PFrElement aux_dest = &lvar[0];
-// load src
-// end load src
-Fr_copy(aux_dest,&circuitConstants[1]);
-}
-Fr_lt(&expaux[0],&lvar[0],&circuitConstants[33]); // line circom 22
-while(Fr_isTrue(&expaux[0])){
-{
 PFrElement aux_dest = &lvar[1];
 // load src
 // end load src
 Fr_copy(aux_dest,&circuitConstants[1]);
 }
-Fr_lt(&expaux[0],&lvar[1],&circuitConstants[9]); // line circom 26
+Fr_lt(&expaux[0],&lvar[1],&circuitConstants[33]); // line circom 20
 while(Fr_isTrue(&expaux[0])){
 {
-uint cmp_index_ref = ((1 * Fr_toInt(&lvar[0])) + 1);
+PFrElement aux_dest = &lvar[2];
+// load src
+// end load src
+Fr_copy(aux_dest,&circuitConstants[1]);
+}
+Fr_lt(&expaux[0],&lvar[2],&circuitConstants[9]); // line circom 23
+while(Fr_isTrue(&expaux[0])){
 {
-PFrElement aux_dest = &ctx->signalValues[ctx->componentMemory[mySubcomponents[cmp_index_ref]].signalStart + ((1 * Fr_toInt(&lvar[1])) + 1)];
+uint cmp_index_ref = ((1 * Fr_toInt(&lvar[1])) + 1);
+{
+PFrElement aux_dest = &ctx->signalValues[ctx->componentMemory[mySubcomponents[cmp_index_ref]].signalStart + ((1 * Fr_toInt(&lvar[2])) + 1)];
 // load src
 cmp_index_ref_load = 0;
 cmp_index_ref_load = 0;
 // end load src
-Fr_copy(aux_dest,&ctx->signalValues[ctx->componentMemory[mySubcomponents[0]].signalStart + ((1 * ((Fr_toInt(&lvar[0]) * 8) + Fr_toInt(&lvar[1]))) + 0)]);
+Fr_copy(aux_dest,&ctx->signalValues[ctx->componentMemory[mySubcomponents[0]].signalStart + ((1 * ((Fr_toInt(&lvar[1]) * 8) + Fr_toInt(&lvar[2]))) + 0)]);
 }
 // run sub component if needed
 if(!(ctx->componentMemory[mySubcomponents[cmp_index_ref]].inputCounter -= 1)){
@@ -1700,30 +1706,30 @@ Bits2Num_3_run(mySubcomponents[cmp_index_ref],ctx);
 }
 }
 {
+PFrElement aux_dest = &lvar[2];
+// load src
+Fr_add(&expaux[0],&lvar[2],&circuitConstants[2]); // line circom 23
+// end load src
+Fr_copy(aux_dest,&expaux[0]);
+}
+Fr_lt(&expaux[0],&lvar[2],&circuitConstants[9]); // line circom 23
+}
+{
+PFrElement aux_dest = &signalValues[mySignalStart + ((1 * Fr_toInt(&lvar[1])) + 0)];
+// load src
+cmp_index_ref_load = ((1 * Fr_toInt(&lvar[1])) + 1);
+cmp_index_ref_load = ((1 * Fr_toInt(&lvar[1])) + 1);
+// end load src
+Fr_copy(aux_dest,&ctx->signalValues[ctx->componentMemory[mySubcomponents[((1 * Fr_toInt(&lvar[1])) + 1)]].signalStart + 0]);
+}
+{
 PFrElement aux_dest = &lvar[1];
 // load src
-Fr_add(&expaux[0],&lvar[1],&circuitConstants[2]); // line circom 26
+Fr_add(&expaux[0],&lvar[1],&circuitConstants[2]); // line circom 20
 // end load src
 Fr_copy(aux_dest,&expaux[0]);
 }
-Fr_lt(&expaux[0],&lvar[1],&circuitConstants[9]); // line circom 26
-}
-{
-PFrElement aux_dest = &signalValues[mySignalStart + ((1 * Fr_toInt(&lvar[0])) + 0)];
-// load src
-cmp_index_ref_load = ((1 * Fr_toInt(&lvar[0])) + 1);
-cmp_index_ref_load = ((1 * Fr_toInt(&lvar[0])) + 1);
-// end load src
-Fr_copy(aux_dest,&ctx->signalValues[ctx->componentMemory[mySubcomponents[((1 * Fr_toInt(&lvar[0])) + 1)]].signalStart + 0]);
-}
-{
-PFrElement aux_dest = &lvar[0];
-// load src
-Fr_add(&expaux[0],&lvar[0],&circuitConstants[2]); // line circom 22
-// end load src
-Fr_copy(aux_dest,&expaux[0]);
-}
-Fr_lt(&expaux[0],&lvar[0],&circuitConstants[33]); // line circom 22
+Fr_lt(&expaux[0],&lvar[1],&circuitConstants[33]); // line circom 20
 }
 for (uint i = 0; i < 33; i++){
 uint index_subc = ctx->componentMemory[ctx_index].subcomponents[i];
@@ -1731,9 +1737,9 @@ if (index_subc != 0)release_memory_component(ctx,index_subc);
 }
 }
 
-void MultiMIMC256_5_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string componentName,uint componentFather){
+void MainMultiMIMC256_5_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string componentName,uint componentFather){
 ctx->componentMemory[coffset].templateId = 5;
-ctx->componentMemory[coffset].templateName = "MultiMIMC256";
+ctx->componentMemory[coffset].templateName = "MainMultiMIMC256";
 ctx->componentMemory[coffset].signalStart = soffset;
 ctx->componentMemory[coffset].inputCounter = 32;
 ctx->componentMemory[coffset].componentName = componentName;
@@ -1741,7 +1747,7 @@ ctx->componentMemory[coffset].idFather = componentFather;
 ctx->componentMemory[coffset].subcomponents = new uint[2]{0};
 }
 
-void MultiMIMC256_5_run(uint ctx_index,Circom_CalcWit* ctx){
+void MainMultiMIMC256_5_run(uint ctx_index,Circom_CalcWit* ctx){
 FrElement* circuitConstants = ctx->circuitConstants;
 FrElement* signalValues = ctx->signalValues;
 FrElement expaux[2];
@@ -1862,7 +1868,7 @@ if (index_subc != 0)release_memory_component(ctx,index_subc);
 }
 
 void run(Circom_CalcWit* ctx){
-MultiMIMC256_5_create(1,0,ctx,"main",0);
-MultiMIMC256_5_run(0,ctx);
+MainMultiMIMC256_5_create(1,0,ctx,"main",0);
+MainMultiMIMC256_5_run(0,ctx);
 }
 
