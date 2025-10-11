@@ -28,9 +28,9 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   Exception? _error;
   late TabController _tabController;
 
-  // Controllers to handle user input
-  final TextEditingController _controllerA = TextEditingController();
-  final TextEditingController _controllerB = TextEditingController();
+  // Controllers to handle user input (commented out for hardcoded Keccak)
+  // final TextEditingController _controllerA = TextEditingController();
+  // final TextEditingController _controllerB = TextEditingController();
   final TextEditingController _controllerOut = TextEditingController();
   final TextEditingController _controllerNoirA = TextEditingController();
   final TextEditingController _controllerNoirB = TextEditingController();
@@ -38,8 +38,8 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _controllerA.text = "5";
-    _controllerB.text = "3";
+    // _controllerA.text = "5";  // Commented out for hardcoded Keccak
+    // _controllerB.text = "3";  // Commented out for hardcoded Keccak
     _controllerOut.text = "55";
     _controllerNoirA.text = "5";
     _controllerNoirB.text = "3";
@@ -64,6 +64,8 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               padding: const EdgeInsets.all(8.0),
               child: Text(_error.toString()),
             ),
+          // Commented out input fields for hardcoded Keccak testing
+          /*
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextFormField(
@@ -86,6 +88,18 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               keyboardType: TextInputType.number,
             ),
           ),
+          */
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Keccak256 Proof Generation\nUsing hardcoded input: "Hello World! This is a test msg."',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -93,9 +107,8 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                 padding: const EdgeInsets.all(8.0),
                 child: OutlinedButton(
                     onPressed: () async {
-                      if (_controllerA.text.isEmpty ||
-                          _controllerB.text.isEmpty ||
-                          isProving) {
+                      // Removed input validation since we're using hardcoded values
+                      if (isProving) {
                         return;
                       }
                       setState(() {
@@ -106,11 +119,46 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                       FocusManager.instance.primaryFocus?.unfocus();
                       CircomProofResult? proofResult;
                       try {
-                        var inputs =
-                            '{"a":["${_controllerA.text}"],"b":["${_controllerB.text}"]}';
+                        // Hardcoded Keccak input: "Hello World! This is a test msg." as byte array
+                        var inputs = '''{
+    "in": [
+        "72",
+        "101",
+        "108",
+        "108",
+        "111",
+        "32",
+        "87",
+        "111",
+        "114",
+        "108",
+        "100",
+        "33",
+        "32",
+        "84",
+        "104",
+        "105",
+        "115",
+        "32",
+        "105",
+        "115",
+        "32",
+        "97",
+        "32",
+        "116",
+        "101",
+        "115",
+        "116",
+        "32",
+        "109",
+        "115",
+        "103",
+        "46"
+    ]
+}''';
                         proofResult =
                             await _moproFlutterPlugin.generateCircomProof(
-                                "assets/multiplier2_final.zkey", inputs, ProofLib.arkworks);  // DO NOT change the proofLib if you don't build for rapidsnark
+                                "assets/circom.zkey", inputs, ProofLib.arkworks);  // Using Keccak zkey
                       } on Exception catch (e) {
                         print("Error: $e");
                         proofResult = null;
@@ -132,9 +180,8 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                 padding: const EdgeInsets.all(8.0),
                 child: OutlinedButton(
                     onPressed: () async {
-                      if (_controllerA.text.isEmpty ||
-                          _controllerB.text.isEmpty ||
-                          isProving) {
+                      // Removed input validation since we're using hardcoded values
+                      if (isProving) {
                         return;
                       }
                       setState(() {
@@ -147,7 +194,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                       try {
                         var proofResult = _circomProofResult;
                         valid = await _moproFlutterPlugin.verifyCircomProof(
-                            "assets/multiplier2_final.zkey", proofResult!, ProofLib.arkworks); // DO NOT change the proofLib if you don't build for rapidsnark
+                            "assets/circom.zkey", proofResult!, ProofLib.arkworks); // Using Keccak zkey
                       } on Exception catch (e) {
                         print("Error: $e");
                         valid = false;
