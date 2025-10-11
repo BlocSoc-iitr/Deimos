@@ -122,6 +122,7 @@ jobs:
             echo "noir_project_count=$(echo \"$NOIR_PROJECTS_UNIQUE\" | sed '/^$/d' | wc -l | tr -d ' ')"
           } >> "$GITHUB_OUTPUT"
 
+
       - name: Compile Circom circuits
         if: steps.detect.outputs.circom_count != '0'
         run: |
@@ -129,16 +130,26 @@ jobs:
           echo "${{ steps.detect.outputs.circom_files }}" | while IFS= read -r file; do
             [ -z "$file" ] && continue
             [ ! -f "$file" ] && continue
+
+            # Skip library circuits that don't have a main component
+            if ! grep -q "component main" "$file"; then
+              echo "⚪️ Skipping library circuit (no main): $file"
+              continue
+            fi
+
             echo "---- Circom: $file"
             out_dir=$(mktemp -d)
-            if ! circom "$file" --r1cs --wasm --sym -o "$out_dir" -l "$(dirname "$file")" -l benchmarking-suite/frameworks/circom/circuits/circomlib/circuits; then
-              echo "FAILED: $file"
+            if ! circom "$file" --r1cs --wasm --sym -o "$out_dir" \
+                -l "$(dirname "$file")" \
+                -l benchmarking-suite/frameworks/circom/circuits/circomlib/circuits; then
+              echo "❌ FAILED: $file"
               exit 1
             fi
             base=$(basename "$file" .circom)
-            test -f "$out_dir/$base.r1cs" || { echo "Missing R1CS for $file"; exit 1; }
-            echo "OK: $file"
+            test -f "$out_dir/$base.r1cs" || { echo "❌ Missing R1CS for $file"; exit 1; }
+            echo "✅ OK: $file"
           done
+
 
       - name: Compile Noir projects
         if: steps.detect.outputs.noir_project_count != '0'
