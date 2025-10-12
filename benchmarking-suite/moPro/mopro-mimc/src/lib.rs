@@ -68,7 +68,6 @@ mod noir_tests {
             false, // low_memory_mode
         )
         .unwrap();
-        println!("Inputs: {:?}", inputs_vec);
         let proof = generate_noir_proof(
             circuit_path.clone(),
             Some(srs_path.clone()),
@@ -78,7 +77,6 @@ mod noir_tests {
             false, // low_memory_mode
         )
         .unwrap();
-        println!("Generated proof (Rust test): {:?}", proof);
         let valid = verify_noir_proof(
             circuit_path,
             proof,
@@ -123,7 +121,7 @@ mod noir_tests {
             false, // low_memory_mode
         )
         .unwrap();
-        println!("Inputs: {:?}", inputs_vec);
+        
         let proof = generate_noir_proof(
             circuit_path.clone(),
             Some(srs_path),
@@ -133,7 +131,7 @@ mod noir_tests {
             false, // low_memory_mode
         )
         .unwrap();
-        println!("Generated proof (Rust test): {:?}", proof);
+        
         let valid = verify_noir_proof(
             circuit_path,
             proof,
