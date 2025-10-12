@@ -14,5 +14,4 @@ template PoseidonBench(nInputs) {
     out <== poseidon.out;
 }
 
-// render this file before compilation
 component main {public[in]} = PoseidonBench(8);
