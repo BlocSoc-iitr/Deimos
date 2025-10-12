@@ -406,7 +406,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                           // Try to load existing VK from assets, or generate new one
                           try {
                             // First try to load existing VK from assets
-                            final vkAsset = await rootBundle.load('assets/noir_multiplier2.vk');
+                            final vkAsset = await rootBundle.load('assets/sims.vk');
                             _noirVerificationKey = vkAsset.buffer.asUint8List();
                           } catch (e) {
                             // If VK doesn't exist in assets, generate it
@@ -418,12 +418,12 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                             );
                           }
                         }
-                        
+                        print("VK length: ${_noirVerificationKey?.length ?? 'null'}");
                         noirProofResult =
                             await _moproFlutterPlugin.generateNoirProof(
                                 "assets/mimc.json",
                                 "assets/mimc.srs",
-                                hardcodedInputs,
+                                hardcodedInputs.map((e) => e.toString()).toList(),
                                 onChain,
                                 _noirVerificationKey!,
                                 lowMemoryMode);
@@ -434,7 +434,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                           _error = e;
                         });
                       }
-
+                      print(noirProofResult); 
                       if (!mounted) return;
 
                       setState(() {
