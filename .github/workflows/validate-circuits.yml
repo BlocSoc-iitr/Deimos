@@ -42,7 +42,7 @@ jobs:
             ~/.cargo/bin/circom
             ~/circom
           key: ${{ runner.os }}-circom-v2.1.6
-
+      
       - name: Install Circom
         if: steps.cache-circom.outputs.cache-hit != 'true'
         run: |
@@ -54,6 +54,9 @@ jobs:
             cargo install --path circom
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
+      - name: Add Circom to PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        
       - name: Install snarkjs
         run: npm install -g snarkjs
 
@@ -70,6 +73,9 @@ jobs:
           curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
           ~/.nargo/bin/noirup
           echo "$HOME/.nargo/bin" >> $GITHUB_PATH
+
+      - name: Add Noir to PATH
+        run: echo "$HOME/.nargo/bin" >> $GITHUB_PAT
 
       - name: Detect changed circuit files
         id: detect
