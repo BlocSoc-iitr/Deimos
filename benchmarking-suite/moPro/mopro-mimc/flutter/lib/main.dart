@@ -418,7 +418,6 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                             );
                           }
                         }
-                        print("VK length: ${_noirVerificationKey?.length ?? 'null'}");
                         noirProofResult =
                             await _moproFlutterPlugin.generateNoirProof(
                                 "assets/mimc.json",
@@ -434,7 +433,6 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                           _error = e;
                         });
                       }
-                      print(noirProofResult); 
                       if (!mounted) return;
 
                       setState(() {
