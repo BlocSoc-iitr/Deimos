@@ -1,0 +1,7 @@
+build_mode = "release"
+target_adapters = ["noir"]
+target_platforms = ["android"]
+android = ["aarch64-linux-android"]
+auto_update = false
+
+[update]
