@@ -75,7 +75,7 @@ jobs:
           echo "$HOME/.nargo/bin" >> $GITHUB_PATH
 
       - name: Add Noir to PATH
-        run: echo "$HOME/.nargo/bin" >> $GITHUB_PAT
+        run: echo "$HOME/.nargo/bin" >> $GITHUB_PATH
 
       - name: Detect changed circuit files
         id: detect
