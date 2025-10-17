@@ -35,8 +35,8 @@ mod noir_tests {
     #[test]
     #[serial]
     fn test_noir_multiplier2() {
-        let srs_path = "./test-vectors/noir/mimc.srs".to_string();
-        let circuit_path = "./test-vectors/noir/mimc.json".to_string();
+        let srs_path = "./test-vectors/noir/keccak256.srs".to_string();
+        let circuit_path = "./test-vectors/noir/keccak256.json".to_string();
         let circuit_inputs = r#"{
     "in": [
         "40","202","21","44","148","225","219","127",
@@ -92,8 +92,8 @@ mod noir_tests {
     #[serial]
     fn test_noir_multiplier2_with_existing_vk() {
         // Use the MiMC test vectors (existing in this crate) and generate the VK via helper.
-        let srs_path = "./test-vectors/noir/mimc.srs".to_string();
-        let circuit_path = "./test-vectors/noir/mimc.json".to_string();
+        let srs_path = "./test-vectors/noir/keccak256.srs".to_string();
+        let circuit_path = "./test-vectors/noir/keccak256.json".to_string();
 
         // reuse the same JSON input from the other test
         let circuit_inputs = r#"{

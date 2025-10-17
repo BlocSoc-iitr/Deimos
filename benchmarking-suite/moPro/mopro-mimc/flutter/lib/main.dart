@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:typed_data';
 
 import 'package:mopro_flutter/mopro_flutter.dart';
 import 'package:mopro_flutter/mopro_types.dart';
@@ -18,11 +19,20 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   CircomProofResult? _circomProofResult;
   Halo2ProofResult? _halo2ProofResult;
-  Uint8List? _noirProofResult;
-  Uint8List? _noirVerificationKey;
+  // Proofs & VKs per Noir circuit
+  Uint8List? _mimcProofResult;
+  Uint8List? _keccakProofResult;
+  Uint8List? _poseidonProofResult;
+
+  Uint8List? _mimcVerificationKey;
+  Uint8List? _keccakVerificationKey;
+  Uint8List? _poseidonVerificationKey;
+
   bool? _circomValid;
   bool? _halo2Valid;
-  bool? _noirValid;
+  bool? _mimcValid;
+  bool? _keccakValid;
+  bool? _poseidonValid;
   final _moproFlutterPlugin = MoproFlutter();
   bool isProving = false;
   Exception? _error;
@@ -365,154 +375,280 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               keyboardType: TextInputType.number,
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (_controllerNoirA.text.isEmpty || _controllerNoirB.text.isEmpty || isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
-
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      Uint8List? noirProofResult;
+              // MiMC
+              OutlinedButton(
+                onPressed: () async {
+                  if (isProving) return;
+                  setState(() {
+                    _error = null;
+                    isProving = true;
+                  });
+                  FocusManager.instance.primaryFocus?.unfocus();
+                  try {
+                    final List<String> hardcodedInputs = [
+                      "40","202","21","44","148","225","219","127",
+                      "125","137","45","39","181","182","116","221",
+                      "65","64","40","99","92","60","3","33",
+                      "40","159","154","251","14","238","144","106"
+                    ];
+                    const bool onChain = true;
+                    const bool lowMemoryMode = false;
+                    if (_mimcVerificationKey == null) {
                       try {
-                        var inputs = [
-                          _controllerNoirA.text,
-                          _controllerNoirB.text
-                        ];
-                        final List<String> hardcodedInputs = [
-                          "40","202","21","44","148","225","219","127",
-                          "125","137","45","39","181","182","116","221",
-                          "65","64","40","99","92","60","3","33",
-                          "40","159","154","251","14","238","144","106"
-                        ];
-                        
-                        // Constants for Noir proof generation
-                        const bool onChain = true;  // Use Keccak for Solidity compatibility
-                        const bool lowMemoryMode = false;
-                        
-                        // Get or generate verification key if not already available
-                        if (_noirVerificationKey == null) {
-                          setState(() {
-                            _error = null;
-                          });
-                          // Try to load existing VK from assets, or generate new one
-                          try {
-                            // First try to load existing VK from assets
-                            final vkAsset = await rootBundle.load('assets/sims.vk');
-                            _noirVerificationKey = vkAsset.buffer.asUint8List();
-                          } catch (e) {
-                            // If VK doesn't exist in assets, generate it
-                            _noirVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
-                              "assets/mimc.json",
-                              "assets/mimc.srs",
-                              onChain,
-                              lowMemoryMode
-                            );
-                          }
-                        }
-                        noirProofResult =
-                            await _moproFlutterPlugin.generateNoirProof(
-                                "assets/mimc.json",
-                                "assets/mimc.srs",
-                                hardcodedInputs.map((e) => e.toString()).toList(),
-                                onChain,
-                                _noirVerificationKey!,
-                                lowMemoryMode);
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        noirProofResult = null;
-                        setState(() {
-                          _error = e;
-                        });
+                        final vkAsset = await rootBundle.load('assets/mimc.vk');
+                        _mimcVerificationKey = vkAsset.buffer.asUint8List();
+                      } catch (e) {
+                        _mimcVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
+                          "assets/mimc.json",
+                          "assets/mimc.srs",
+                          onChain,
+                          lowMemoryMode,
+                        );
                       }
-                      if (!mounted) return;
-
-                      setState(() {
-                        isProving = false;
-                        _noirProofResult = noirProofResult;
-                      });
-                    },
-                    child: const Text("Generate Proof")),
+                    }
+                    final proof = await _moproFlutterPlugin.generateNoirProof(
+                      "assets/mimc.json",
+                      "assets/mimc.srs",
+                      hardcodedInputs,
+                      onChain,
+                      _mimcVerificationKey!,
+                      lowMemoryMode,
+                    );
+                    setState(() {
+                      // show the newly generated proof and clear other circuit proofs
+                      _mimcProofResult = proof;
+                      _mimcValid = null;
+                      _keccakProofResult = null;
+                      _poseidonProofResult = null;
+                      _keccakValid = null;
+                      _poseidonValid = null;
+                    });
+                  } on Exception catch (e) {
+                    setState(() { _error = e; });
+                  } finally {
+                    if (mounted) setState(() { isProving = false; });
+                  }
+                },
+                child: const Text('Generate MiMC Proof'),
               ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (_controllerNoirA.text.isEmpty || _controllerNoirB.text.isEmpty || isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
+              OutlinedButton(
+                onPressed: () async {
+                  if (isProving || _mimcProofResult == null) return;
+                  setState(() { _error = null; isProving = true; });
+                  try {
+                    const bool onChain = true;
+                    const bool lowMemoryMode = false;
+                    final valid = await _moproFlutterPlugin.verifyNoirProof(
+                      "assets/mimc.json",
+                      _mimcProofResult!,
+                      onChain,
+                      _mimcVerificationKey!,
+                      lowMemoryMode,
+                    );
+                    setState(() { _mimcValid = valid; });
+                  } on Exception catch (e) {
+                    setState(() { _error = e; _mimcValid = false; });
+                  } finally {
+                    if (mounted) setState(() { isProving = false; });
+                  }
+                },
+                child: const Text('Verify MiMC Proof'),
+              ),
 
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      bool? valid;
+              // Keccak
+              OutlinedButton(
+                onPressed: () async {
+                  if (isProving) return;
+                  setState(() { _error = null; isProving = true; });
+                  FocusManager.instance.primaryFocus?.unfocus();
+                  try {
+                    final List<String> hardcodedInputs = [
+                      "40","202","21","44","148","225","219","127",
+                      "125","137","45","39","181","182","116","221",
+                      "65","64","40","99","92","60","3","33",
+                      "40","159","154","251","14","238","144","106"
+                    ];
+                    const bool onChain = true;
+                    const bool lowMemoryMode = false;
+                    if (_keccakVerificationKey == null) {
                       try {
-                        var proofResult = _noirProofResult;
-                        var vk = _noirVerificationKey;
-                        
-                        if (vk == null) {
-                          throw Exception("Verification key not available. Generate proof first.");
-                        }
-                        
-                        // Constants for Noir proof verification
-                        const bool onChain = true;  // Use Keccak for Solidity compatibility
-                        const bool lowMemoryMode = false;
-                        
-                        valid = await _moproFlutterPlugin.verifyNoirProof(
-                            "assets/mimc.json",
-                            proofResult!,
-                            onChain,
-                            vk,
-                            lowMemoryMode);
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = e;
-                        });
-                      } on TypeError catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = Exception(e.toString());
-                        });
+                        final vkAsset = await rootBundle.load('assets/keccak.vk');
+                        _keccakVerificationKey = vkAsset.buffer.asUint8List();
+                      } catch (e) {
+                        _keccakVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
+                          "assets/keccak256.json",
+                          "assets/keccak256.srs",
+                          onChain,
+                          lowMemoryMode,
+                        );
                       }
+                    }
+                    final proof = await _moproFlutterPlugin.generateNoirProof(
+                      "assets/keccak256.json",
+                      "assets/keccak256.srs",
+                      hardcodedInputs,
+                      onChain,
+                      _keccakVerificationKey!,
+                      lowMemoryMode,
+                    );
+                    setState(() {
+                      // show the newly generated proof and clear other circuit proofs
+                      _keccakProofResult = proof;
+                      _keccakValid = null;
+                      _mimcProofResult = null;
+                      _poseidonProofResult = null;
+                      _mimcValid = null;
+                      _poseidonValid = null;
+                    });
+                  } on Exception catch (e) {
+                    setState(() { _error = e; });
+                  } finally {
+                    if (mounted) setState(() { isProving = false; });
+                  }
+                },
+                child: const Text('Generate Keccak Proof'),
+              ),
+              OutlinedButton(
+                onPressed: () async {
+                  if (isProving || _keccakProofResult == null) return;
+                  setState(() { _error = null; isProving = true; });
+                  try {
+                    const bool onChain = true;
+                    const bool lowMemoryMode = false;
+                    final valid = await _moproFlutterPlugin.verifyNoirProof(
+                      "assets/keccak256.json",
+                      _keccakProofResult!,
+                      onChain,
+                      _keccakVerificationKey!,
+                      lowMemoryMode,
+                    );
+                    setState(() { _keccakValid = valid; });
+                  } on Exception catch (e) {
+                    setState(() { _error = e; _keccakValid = false; });
+                  } finally {
+                    if (mounted) setState(() { isProving = false; });
+                  }
+                },
+                child: const Text('Verify Keccak Proof'),
+              ),
 
-                      if (!mounted) return;
-
-                      setState(() {
-                        _noirValid = valid;
-                        isProving = false;
-                      });
-                    },
-                    child: const Text("Verify Proof")),
+              // Poseidon
+              OutlinedButton(
+                onPressed: () async {
+                  if (isProving) return;
+                  setState(() { _error = null; isProving = true; });
+                  FocusManager.instance.primaryFocus?.unfocus();
+                  try {
+                    final List<String> hardcodedInputs = [
+                      "40","202","21","44","148","225","219","127",
+                      "125","137","45","39","181","182","116","221",
+                      "65","64","40","99","92","60","3","33",
+                      "40","159","154","251","14","238","144","106"
+                    ];
+                    const bool onChain = false; // Poseidon usually not on-chain
+                    const bool lowMemoryMode = false;
+                    if (_poseidonVerificationKey == null) {
+                      try {
+                        final vkAsset = await rootBundle.load('assets/poseidon.vk');
+                        _poseidonVerificationKey = vkAsset.buffer.asUint8List();
+                      } catch (e) {
+                        _poseidonVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
+                          "assets/poseidon.json",
+                          "assets/poseidon.srs",
+                          onChain,
+                          lowMemoryMode,
+                        );
+                      }
+                    }
+                    final proof = await _moproFlutterPlugin.generateNoirProof(
+                      "assets/poseidon.json",
+                      "assets/poseidon.srs",
+                      hardcodedInputs,
+                      onChain,
+                      _poseidonVerificationKey!,
+                      lowMemoryMode,
+                    );
+                    setState(() {
+                      // show the newly generated proof and clear other circuit proofs
+                      _poseidonProofResult = proof;
+                      _poseidonValid = null;
+                      _mimcProofResult = null;
+                      _keccakProofResult = null;
+                      _mimcValid = null;
+                      _keccakValid = null;
+                    });
+                  } on Exception catch (e) {
+                    setState(() { _error = e; });
+                  } finally {
+                    if (mounted) setState(() { isProving = false; });
+                  }
+                },
+                child: const Text('Generate Poseidon Proof'),
+              ),
+              OutlinedButton(
+                onPressed: () async {
+                  if (isProving || _poseidonProofResult == null) return;
+                  setState(() { _error = null; isProving = true; });
+                  try {
+                    const bool onChain = false;
+                    const bool lowMemoryMode = false;
+                    final valid = await _moproFlutterPlugin.verifyNoirProof(
+                      "assets/poseidon.json",
+                      _poseidonProofResult!,
+                      onChain,
+                      _poseidonVerificationKey!,
+                      lowMemoryMode,
+                    );
+                    setState(() { _poseidonValid = valid; });
+                  } on Exception catch (e) {
+                    setState(() { _error = e; _poseidonValid = false; });
+                  } finally {
+                    if (mounted) setState(() { isProving = false; });
+                  }
+                },
+                child: const Text('Verify Poseidon Proof'),
               ),
             ],
           ),
-          if (_noirProofResult != null)
-            Column(
-              children: [
+          Column(
+            children: [
+              if (_mimcProofResult != null) ...[
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text('Proof is valid: ${_noirValid ?? false}'),
+                  child: Text('MiMC proof is valid: ${_mimcValid ?? false}'),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child:
-                      Text('Proof: ${_noirProofResult ?? ""}'),
+                  child: Text('MiMC proof: ${_mimcProofResult}'),
                 ),
               ],
-            ),
+              if (_keccakProofResult != null) ...[
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Keccak proof is valid: ${_keccakValid ?? false}'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Keccak proof: ${_keccakProofResult}'),
+                ),
+              ],
+              if (_poseidonProofResult != null) ...[
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Poseidon proof is valid: ${_poseidonValid ?? false}'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Poseidon proof: ${_poseidonProofResult}'),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );
