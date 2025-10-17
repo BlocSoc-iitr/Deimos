@@ -23,16 +23,19 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   Uint8List? _mimcProofResult;
   Uint8List? _keccakProofResult;
   Uint8List? _poseidonProofResult;
+  Uint8List? _pedersenProofResult;
 
   Uint8List? _mimcVerificationKey;
   Uint8List? _keccakVerificationKey;
   Uint8List? _poseidonVerificationKey;
+  Uint8List? _pedersenVerificationKey;
 
   bool? _circomValid;
   bool? _halo2Valid;
   bool? _mimcValid;
   bool? _keccakValid;
   bool? _poseidonValid;
+  bool? _pedersenValid;
   final _moproFlutterPlugin = MoproFlutter();
   bool isProving = false;
   Exception? _error;
@@ -590,6 +593,84 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                 },
                 child: const Text('Generate Poseidon Proof'),
               ),
+              // Pedersen
+              OutlinedButton(
+                onPressed: () async {
+                  if (isProving) return;
+                  setState(() { _error = null; isProving = true; });
+                  FocusManager.instance.primaryFocus?.unfocus();
+                  try {
+                    final List<String> hardcodedInputs = [
+                      "40","202","21","44","148","225","219","127",
+                      "125","137","45","39","181","182","116","221",
+                      "65","64","40","99","92","60","3","33",
+                      "40","159","154","251","14","238","144","106"
+                    ];
+                    const bool onChain = true;
+                    const bool lowMemoryMode = false;
+                    if (_pedersenVerificationKey == null) {
+                      try {
+                        final vkAsset = await rootBundle.load('assets/pedersen.vk');
+                        _pedersenVerificationKey = vkAsset.buffer.asUint8List();
+                      } catch (e) {
+                        _pedersenVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
+                          "assets/pedersen.json",
+                          "assets/pedersen.srs",
+                          onChain,
+                          lowMemoryMode,
+                        );
+                      }
+                    }
+                    final proof = await _moproFlutterPlugin.generateNoirProof(
+                      "assets/pedersen.json",
+                      "assets/pedersen.srs",
+                      hardcodedInputs,
+                      onChain,
+                      _pedersenVerificationKey!,
+                      lowMemoryMode,
+                    );
+                    setState(() {
+                      // show the newly generated proof and clear other circuit proofs
+                      _pedersenProofResult = proof;
+                      _pedersenValid = null;
+                      _mimcProofResult = null;
+                      _keccakProofResult = null;
+                      _poseidonProofResult = null;
+                      _mimcValid = null;
+                      _keccakValid = null;
+                      _poseidonValid = null;
+                    });
+                  } on Exception catch (e) {
+                    setState(() { _error = e; });
+                  } finally {
+                    if (mounted) setState(() { isProving = false; });
+                  }
+                },
+                child: const Text('Generate Pedersen Proof'),
+              ),
+              OutlinedButton(
+                onPressed: () async {
+                  if (isProving || _pedersenProofResult == null) return;
+                  setState(() { _error = null; isProving = true; });
+                  try {
+                    const bool onChain = true;
+                    const bool lowMemoryMode = false;
+                    final valid = await _moproFlutterPlugin.verifyNoirProof(
+                      "assets/pedersen.json",
+                      _pedersenProofResult!,
+                      onChain,
+                      _pedersenVerificationKey!,
+                      lowMemoryMode,
+                    );
+                    setState(() { _pedersenValid = valid; });
+                  } on Exception catch (e) {
+                    setState(() { _error = e; _pedersenValid = false; });
+                  } finally {
+                    if (mounted) setState(() { isProving = false; });
+                  }
+                },
+                child: const Text('Verify Pedersen Proof'),
+              ),
               OutlinedButton(
                 onPressed: () async {
                   if (isProving || _poseidonProofResult == null) return;
@@ -645,6 +726,16 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text('Poseidon proof: ${_poseidonProofResult}'),
+                ),
+              ],
+              if (_pedersenProofResult != null) ...[
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Pedersen proof is valid: ${_pedersenValid ?? false}'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Pedersen proof: ${_pedersenProofResult}'),
                 ),
               ],
             ],

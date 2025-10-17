@@ -67,6 +67,8 @@ flutter:
     - assets/poseidon.srs
     - assets/keccak256.json
     - assets/keccak256.srs
+    - assets/pedersen.json
+    - assets/pedersen.srs
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
