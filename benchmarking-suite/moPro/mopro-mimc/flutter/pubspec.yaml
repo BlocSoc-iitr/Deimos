@@ -63,6 +63,10 @@ flutter:
     - assets/noir_multiplier2.vk
     - assets/mimc.json
     - assets/mimc.srs
+    - assets/poseidon.json
+    - assets/poseidon.srs
+    - assets/keccak256.json
+    - assets/keccak256.srs
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
