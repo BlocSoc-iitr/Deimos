@@ -69,6 +69,8 @@ flutter:
     - assets/keccak256.srs
     - assets/pedersen.json
     - assets/pedersen.srs
+    - assets/keccak.zkey
+    - assets/sha256.zkey
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

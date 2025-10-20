@@ -17,25 +17,31 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
-  CircomProofResult? _circomProofResult;
+  // Circom proofs
+  CircomProofResult? _circomKeccakProofResult;
+  CircomProofResult? _circomSha256ProofResult;
+  bool? _circomKeccakValid;
+  bool? _circomSha256Valid;
+  
+  // Halo2 proofs
   Halo2ProofResult? _halo2ProofResult;
-  // Proofs & VKs per Noir circuit
-  Uint8List? _mimcProofResult;
-  Uint8List? _keccakProofResult;
-  Uint8List? _poseidonProofResult;
-  Uint8List? _pedersenProofResult;
-
-  Uint8List? _mimcVerificationKey;
-  Uint8List? _keccakVerificationKey;
-  Uint8List? _poseidonVerificationKey;
-  Uint8List? _pedersenVerificationKey;
-
-  bool? _circomValid;
   bool? _halo2Valid;
-  bool? _mimcValid;
-  bool? _keccakValid;
-  bool? _poseidonValid;
-  bool? _pedersenValid;
+  
+  // Noir proofs & VKs
+  Uint8List? _noirMimcProofResult;
+  Uint8List? _noirKeccakProofResult;
+  Uint8List? _noirPoseidonProofResult;
+  Uint8List? _noirPedersenProofResult;
+
+  Uint8List? _noirMimcVerificationKey;
+  Uint8List? _noirKeccakVerificationKey;
+  Uint8List? _noirPoseidonVerificationKey;
+  Uint8List? _noirPedersenVerificationKey;
+
+  bool? _noirMimcValid;
+  bool? _noirKeccakValid;
+  bool? _noirPoseidonValid;
+  bool? _noirPedersenValid;
   final _moproFlutterPlugin = MoproFlutter();
   bool isProving = false;
   Exception? _error;
@@ -77,26 +83,18 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               padding: const EdgeInsets.all(8.0),
               child: Text(_error.toString()),
             ),
+          
+          // Keccak256 Section
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextFormField(
-              controller: _controllerA,
-              decoration: const InputDecoration(
-                labelText: "Public input `a`",
-                hintText: "For example, 5",
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Keccak256 Proof Generation\nUsing hardcoded input: "Hello World! This is a test msg."',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.blue[800],
               ),
-              keyboardType: TextInputType.number,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextFormField(
-              controller: _controllerB,
-              decoration: const InputDecoration(
-                labelText: "Private input `b`",
-                hintText: "For example, 3",
-              ),
-              keyboardType: TextInputType.number,
             ),
           ),
           Row(
@@ -106,9 +104,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                 padding: const EdgeInsets.all(8.0),
                 child: OutlinedButton(
                     onPressed: () async {
-                      if (_controllerA.text.isEmpty ||
-                          _controllerB.text.isEmpty ||
-                          isProving) {
+                      if (isProving) {
                         return;
                       }
                       setState(() {
@@ -119,11 +115,46 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                       FocusManager.instance.primaryFocus?.unfocus();
                       CircomProofResult? proofResult;
                       try {
-                        var inputs =
-                            '{"a":["${_controllerA.text}"],"b":["${_controllerB.text}"]}';
+                        // Hardcoded Keccak input: "Hello World! This is a test msg." as byte array
+                        var inputs = '''{
+    "in": [
+        "72",
+        "101",
+        "108",
+        "108",
+        "111",
+        "32",
+        "87",
+        "111",
+        "114",
+        "108",
+        "100",
+        "33",
+        "32",
+        "84",
+        "104",
+        "105",
+        "115",
+        "32",
+        "105",
+        "115",
+        "32",
+        "97",
+        "32",
+        "116",
+        "101",
+        "115",
+        "116",
+        "32",
+        "109",
+        "115",
+        "103",
+        "46"
+    ]
+}''';
                         proofResult =
                             await _moproFlutterPlugin.generateCircomProof(
-                                "assets/multiplier2_final.zkey", inputs, ProofLib.arkworks);  // DO NOT change the proofLib if you don't build for rapidsnark
+                                "assets/keccak.zkey", inputs, ProofLib.arkworks);  // Using Keccak zkey
                       } on Exception catch (e) {
                         print("Error: $e");
                         proofResult = null;
@@ -136,18 +167,16 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
 
                       setState(() {
                         isProving = false;
-                        _circomProofResult = proofResult;
+                        _circomKeccakProofResult = proofResult;
                       });
                     },
-                    child: const Text("Generate Proof")),
+                    child: const Text("Prove Keccak")),
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: OutlinedButton(
                     onPressed: () async {
-                      if (_controllerA.text.isEmpty ||
-                          _controllerB.text.isEmpty ||
-                          isProving) {
+                      if (isProving) {
                         return;
                       }
                       setState(() {
@@ -158,9 +187,9 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                       FocusManager.instance.primaryFocus?.unfocus();
                       bool? valid;
                       try {
-                        var proofResult = _circomProofResult;
+                        var proofResult = _circomKeccakProofResult;
                         valid = await _moproFlutterPlugin.verifyCircomProof(
-                            "assets/multiplier2_final.zkey", proofResult!, ProofLib.arkworks); // DO NOT change the proofLib if you don't build for rapidsnark
+                            "assets/keccak.zkey", proofResult!, ProofLib.arkworks); // Using Keccak zkey
                       } on Exception catch (e) {
                         print("Error: $e");
                         valid = false;
@@ -179,28 +208,187 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
 
                       setState(() {
                         isProving = false;
-                        _circomValid = valid;
+                        _circomKeccakValid = valid;
                       });
                     },
-                    child: const Text("Verify Proof")),
+                    child: const Text("Verify Keccak")),
               ),
             ],
           ),
-          if (_circomProofResult != null)
+          if (_circomKeccakProofResult != null)
             Column(
               children: [
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text('Proof is valid: ${_circomValid ?? false}'),
+                  child: Text('Keccak Proof is valid: ${_circomKeccakValid ?? false}'),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child:
-                      Text('Proof inputs: ${_circomProofResult?.inputs ?? ""}'),
+                      Text('Keccak Proof inputs: ${_circomKeccakProofResult?.inputs ?? ""}'),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text('Proof: ${_circomProofResult?.proof ?? ""}'),
+                  child: Text('Keccak Proof: ${_circomKeccakProofResult?.proof ?? ""}'),
+                ),
+              ],
+            ),
+          
+          // Visual divider
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40.0),
+            child: Divider(
+              thickness: 2,
+              color: Colors.grey[400],
+            ),
+          ),
+          
+          // SHA256 Section
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'SHA256 Proof Generation\nUsing hardcoded input: "Hello World! This is a test msg."',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.green[800],
+              ),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: OutlinedButton(
+                    onPressed: () async {
+                      if (isProving) {
+                        return;
+                      }
+                      setState(() {
+                        _error = null;
+                        isProving = true;
+                      });
+
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      CircomProofResult? proofResult;
+                      try {
+                        // Hardcoded SHA256 input: "Hello World! This is a test msg." as byte array
+                        var inputs = '''{
+    "in": [
+        "40",
+        "202",
+        "21",
+        "44",
+        "148",
+        "225",
+        "219",
+        "127",
+        "125",
+        "137",
+        "45",
+        "39",
+        "181",
+        "182",
+        "116",
+        "221",
+        "65",
+        "64",
+        "40",
+        "99",
+        "92",
+        "60",
+        "3",
+        "33",
+        "40",
+        "159",
+        "154",
+        "251",
+        "14",
+        "238",
+        "144",
+        "106"
+    ]
+}''';
+                        proofResult =
+                            await _moproFlutterPlugin.generateCircomProof(
+                                "assets/sha256.zkey", inputs, ProofLib.arkworks);  // Using SHA256 zkey
+                      } on Exception catch (e) {
+                        print("Error: $e");
+                        proofResult = null;
+                        setState(() {
+                          _error = e;
+                        });
+                      }
+
+                      if (!mounted) return;
+
+                      setState(() {
+                        isProving = false;
+                        _circomSha256ProofResult = proofResult;
+                      });
+                    },
+                    child: const Text("Prove SHA256")),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: OutlinedButton(
+                    onPressed: () async {
+                      if (isProving) {
+                        return;
+                      }
+                      setState(() {
+                        _error = null;
+                        isProving = true;
+                      });
+
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      bool? valid;
+                      try {
+                        var proofResult = _circomSha256ProofResult;
+                        valid = await _moproFlutterPlugin.verifyCircomProof(
+                            "assets/sha256.zkey", proofResult!, ProofLib.arkworks); // Using SHA256 zkey
+                      } on Exception catch (e) {
+                        print("Error: $e");
+                        valid = false;
+                        setState(() {
+                          _error = e;
+                        });
+                      } on TypeError catch (e) {
+                        print("Error: $e");
+                        valid = false;
+                        setState(() {
+                          _error = Exception(e.toString());
+                        });
+                      }
+
+                      if (!mounted) return;
+
+                      setState(() {
+                        isProving = false;
+                        _circomSha256Valid = valid;
+                      });
+                    },
+                    child: const Text("Verify SHA256")),
+              ),
+            ],
+          ),
+          if (_circomSha256ProofResult != null)
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('SHA256 Proof is valid: ${_circomSha256Valid ?? false}'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child:
+                      Text('SHA256 Proof inputs: ${_circomSha256ProofResult?.inputs ?? ""}'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('SHA256 Proof: ${_circomSha256ProofResult?.proof ?? ""}'),
                 ),
               ],
             ),
@@ -401,12 +589,12 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                     ];
                     const bool onChain = true;
                     const bool lowMemoryMode = false;
-                    if (_mimcVerificationKey == null) {
+                    if (_noirMimcVerificationKey == null) {
                       try {
                         final vkAsset = await rootBundle.load('assets/mimc.vk');
-                        _mimcVerificationKey = vkAsset.buffer.asUint8List();
+                        _noirMimcVerificationKey = vkAsset.buffer.asUint8List();
                       } catch (e) {
-                        _mimcVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
+                        _noirMimcVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
                           "assets/mimc.json",
                           "assets/mimc.srs",
                           onChain,
@@ -419,17 +607,17 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                       "assets/mimc.srs",
                       hardcodedInputs,
                       onChain,
-                      _mimcVerificationKey!,
+                      _noirMimcVerificationKey!,
                       lowMemoryMode,
                     );
                     setState(() {
                       // show the newly generated proof and clear other circuit proofs
-                      _mimcProofResult = proof;
-                      _mimcValid = null;
-                      _keccakProofResult = null;
-                      _poseidonProofResult = null;
-                      _keccakValid = null;
-                      _poseidonValid = null;
+                      _noirMimcProofResult = proof;
+                      _noirMimcValid = null;
+                      _noirKeccakProofResult = null;
+                      _noirPoseidonProofResult = null;
+                      _noirKeccakValid = null;
+                      _noirPoseidonValid = null;
                     });
                   } on Exception catch (e) {
                     setState(() { _error = e; });
@@ -441,21 +629,21 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               ),
               OutlinedButton(
                 onPressed: () async {
-                  if (isProving || _mimcProofResult == null) return;
+                  if (isProving || _noirMimcProofResult == null) return;
                   setState(() { _error = null; isProving = true; });
                   try {
                     const bool onChain = true;
                     const bool lowMemoryMode = false;
                     final valid = await _moproFlutterPlugin.verifyNoirProof(
                       "assets/mimc.json",
-                      _mimcProofResult!,
+                      _noirMimcProofResult!,
                       onChain,
-                      _mimcVerificationKey!,
+                      _noirMimcVerificationKey!,
                       lowMemoryMode,
                     );
-                    setState(() { _mimcValid = valid; });
+                    setState(() { _noirMimcValid = valid; });
                   } on Exception catch (e) {
-                    setState(() { _error = e; _mimcValid = false; });
+                    setState(() { _error = e; _noirMimcValid = false; });
                   } finally {
                     if (mounted) setState(() { isProving = false; });
                   }
@@ -478,12 +666,12 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                     ];
                     const bool onChain = true;
                     const bool lowMemoryMode = false;
-                    if (_keccakVerificationKey == null) {
+                    if (_noirKeccakVerificationKey == null) {
                       try {
                         final vkAsset = await rootBundle.load('assets/keccak.vk');
-                        _keccakVerificationKey = vkAsset.buffer.asUint8List();
+                        _noirKeccakVerificationKey = vkAsset.buffer.asUint8List();
                       } catch (e) {
-                        _keccakVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
+                        _noirKeccakVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
                           "assets/keccak256.json",
                           "assets/keccak256.srs",
                           onChain,
@@ -496,17 +684,17 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                       "assets/keccak256.srs",
                       hardcodedInputs,
                       onChain,
-                      _keccakVerificationKey!,
+                      _noirKeccakVerificationKey!,
                       lowMemoryMode,
                     );
                     setState(() {
                       // show the newly generated proof and clear other circuit proofs
-                      _keccakProofResult = proof;
-                      _keccakValid = null;
-                      _mimcProofResult = null;
-                      _poseidonProofResult = null;
-                      _mimcValid = null;
-                      _poseidonValid = null;
+                      _noirKeccakProofResult = proof;
+                      _noirKeccakValid = null;
+                      _noirMimcProofResult = null;
+                      _noirPoseidonProofResult = null;
+                      _noirMimcValid = null;
+                      _noirPoseidonValid = null;
                     });
                   } on Exception catch (e) {
                     setState(() { _error = e; });
@@ -518,21 +706,21 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               ),
               OutlinedButton(
                 onPressed: () async {
-                  if (isProving || _keccakProofResult == null) return;
+                  if (isProving || _noirKeccakProofResult == null) return;
                   setState(() { _error = null; isProving = true; });
                   try {
                     const bool onChain = true;
                     const bool lowMemoryMode = false;
                     final valid = await _moproFlutterPlugin.verifyNoirProof(
                       "assets/keccak256.json",
-                      _keccakProofResult!,
+                      _noirKeccakProofResult!,
                       onChain,
-                      _keccakVerificationKey!,
+                      _noirKeccakVerificationKey!,
                       lowMemoryMode,
                     );
-                    setState(() { _keccakValid = valid; });
+                    setState(() { _noirKeccakValid = valid; });
                   } on Exception catch (e) {
-                    setState(() { _error = e; _keccakValid = false; });
+                    setState(() { _error = e; _noirKeccakValid = false; });
                   } finally {
                     if (mounted) setState(() { isProving = false; });
                   }
@@ -555,12 +743,12 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                     ];
                     const bool onChain = false; // Poseidon usually not on-chain
                     const bool lowMemoryMode = false;
-                    if (_poseidonVerificationKey == null) {
+                    if (_noirPoseidonVerificationKey == null) {
                       try {
                         final vkAsset = await rootBundle.load('assets/poseidon.vk');
-                        _poseidonVerificationKey = vkAsset.buffer.asUint8List();
+                        _noirPoseidonVerificationKey = vkAsset.buffer.asUint8List();
                       } catch (e) {
-                        _poseidonVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
+                        _noirPoseidonVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
                           "assets/poseidon.json",
                           "assets/poseidon.srs",
                           onChain,
@@ -573,17 +761,17 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                       "assets/poseidon.srs",
                       hardcodedInputs,
                       onChain,
-                      _poseidonVerificationKey!,
+                      _noirPoseidonVerificationKey!,
                       lowMemoryMode,
                     );
                     setState(() {
                       // show the newly generated proof and clear other circuit proofs
-                      _poseidonProofResult = proof;
-                      _poseidonValid = null;
-                      _mimcProofResult = null;
-                      _keccakProofResult = null;
-                      _mimcValid = null;
-                      _keccakValid = null;
+                      _noirPoseidonProofResult = proof;
+                      _noirPoseidonValid = null;
+                      _noirMimcProofResult = null;
+                      _noirKeccakProofResult = null;
+                      _noirMimcValid = null;
+                      _noirKeccakValid = null;
                     });
                   } on Exception catch (e) {
                     setState(() { _error = e; });
@@ -608,12 +796,12 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                     ];
                     const bool onChain = true;
                     const bool lowMemoryMode = false;
-                    if (_pedersenVerificationKey == null) {
+                    if (_noirPedersenVerificationKey == null) {
                       try {
                         final vkAsset = await rootBundle.load('assets/pedersen.vk');
-                        _pedersenVerificationKey = vkAsset.buffer.asUint8List();
+                        _noirPedersenVerificationKey = vkAsset.buffer.asUint8List();
                       } catch (e) {
-                        _pedersenVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
+                        _noirPedersenVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
                           "assets/pedersen.json",
                           "assets/pedersen.srs",
                           onChain,
@@ -626,19 +814,19 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                       "assets/pedersen.srs",
                       hardcodedInputs,
                       onChain,
-                      _pedersenVerificationKey!,
+                      _noirPedersenVerificationKey!,
                       lowMemoryMode,
                     );
                     setState(() {
                       // show the newly generated proof and clear other circuit proofs
-                      _pedersenProofResult = proof;
-                      _pedersenValid = null;
-                      _mimcProofResult = null;
-                      _keccakProofResult = null;
-                      _poseidonProofResult = null;
-                      _mimcValid = null;
-                      _keccakValid = null;
-                      _poseidonValid = null;
+                      _noirPedersenProofResult = proof;
+                      _noirPedersenValid = null;
+                      _noirMimcProofResult = null;
+                      _noirKeccakProofResult = null;
+                      _noirPoseidonProofResult = null;
+                      _noirMimcValid = null;
+                      _noirKeccakValid = null;
+                      _noirPoseidonValid = null;
                     });
                   } on Exception catch (e) {
                     setState(() { _error = e; });
@@ -650,21 +838,21 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               ),
               OutlinedButton(
                 onPressed: () async {
-                  if (isProving || _pedersenProofResult == null) return;
+                  if (isProving || _noirPedersenProofResult == null) return;
                   setState(() { _error = null; isProving = true; });
                   try {
                     const bool onChain = true;
                     const bool lowMemoryMode = false;
                     final valid = await _moproFlutterPlugin.verifyNoirProof(
                       "assets/pedersen.json",
-                      _pedersenProofResult!,
+                      _noirPedersenProofResult!,
                       onChain,
-                      _pedersenVerificationKey!,
+                      _noirPedersenVerificationKey!,
                       lowMemoryMode,
                     );
-                    setState(() { _pedersenValid = valid; });
+                    setState(() { _noirPedersenValid = valid; });
                   } on Exception catch (e) {
-                    setState(() { _error = e; _pedersenValid = false; });
+                    setState(() { _error = e; _noirPedersenValid = false; });
                   } finally {
                     if (mounted) setState(() { isProving = false; });
                   }
@@ -673,21 +861,21 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               ),
               OutlinedButton(
                 onPressed: () async {
-                  if (isProving || _poseidonProofResult == null) return;
+                  if (isProving || _noirPoseidonProofResult == null) return;
                   setState(() { _error = null; isProving = true; });
                   try {
                     const bool onChain = false;
                     const bool lowMemoryMode = false;
                     final valid = await _moproFlutterPlugin.verifyNoirProof(
                       "assets/poseidon.json",
-                      _poseidonProofResult!,
+                      _noirPoseidonProofResult!,
                       onChain,
-                      _poseidonVerificationKey!,
+                      _noirPoseidonVerificationKey!,
                       lowMemoryMode,
                     );
-                    setState(() { _poseidonValid = valid; });
+                    setState(() { _noirPoseidonValid = valid; });
                   } on Exception catch (e) {
-                    setState(() { _error = e; _poseidonValid = false; });
+                    setState(() { _error = e; _noirPoseidonValid = false; });
                   } finally {
                     if (mounted) setState(() { isProving = false; });
                   }
@@ -698,44 +886,44 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
           ),
           Column(
             children: [
-              if (_mimcProofResult != null) ...[
+              if (_noirMimcProofResult != null) ...[
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text('MiMC proof is valid: ${_mimcValid ?? false}'),
+                  child: Text('MiMC proof is valid: ${_noirMimcValid ?? false}'),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text('MiMC proof: ${_mimcProofResult}'),
-                ),
-              ],
-              if (_keccakProofResult != null) ...[
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('Keccak proof is valid: ${_keccakValid ?? false}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('Keccak proof: ${_keccakProofResult}'),
+                  child: Text('MiMC proof: ${_noirMimcProofResult}'),
                 ),
               ],
-              if (_poseidonProofResult != null) ...[
+              if (_noirKeccakProofResult != null) ...[
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text('Poseidon proof is valid: ${_poseidonValid ?? false}'),
+                  child: Text('Keccak proof is valid: ${_noirKeccakValid ?? false}'),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text('Poseidon proof: ${_poseidonProofResult}'),
+                  child: Text('Keccak proof: ${_noirKeccakProofResult}'),
                 ),
               ],
-              if (_pedersenProofResult != null) ...[
+              if (_noirPoseidonProofResult != null) ...[
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text('Pedersen proof is valid: ${_pedersenValid ?? false}'),
+                  child: Text('Poseidon proof is valid: ${_noirPoseidonValid ?? false}'),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text('Pedersen proof: ${_pedersenProofResult}'),
+                  child: Text('Poseidon proof: ${_noirPoseidonProofResult}'),
+                ),
+              ],
+              if (_noirPedersenProofResult != null) ...[
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Pedersen proof is valid: ${_noirPedersenValid ?? false}'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Pedersen proof: ${_noirPedersenProofResult}'),
                 ),
               ],
             ],
