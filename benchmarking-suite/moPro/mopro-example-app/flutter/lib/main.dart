@@ -20,8 +20,16 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   // Circom proofs
   CircomProofResult? _circomKeccakProofResult;
   CircomProofResult? _circomSha256ProofResult;
+  CircomProofResult? _circomBlake2s256ProofResult;
+  CircomProofResult? _circomMimc256ProofResult;
+  CircomProofResult? _circomPedersenProofResult;
+  CircomProofResult? _circomPoseidonProofResult;
   bool? _circomKeccakValid;
   bool? _circomSha256Valid;
+  bool? _circomBlake2s256Valid;
+  bool? _circomMimc256Valid;
+  bool? _circomPedersenValid;
+  bool? _circomPoseidonValid;
   
   // Halo2 proofs
   Halo2ProofResult? _halo2ProofResult;
@@ -394,6 +402,619 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text('SHA256 Proof: ${_circomSha256ProofResult?.proof ?? ""}'),
+                ),
+              ],
+            ),
+          
+          // Visual divider
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40.0),
+            child: Divider(
+              thickness: 2,
+              color: Colors.grey[400],
+            ),
+          ),
+          
+          // Blake2s256 Section
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Blake2s256 Proof Generation\nUsing hardcoded input: "Hello World! This is a test msg."',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.purple[800],
+              ),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: OutlinedButton(
+                    onPressed: () async {
+                      if (isProving) {
+                        return;
+                      }
+                      setState(() {
+                        _error = null;
+                        isProving = true;
+                      });
+
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      CircomProofResult? proofResult;
+                      try {
+                        // Hardcoded Blake2s256 input: "Hello World! This is a test msg." as byte array
+                         var inputs = '''{
+    "in": [
+        "40",
+        "202",
+        "21",
+        "44",
+        "148",
+        "225",
+        "219",
+        "127",
+        "125",
+        "137",
+        "45",
+        "39",
+        "181",
+        "182",
+        "116",
+        "221",
+        "65",
+        "64",
+        "40",
+        "99",
+        "92",
+        "60",
+        "3",
+        "33",
+        "40",
+        "159",
+        "154",
+        "251",
+        "14",
+        "238",
+        "144",
+        "106"
+    ]
+}''';
+                        proofResult =
+                            await _moproFlutterPlugin.generateCircomProof(
+                                "assets/blake2s256.zkey", inputs, ProofLib.arkworks);
+                      } on Exception catch (e) {
+                        print("Error: $e");
+                        proofResult = null;
+                        setState(() {
+                          _error = e;
+                        });
+                      }
+
+                      if (!mounted) return;
+
+                      setState(() {
+                        isProving = false;
+                        _circomBlake2s256ProofResult = proofResult;
+                      });
+                    },
+                    child: const Text("Prove Blake2s256")),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: OutlinedButton(
+                    onPressed: () async {
+                      if (isProving) {
+                        return;
+                      }
+                      setState(() {
+                        _error = null;
+                        isProving = true;
+                      });
+
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      bool? valid;
+                      try {
+                        var proofResult = _circomBlake2s256ProofResult;
+                        valid = await _moproFlutterPlugin.verifyCircomProof(
+                            "assets/blake2s256.zkey", proofResult!, ProofLib.arkworks);
+                      } on Exception catch (e) {
+                        print("Error: $e");
+                        valid = false;
+                        setState(() {
+                          _error = e;
+                        });
+                      } on TypeError catch (e) {
+                        print("Error: $e");
+                        valid = false;
+                        setState(() {
+                          _error = Exception(e.toString());
+                        });
+                      }
+
+                      if (!mounted) return;
+
+                      setState(() {
+                        isProving = false;
+                        _circomBlake2s256Valid = valid;
+                      });
+                    },
+                    child: const Text("Verify Blake2s256")),
+              ),
+            ],
+          ),
+          if (_circomBlake2s256ProofResult != null)
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Blake2s256 Proof is valid: ${_circomBlake2s256Valid ?? false}'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child:
+                      Text('Blake2s256 Proof inputs: ${_circomBlake2s256ProofResult?.inputs ?? ""}'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Blake2s256 Proof: ${_circomBlake2s256ProofResult?.proof ?? ""}'),
+                ),
+              ],
+            ),
+          
+          // Visual divider
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40.0),
+            child: Divider(
+              thickness: 2,
+              color: Colors.grey[400],
+            ),
+          ),
+          
+          // MiMC256 Section
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'MiMC256 Proof Generation\nUsing hardcoded field element input',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.orange[800],
+              ),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: OutlinedButton(
+                    onPressed: () async {
+                      if (isProving) {
+                        return;
+                      }
+                      setState(() {
+                        _error = null;
+                        isProving = true;
+                      });
+
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      CircomProofResult? proofResult;
+                      try {
+                        // MiMC256 uses field elements as input
+                       var inputs = '''{
+    "in": [
+        "40",
+        "202",
+        "21",
+        "44",
+        "148",
+        "225",
+        "219",
+        "127",
+        "125",
+        "137",
+        "45",
+        "39",
+        "181",
+        "182",
+        "116",
+        "221",
+        "65",
+        "64",
+        "40",
+        "99",
+        "92",
+        "60",
+        "3",
+        "33",
+        "40",
+        "159",
+        "154",
+        "251",
+        "14",
+        "238",
+        "144",
+        "106"
+    ]
+}''';
+                        proofResult =
+                            await _moproFlutterPlugin.generateCircomProof(
+                                "assets/mimc256.zkey", inputs, ProofLib.arkworks);
+                      } on Exception catch (e) {
+                        print("Error: $e");
+                        proofResult = null;
+                        setState(() {
+                          _error = e;
+                        });
+                      }
+
+                      if (!mounted) return;
+
+                      setState(() {
+                        isProving = false;
+                        _circomMimc256ProofResult = proofResult;
+                      });
+                    },
+                    child: const Text("Prove MiMC256")),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: OutlinedButton(
+                    onPressed: () async {
+                      if (isProving) {
+                        return;
+                      }
+                      setState(() {
+                        _error = null;
+                        isProving = true;
+                      });
+
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      bool? valid;
+                      try {
+                        var proofResult = _circomMimc256ProofResult;
+                        valid = await _moproFlutterPlugin.verifyCircomProof(
+                            "assets/mimc256.zkey", proofResult!, ProofLib.arkworks);
+                      } on Exception catch (e) {
+                        print("Error: $e");
+                        valid = false;
+                        setState(() {
+                          _error = e;
+                        });
+                      } on TypeError catch (e) {
+                        print("Error: $e");
+                        valid = false;
+                        setState(() {
+                          _error = Exception(e.toString());
+                        });
+                      }
+
+                      if (!mounted) return;
+
+                      setState(() {
+                        isProving = false;
+                        _circomMimc256Valid = valid;
+                      });
+                    },
+                    child: const Text("Verify MiMC256")),
+              ),
+            ],
+          ),
+          if (_circomMimc256ProofResult != null)
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('MiMC256 Proof is valid: ${_circomMimc256Valid ?? false}'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child:
+                      Text('MiMC256 Proof inputs: ${_circomMimc256ProofResult?.inputs ?? ""}'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('MiMC256 Proof: ${_circomMimc256ProofResult?.proof ?? ""}'),
+                ),
+              ],
+            ),
+          
+          // Visual divider
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40.0),
+            child: Divider(
+              thickness: 2,
+              color: Colors.grey[400],
+            ),
+          ),
+          
+          // Pedersen Section
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Pedersen Proof Generation\nUsing hardcoded field element inputs',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.red[800],
+              ),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: OutlinedButton(
+                    onPressed: () async {
+                      if (isProving) {
+                        return;
+                      }
+                      setState(() {
+                        _error = null;
+                        isProving = true;
+                      });
+
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      CircomProofResult? proofResult;
+                      try {
+                        // Pedersen uses field elements as input
+                       var inputs = '''{
+    "in": [
+        "40",
+        "202",
+        "21",
+        "44",
+        "148",
+        "225",
+        "219",
+        "127",
+        "125",
+        "137",
+        "45",
+        "39",
+        "181",
+        "182",
+        "116",
+        "221",
+        "65",
+        "64",
+        "40",
+        "99",
+        "92",
+        "60",
+        "3",
+        "33",
+        "40",
+        "159",
+        "154",
+        "251",
+        "14",
+        "238",
+        "144",
+        "106"
+    ]
+}''';
+                        proofResult =
+                            await _moproFlutterPlugin.generateCircomProof(
+                                "assets/pedersen.zkey", inputs, ProofLib.arkworks);
+                      } on Exception catch (e) {
+                        print("Error: $e");
+                        proofResult = null;
+                        setState(() {
+                          _error = e;
+                        });
+                      }
+
+                      if (!mounted) return;
+
+                      setState(() {
+                        isProving = false;
+                        _circomPedersenProofResult = proofResult;
+                      });
+                    },
+                    child: const Text("Prove Pedersen")),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: OutlinedButton(
+                    onPressed: () async {
+                      if (isProving) {
+                        return;
+                      }
+                      setState(() {
+                        _error = null;
+                        isProving = true;
+                      });
+
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      bool? valid;
+                      try {
+                        var proofResult = _circomPedersenProofResult;
+                        valid = await _moproFlutterPlugin.verifyCircomProof(
+                            "assets/pedersen.zkey", proofResult!, ProofLib.arkworks);
+                      } on Exception catch (e) {
+                        print("Error: $e");
+                        valid = false;
+                        setState(() {
+                          _error = e;
+                        });
+                      } on TypeError catch (e) {
+                        print("Error: $e");
+                        valid = false;
+                        setState(() {
+                          _error = Exception(e.toString());
+                        });
+                      }
+
+                      if (!mounted) return;
+
+                      setState(() {
+                        isProving = false;
+                        _circomPedersenValid = valid;
+                      });
+                    },
+                    child: const Text("Verify Pedersen")),
+              ),
+            ],
+          ),
+          if (_circomPedersenProofResult != null)
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Pedersen Proof is valid: ${_circomPedersenValid ?? false}'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child:
+                      Text('Pedersen Proof inputs: ${_circomPedersenProofResult?.inputs ?? ""}'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Pedersen Proof: ${_circomPedersenProofResult?.proof ?? ""}'),
+                ),
+              ],
+            ),
+          
+          // Visual divider
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40.0),
+            child: Divider(
+              thickness: 2,
+              color: Colors.grey[400],
+            ),
+          ),
+          
+          // Poseidon Section
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Poseidon Proof Generation\nUsing hardcoded field element inputs',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.teal[800],
+              ),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: OutlinedButton(
+                    onPressed: () async {
+                      if (isProving) {
+                        return;
+                      }
+                      setState(() {
+                        _error = null;
+                        isProving = true;
+                      });
+
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      CircomProofResult? proofResult;
+                      try {
+                        // Poseidon uses field elements as input
+                        var inputs = '''{
+    "in": [
+        "72",
+        "101",
+        "108",
+        "108",
+        "111",
+        "32",
+        "87",
+        "111"
+    ]
+}
+''';
+                        proofResult =
+                            await _moproFlutterPlugin.generateCircomProof(
+                                "assets/poseidon.zkey", inputs, ProofLib.arkworks);
+                      } on Exception catch (e) {
+                        print("Error: $e");
+                        proofResult = null;
+                        setState(() {
+                          _error = e;
+                        });
+                      }
+
+                      if (!mounted) return;
+
+                      setState(() {
+                        isProving = false;
+                        _circomPoseidonProofResult = proofResult;
+                      });
+                    },
+                    child: const Text("Prove Poseidon")),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: OutlinedButton(
+                    onPressed: () async {
+                      if (isProving) {
+                        return;
+                      }
+                      setState(() {
+                        _error = null;
+                        isProving = true;
+                      });
+
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      bool? valid;
+                      try {
+                        var proofResult = _circomPoseidonProofResult;
+                        valid = await _moproFlutterPlugin.verifyCircomProof(
+                            "assets/poseidon.zkey", proofResult!, ProofLib.arkworks);
+                      } on Exception catch (e) {
+                        print("Error: $e");
+                        valid = false;
+                        setState(() {
+                          _error = e;
+                        });
+                      } on TypeError catch (e) {
+                        print("Error: $e");
+                        valid = false;
+                        setState(() {
+                          _error = Exception(e.toString());
+                        });
+                      }
+
+                      if (!mounted) return;
+
+                      setState(() {
+                        isProving = false;
+                        _circomPoseidonValid = valid;
+                      });
+                    },
+                    child: const Text("Verify Poseidon")),
+              ),
+            ],
+          ),
+          if (_circomPoseidonProofResult != null)
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Poseidon Proof is valid: ${_circomPoseidonValid ?? false}'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child:
+                      Text('Poseidon Proof inputs: ${_circomPoseidonProofResult?.inputs ?? ""}'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Poseidon Proof: ${_circomPoseidonProofResult?.proof ?? ""}'),
                 ),
               ],
             ),
