@@ -70,6 +70,10 @@ flutter:
     - assets/pedersen.json
     - assets/pedersen.srs
     - assets/keccak.zkey
+    - assets/blake2s256.zkey
+    - assets/mimc256.zkey
+    - assets/pedersen.zkey
+    - assets/poseidon.zkey
     - assets/sha256.zkey
     - assets/sha256.srs
     - assets/sha256.json

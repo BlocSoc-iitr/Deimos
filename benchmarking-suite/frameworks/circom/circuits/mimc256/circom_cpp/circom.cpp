@@ -13,15 +13,15 @@ void Bits2Num_3_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string
 void Bits2Num_3_run(uint ctx_index,Circom_CalcWit* ctx);
 void HashToBytes_4_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string componentName,uint componentFather);
 void HashToBytes_4_run(uint ctx_index,Circom_CalcWit* ctx);
-void MainMultiMIMC256_5_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string componentName,uint componentFather);
-void MainMultiMIMC256_5_run(uint ctx_index,Circom_CalcWit* ctx);
+void Main_5_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string componentName,uint componentFather);
+void Main_5_run(uint ctx_index,Circom_CalcWit* ctx);
 Circom_TemplateFunction _functionTable[6] = { 
 MiMC7_0_run,
 MultiMiMC7_1_run,
 Num2Bits_2_run,
 Bits2Num_3_run,
 HashToBytes_4_run,
-MainMultiMIMC256_5_run };
+Main_5_run };
 Circom_TemplateFunction _functionTableParallel[6] = { 
 NULL,
 NULL,
@@ -1737,9 +1737,9 @@ if (index_subc != 0)release_memory_component(ctx,index_subc);
 }
 }
 
-void MainMultiMIMC256_5_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string componentName,uint componentFather){
+void Main_5_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string componentName,uint componentFather){
 ctx->componentMemory[coffset].templateId = 5;
-ctx->componentMemory[coffset].templateName = "MainMultiMIMC256";
+ctx->componentMemory[coffset].templateName = "Main";
 ctx->componentMemory[coffset].signalStart = soffset;
 ctx->componentMemory[coffset].inputCounter = 32;
 ctx->componentMemory[coffset].componentName = componentName;
@@ -1747,7 +1747,7 @@ ctx->componentMemory[coffset].idFather = componentFather;
 ctx->componentMemory[coffset].subcomponents = new uint[2]{0};
 }
 
-void MainMultiMIMC256_5_run(uint ctx_index,Circom_CalcWit* ctx){
+void Main_5_run(uint ctx_index,Circom_CalcWit* ctx){
 FrElement* circuitConstants = ctx->circuitConstants;
 FrElement* signalValues = ctx->signalValues;
 FrElement expaux[2];
@@ -1868,7 +1868,7 @@ if (index_subc != 0)release_memory_component(ctx,index_subc);
 }
 
 void run(Circom_CalcWit* ctx){
-MainMultiMIMC256_5_create(1,0,ctx,"main",0);
-MainMultiMIMC256_5_run(0,ctx);
+Main_5_create(1,0,ctx,"main",0);
+Main_5_run(0,ctx);
 }
 
