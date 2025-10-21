@@ -71,7 +71,7 @@ jobs:
         if: steps.cache-noir.outputs.cache-hit != 'true'
         run: |
           curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
-          ~/.nargo/bin/noirup
+          ~/.nargo/bin/noirup --version v1.0.0-beta.8 
           echo "$HOME/.nargo/bin" >> $GITHUB_PATH
 
       - name: Add Noir to PATH
