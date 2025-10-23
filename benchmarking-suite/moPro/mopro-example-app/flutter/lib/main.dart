@@ -1,1364 +1,792 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:typed_data';
+import 'dart:convert';
 
 import 'package:mopro_flutter/mopro_flutter.dart';
 import 'package:mopro_flutter/mopro_types.dart';
+
+// Design constants based on design.json
+class AppTheme {
+  static const Color primary = Color(0xFF5B56E6);
+  static const Color secondary = Color(0xFF1E40AF);
+  static const Color accent = Color(0xFF00BCD4);
+  static const Color danger = Color(0xFFFF6B6B);
+  static const Color warning = Color(0xFFFFA500);
+  static const Color success = Color(0xFF10B981);
+  static const Color background = Color(0xFFF5F7FA);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color text = Color(0xFF1A1A1A);
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color border = Color(0xFFE5E7EB);
+}
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Deimos',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: AppTheme.background,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppTheme.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+      ),
+      home: const MainSelectionPage(),
+    );
+  }
 }
 
-class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
-  // Circom proofs
-  CircomProofResult? _circomKeccakProofResult;
-  CircomProofResult? _circomSha256ProofResult;
-  CircomProofResult? _circomBlake2s256ProofResult;
-  CircomProofResult? _circomMimc256ProofResult;
-  CircomProofResult? _circomPedersenProofResult;
-  CircomProofResult? _circomPoseidonProofResult;
-  bool? _circomKeccakValid;
-  bool? _circomSha256Valid;
-  bool? _circomBlake2s256Valid;
-  bool? _circomMimc256Valid;
-  bool? _circomPedersenValid;
-  bool? _circomPoseidonValid;
-  
-  // Halo2 proofs
-  Halo2ProofResult? _halo2ProofResult;
-  bool? _halo2Valid;
-  
-  // Noir proofs & VKs
-  Uint8List? _noirMimcProofResult;
-  Uint8List? _noirKeccakProofResult;
-  Uint8List? _noirPoseidonProofResult;
-  Uint8List? _noirPedersenProofResult;
-  Uint8List? _noirSha256ProofResult;
+class MainSelectionPage extends StatefulWidget {
+  const MainSelectionPage({super.key});
 
+  @override
+  State<MainSelectionPage> createState() => _MainSelectionPageState();
+}
+
+class _MainSelectionPageState extends State<MainSelectionPage> {
+  // Selection state
+  String? _selectedFramework;
+  String? _selectedAlgorithm;
+  final TextEditingController _customInputController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _customInputController.text = "Hello World! This is a test msg.";
+  }
+
+  @override
+  void dispose() {
+    _customInputController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+      child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+              _buildHeader(),
+              const SizedBox(height: 24),
+              _buildFrameworkSelection(),
+              const SizedBox(height: 24),
+              _buildAlgorithmSelection(),
+              const SizedBox(height: 24),
+              _buildCustomInput(),
+              const SizedBox(height: 32),
+              _buildRunButton(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(24.0),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppTheme.primary, AppTheme.secondary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: Text(
+                    'D',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                    Text(
+                      'Deimos',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      'ZK Proof Benchmarking',
+              style: TextStyle(
+                fontSize: 16,
+                        color: Colors.white70,
+                      ),
+                ),
+              ],
+            ),
+              ),
+            ],
+              ),
+            ],
+          ),
+    );
+  }
+
+  Widget _buildFrameworkSelection() {
+    return _buildCard(
+      title: 'Select Framework',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+          const Text(
+            'Choose a ZK proof framework',
+              style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.textSecondary,
+              ),
+            ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildFrameworkButton(
+                  'Circom',
+                  Icons.speed,
+                  'circom',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildFrameworkButton(
+                  'Halo2',
+                  Icons.layers,
+                  'halo2',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildFrameworkButton(
+                  'Noir',
+                  Icons.nightlight_round,
+                  'noir',
+                ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFrameworkButton(String label, IconData icon, String value) {
+    final isSelected = _selectedFramework == value;
+    return GestureDetector(
+      onTap: () {
+                        setState(() {
+          _selectedFramework = value;
+          _selectedAlgorithm = null; // Reset algorithm when framework changes
+                      });
+                    },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.accent : AppTheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppTheme.accent : AppTheme.border,
+            width: 2,
+          ),
+        ),
+        child: Column(
+              children: [
+            Icon(
+              icon,
+              size: 32,
+              color: isSelected ? Colors.white : AppTheme.textSecondary,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : AppTheme.text,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAlgorithmSelection() {
+    if (_selectedFramework == null) {
+      return const SizedBox.shrink();
+    }
+
+    final algorithms = _getAlgorithmsForFramework(_selectedFramework!);
+    
+    return _buildCard(
+      title: 'Select Algorithm',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Choose a hashing algorithm',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: algorithms.map((algorithm) {
+              final isSelected = _selectedAlgorithm == algorithm;
+              return GestureDetector(
+                onTap: () {
+                      setState(() {
+                    _selectedAlgorithm = algorithm;
+                      });
+                    },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppTheme.primary : AppTheme.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected ? AppTheme.primary : AppTheme.border,
+                    ),
+                  ),
+                  child: Text(
+                    algorithm,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: isSelected ? Colors.white : AppTheme.text,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildCustomInput() {
+    return _buildCard(
+      title: 'Custom Input',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Enter text to hash',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _customInputController,
+            decoration: InputDecoration(
+              hintText: 'Enter your custom text here...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppTheme.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            maxLines: 3,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRunButton() {
+    final canRun = _selectedFramework != null && _selectedAlgorithm != null;
+    
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: canRun ? _runBenchmark : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: canRun ? AppTheme.primary : AppTheme.border,
+          foregroundColor: canRun ? Colors.white : AppTheme.textSecondary,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: canRun ? 2 : 0,
+        ),
+        child: _isLoading
+            ? const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Text('Generating Proof...'),
+                ],
+              )
+            : Text(
+                canRun 
+                    ? 'Run ${_selectedFramework!.toUpperCase()} - $_selectedAlgorithm'
+                    : 'Select Framework & Algorithm',
+                style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+    );
+  }
+
+  Widget _buildCard({required String title, required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.text,
+            ),
+          ),
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
+  }
+
+  List<String> _getAlgorithmsForFramework(String framework) {
+    switch (framework) {
+      case 'circom':
+        return ['SHA256', 'Keccak256', 'Blake2s256', 'MiMC256', 'Pedersen', 'Poseidon'];
+      case 'halo2':
+        return ['Fibonacci'];
+      case 'noir':
+        return ['SHA256', 'Keccak256', 'Poseidon', 'MiMC', 'Pedersen'];
+      default:
+        return [];
+    }
+  }
+
+  void _runBenchmark() async {
+    if (_selectedFramework == null || _selectedAlgorithm == null) return;
+
+                      setState(() {
+      _isLoading = true;
+    });
+
+    // Simulate loading time
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProofResultPage(
+            framework: _selectedFramework!,
+            algorithm: _selectedAlgorithm!,
+            customInput: _customInputController.text,
+          ),
+        ),
+      );
+    }
+
+                        setState(() {
+      _isLoading = false;
+    });
+  }
+}
+
+// Stage 2: Proof Result Page
+class ProofResultPage extends StatefulWidget {
+  final String framework;
+  final String algorithm;
+  final String customInput;
+
+  const ProofResultPage({
+    super.key,
+    required this.framework,
+    required this.algorithm,
+    required this.customInput,
+  });
+
+  @override
+  State<ProofResultPage> createState() => _ProofResultPageState();
+}
+
+class _ProofResultPageState extends State<ProofResultPage> {
+  bool _isGenerating = false;
+  bool _isVerifying = false;
+  bool? _isValid;
+  String? _proofData;
+  String? _error;
+  
+  // Store actual proof objects for verification
+  CircomProofResult? _circomProofResult;
+  Halo2ProofResult? _halo2ProofResult;
+  Uint8List? _noirProofResult;
+  
+  // Store Noir verification keys (like in old implementation)
   Uint8List? _noirMimcVerificationKey;
   Uint8List? _noirKeccakVerificationKey;
   Uint8List? _noirPoseidonVerificationKey;
   Uint8List? _noirPedersenVerificationKey;
   Uint8List? _noirSha256VerificationKey;
-
-  bool? _noirMimcValid;
-  bool? _noirKeccakValid;
-  bool? _noirPoseidonValid;
-  bool? _noirPedersenValid;
-  bool? _noirSha256Valid;
   
-  String _selectedNoirHashFunction = 'MiMC';
-  final _moproFlutterPlugin = MoproFlutter();
-  bool isProving = false;
-  Exception? _error;
-  late TabController _tabController;
-
-  // Controllers to handle user input
-  final TextEditingController _controllerA = TextEditingController();
-  final TextEditingController _controllerB = TextEditingController();
-  final TextEditingController _controllerOut = TextEditingController();
-  final TextEditingController _controllerNoirA = TextEditingController();
-  final TextEditingController _controllerNoirB = TextEditingController();
+  // Benchmarking timing
+  Duration? _proofGenerationTime;
+  Duration? _proofVerificationTime;
 
   @override
   void initState() {
     super.initState();
-    _controllerA.text = "5";
-    _controllerB.text = "3";
-    _controllerOut.text = "55";
-    _controllerNoirA.text = "5";
-    _controllerNoirB.text = "3";
-    _tabController = TabController(length: 3, vsync: this);
+    _generateProof();
   }
 
   @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  Widget _buildCircomTab() {
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (isProving) const CircularProgressIndicator(),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(_error.toString()),
-            ),
-          
-          // Keccak256 Section
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Keccak256 Proof Generation\nUsing hardcoded input: "Hello World! This is a test msg."',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.blue[800],
-              ),
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
-
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      CircomProofResult? proofResult;
-                      try {
-                        // Hardcoded Keccak input: "Hello World! This is a test msg." as byte array
-                        var inputs = '''{
-    "in": [
-        "72",
-        "101",
-        "108",
-        "108",
-        "111",
-        "32",
-        "87",
-        "111",
-        "114",
-        "108",
-        "100",
-        "33",
-        "32",
-        "84",
-        "104",
-        "105",
-        "115",
-        "32",
-        "105",
-        "115",
-        "32",
-        "97",
-        "32",
-        "116",
-        "101",
-        "115",
-        "116",
-        "32",
-        "109",
-        "115",
-        "103",
-        "46"
-    ]
-}''';
-                        proofResult =
-                            await _moproFlutterPlugin.generateCircomProof(
-                                "assets/keccak.zkey", inputs, ProofLib.arkworks);  // Using Keccak zkey
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        proofResult = null;
-                        setState(() {
-                          _error = e;
-                        });
-                      }
-
-                      if (!mounted) return;
-
-                      setState(() {
-                        isProving = false;
-                        _circomKeccakProofResult = proofResult;
-                      });
-                    },
-                    child: const Text("Prove Keccak")),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
-
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      bool? valid;
-                      try {
-                        var proofResult = _circomKeccakProofResult;
-                        valid = await _moproFlutterPlugin.verifyCircomProof(
-                            "assets/keccak.zkey", proofResult!, ProofLib.arkworks); // Using Keccak zkey
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = e;
-                        });
-                      } on TypeError catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = Exception(e.toString());
-                        });
-                      }
-
-                      if (!mounted) return;
-
-                      setState(() {
-                        isProving = false;
-                        _circomKeccakValid = valid;
-                      });
-                    },
-                    child: const Text("Verify Keccak")),
-              ),
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('${widget.framework.toUpperCase()} - ${widget.algorithm}'),
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+              _buildInputDisplay(),
+              const SizedBox(height: 24),
+              _buildProofSection(),
+              const SizedBox(height: 24),
+              _buildVerificationSection(),
+              const SizedBox(height: 24),
+              _buildResultsSection(),
             ],
           ),
-          if (_circomKeccakProofResult != null)
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('Keccak Proof is valid: ${_circomKeccakValid ?? false}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child:
-                      Text('Keccak Proof inputs: ${_circomKeccakProofResult?.inputs ?? ""}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('Keccak Proof: ${_circomKeccakProofResult?.proof ?? ""}'),
-                ),
-              ],
-            ),
-          
-          // Visual divider
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40.0),
-            child: Divider(
-              thickness: 2,
-              color: Colors.grey[400],
-            ),
-          ),
-          
-          // SHA256 Section
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'SHA256 Proof Generation\nUsing hardcoded input: "Hello World! This is a test msg."',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.green[800],
-              ),
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
-
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      CircomProofResult? proofResult;
-                      try {
-                        // Hardcoded SHA256 input: "Hello World! This is a test msg." as byte array
-                        var inputs = '''{
-    "in": [
-        "40",
-        "202",
-        "21",
-        "44",
-        "148",
-        "225",
-        "219",
-        "127",
-        "125",
-        "137",
-        "45",
-        "39",
-        "181",
-        "182",
-        "116",
-        "221",
-        "65",
-        "64",
-        "40",
-        "99",
-        "92",
-        "60",
-        "3",
-        "33",
-        "40",
-        "159",
-        "154",
-        "251",
-        "14",
-        "238",
-        "144",
-        "106"
-    ]
-}''';
-                        proofResult =
-                            await _moproFlutterPlugin.generateCircomProof(
-                                "assets/sha256.zkey", inputs, ProofLib.arkworks);  // Using SHA256 zkey
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        proofResult = null;
-                        setState(() {
-                          _error = e;
-                        });
-                      }
-
-                      if (!mounted) return;
-
-                      setState(() {
-                        isProving = false;
-                        _circomSha256ProofResult = proofResult;
-                      });
-                    },
-                    child: const Text("Prove SHA256")),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
-
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      bool? valid;
-                      try {
-                        var proofResult = _circomSha256ProofResult;
-                        valid = await _moproFlutterPlugin.verifyCircomProof(
-                            "assets/sha256.zkey", proofResult!, ProofLib.arkworks); // Using SHA256 zkey
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = e;
-                        });
-                      } on TypeError catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = Exception(e.toString());
-                        });
-                      }
-
-                      if (!mounted) return;
-
-                      setState(() {
-                        isProving = false;
-                        _circomSha256Valid = valid;
-                      });
-                    },
-                    child: const Text("Verify SHA256")),
-              ),
-            ],
-          ),
-          if (_circomSha256ProofResult != null)
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('SHA256 Proof is valid: ${_circomSha256Valid ?? false}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child:
-                      Text('SHA256 Proof inputs: ${_circomSha256ProofResult?.inputs ?? ""}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('SHA256 Proof: ${_circomSha256ProofResult?.proof ?? ""}'),
-                ),
-              ],
-            ),
-          
-          // Visual divider
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40.0),
-            child: Divider(
-              thickness: 2,
-              color: Colors.grey[400],
-            ),
-          ),
-          
-          // Blake2s256 Section
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Blake2s256 Proof Generation\nUsing hardcoded input: "Hello World! This is a test msg."',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.purple[800],
-              ),
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
-
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      CircomProofResult? proofResult;
-                      try {
-                        // Hardcoded Blake2s256 input: "Hello World! This is a test msg." as byte array
-                         var inputs = '''{
-    "in": [
-        "40",
-        "202",
-        "21",
-        "44",
-        "148",
-        "225",
-        "219",
-        "127",
-        "125",
-        "137",
-        "45",
-        "39",
-        "181",
-        "182",
-        "116",
-        "221",
-        "65",
-        "64",
-        "40",
-        "99",
-        "92",
-        "60",
-        "3",
-        "33",
-        "40",
-        "159",
-        "154",
-        "251",
-        "14",
-        "238",
-        "144",
-        "106"
-    ]
-}''';
-                        proofResult =
-                            await _moproFlutterPlugin.generateCircomProof(
-                                "assets/blake2s256.zkey", inputs, ProofLib.arkworks);
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        proofResult = null;
-                        setState(() {
-                          _error = e;
-                        });
-                      }
-
-                      if (!mounted) return;
-
-                      setState(() {
-                        isProving = false;
-                        _circomBlake2s256ProofResult = proofResult;
-                      });
-                    },
-                    child: const Text("Prove Blake2s256")),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
-
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      bool? valid;
-                      try {
-                        var proofResult = _circomBlake2s256ProofResult;
-                        valid = await _moproFlutterPlugin.verifyCircomProof(
-                            "assets/blake2s256.zkey", proofResult!, ProofLib.arkworks);
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = e;
-                        });
-                      } on TypeError catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = Exception(e.toString());
-                        });
-                      }
-
-                      if (!mounted) return;
-
-                      setState(() {
-                        isProving = false;
-                        _circomBlake2s256Valid = valid;
-                      });
-                    },
-                    child: const Text("Verify Blake2s256")),
-              ),
-            ],
-          ),
-          if (_circomBlake2s256ProofResult != null)
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('Blake2s256 Proof is valid: ${_circomBlake2s256Valid ?? false}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child:
-                      Text('Blake2s256 Proof inputs: ${_circomBlake2s256ProofResult?.inputs ?? ""}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('Blake2s256 Proof: ${_circomBlake2s256ProofResult?.proof ?? ""}'),
-                ),
-              ],
-            ),
-          
-          // Visual divider
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40.0),
-            child: Divider(
-              thickness: 2,
-              color: Colors.grey[400],
-            ),
-          ),
-          
-          // MiMC256 Section
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'MiMC256 Proof Generation\nUsing hardcoded field element input',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.orange[800],
-              ),
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
-
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      CircomProofResult? proofResult;
-                      try {
-                        // MiMC256 uses field elements as input
-                       var inputs = '''{
-    "in": [
-        "40",
-        "202",
-        "21",
-        "44",
-        "148",
-        "225",
-        "219",
-        "127",
-        "125",
-        "137",
-        "45",
-        "39",
-        "181",
-        "182",
-        "116",
-        "221",
-        "65",
-        "64",
-        "40",
-        "99",
-        "92",
-        "60",
-        "3",
-        "33",
-        "40",
-        "159",
-        "154",
-        "251",
-        "14",
-        "238",
-        "144",
-        "106"
-    ]
-}''';
-                        proofResult =
-                            await _moproFlutterPlugin.generateCircomProof(
-                                "assets/mimc256.zkey", inputs, ProofLib.arkworks);
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        proofResult = null;
-                        setState(() {
-                          _error = e;
-                        });
-                      }
-
-                      if (!mounted) return;
-
-                      setState(() {
-                        isProving = false;
-                        _circomMimc256ProofResult = proofResult;
-                      });
-                    },
-                    child: const Text("Prove MiMC256")),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
-
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      bool? valid;
-                      try {
-                        var proofResult = _circomMimc256ProofResult;
-                        valid = await _moproFlutterPlugin.verifyCircomProof(
-                            "assets/mimc256.zkey", proofResult!, ProofLib.arkworks);
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = e;
-                        });
-                      } on TypeError catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = Exception(e.toString());
-                        });
-                      }
-
-                      if (!mounted) return;
-
-                      setState(() {
-                        isProving = false;
-                        _circomMimc256Valid = valid;
-                      });
-                    },
-                    child: const Text("Verify MiMC256")),
-              ),
-            ],
-          ),
-          if (_circomMimc256ProofResult != null)
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('MiMC256 Proof is valid: ${_circomMimc256Valid ?? false}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child:
-                      Text('MiMC256 Proof inputs: ${_circomMimc256ProofResult?.inputs ?? ""}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('MiMC256 Proof: ${_circomMimc256ProofResult?.proof ?? ""}'),
-                ),
-              ],
-            ),
-          
-          // Visual divider
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40.0),
-            child: Divider(
-              thickness: 2,
-              color: Colors.grey[400],
-            ),
-          ),
-          
-          // Pedersen Section
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Pedersen Proof Generation\nUsing hardcoded field element inputs',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.red[800],
-              ),
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
-
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      CircomProofResult? proofResult;
-                      try {
-                        // Pedersen uses field elements as input
-                       var inputs = '''{
-    "in": [
-        "40",
-        "202",
-        "21",
-        "44",
-        "148",
-        "225",
-        "219",
-        "127",
-        "125",
-        "137",
-        "45",
-        "39",
-        "181",
-        "182",
-        "116",
-        "221",
-        "65",
-        "64",
-        "40",
-        "99",
-        "92",
-        "60",
-        "3",
-        "33",
-        "40",
-        "159",
-        "154",
-        "251",
-        "14",
-        "238",
-        "144",
-        "106"
-    ]
-}''';
-                        proofResult =
-                            await _moproFlutterPlugin.generateCircomProof(
-                                "assets/pedersen.zkey", inputs, ProofLib.arkworks);
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        proofResult = null;
-                        setState(() {
-                          _error = e;
-                        });
-                      }
-
-                      if (!mounted) return;
-
-                      setState(() {
-                        isProving = false;
-                        _circomPedersenProofResult = proofResult;
-                      });
-                    },
-                    child: const Text("Prove Pedersen")),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
-
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      bool? valid;
-                      try {
-                        var proofResult = _circomPedersenProofResult;
-                        valid = await _moproFlutterPlugin.verifyCircomProof(
-                            "assets/pedersen.zkey", proofResult!, ProofLib.arkworks);
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = e;
-                        });
-                      } on TypeError catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = Exception(e.toString());
-                        });
-                      }
-
-                      if (!mounted) return;
-
-                      setState(() {
-                        isProving = false;
-                        _circomPedersenValid = valid;
-                      });
-                    },
-                    child: const Text("Verify Pedersen")),
-              ),
-            ],
-          ),
-          if (_circomPedersenProofResult != null)
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('Pedersen Proof is valid: ${_circomPedersenValid ?? false}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child:
-                      Text('Pedersen Proof inputs: ${_circomPedersenProofResult?.inputs ?? ""}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('Pedersen Proof: ${_circomPedersenProofResult?.proof ?? ""}'),
-                ),
-              ],
-            ),
-          
-          // Visual divider
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40.0),
-            child: Divider(
-              thickness: 2,
-              color: Colors.grey[400],
-            ),
-          ),
-          
-          // Poseidon Section
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Poseidon Proof Generation\nUsing hardcoded field element inputs',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.teal[800],
-              ),
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
-
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      CircomProofResult? proofResult;
-                      try {
-                        // Poseidon uses field elements as input
-                        var inputs = '''{
-    "in": [
-        "72",
-        "101",
-        "108",
-        "108",
-        "111",
-        "32",
-        "87",
-        "111"
-    ]
-}
-''';
-                        proofResult =
-                            await _moproFlutterPlugin.generateCircomProof(
-                                "assets/poseidon.zkey", inputs, ProofLib.arkworks);
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        proofResult = null;
-                        setState(() {
-                          _error = e;
-                        });
-                      }
-
-                      if (!mounted) return;
-
-                      setState(() {
-                        isProving = false;
-                        _circomPoseidonProofResult = proofResult;
-                      });
-                    },
-                    child: const Text("Prove Poseidon")),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
-
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      bool? valid;
-                      try {
-                        var proofResult = _circomPoseidonProofResult;
-                        valid = await _moproFlutterPlugin.verifyCircomProof(
-                            "assets/poseidon.zkey", proofResult!, ProofLib.arkworks);
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = e;
-                        });
-                      } on TypeError catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = Exception(e.toString());
-                        });
-                      }
-
-                      if (!mounted) return;
-
-                      setState(() {
-                        isProving = false;
-                        _circomPoseidonValid = valid;
-                      });
-                    },
-                    child: const Text("Verify Poseidon")),
-              ),
-            ],
-          ),
-          if (_circomPoseidonProofResult != null)
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('Poseidon Proof is valid: ${_circomPoseidonValid ?? false}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child:
-                      Text('Poseidon Proof inputs: ${_circomPoseidonProofResult?.inputs ?? ""}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('Poseidon Proof: ${_circomPoseidonProofResult?.proof ?? ""}'),
-                ),
-              ],
-            ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildHalo2Tab() {
-    return SingleChildScrollView(
+  Widget _buildInputDisplay() {
+    return _buildCard(
+      title: 'Input',
       child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (isProving) const CircularProgressIndicator(),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(_error.toString()),
-            ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextFormField(
-              controller: _controllerOut,
-              decoration: const InputDecoration(
-                labelText: "Public input `out`",
-                hintText: "For example, 55",
-              ),
-              keyboardType: TextInputType.number,
+          Text(
+            'Framework: ${widget.framework.toUpperCase()}',
+            style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              color: AppTheme.text,
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (_controllerOut.text.isEmpty || isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
-
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      Halo2ProofResult? halo2ProofResult;
-                      try {
-                        var inputs = {
-                          "out": [(_controllerOut.text)]
-                        };
-                        halo2ProofResult =
-                            await _moproFlutterPlugin.generateHalo2Proof(
-                                "assets/plonk_fibonacci_srs.bin",
-                                "assets/plonk_fibonacci_pk.bin",
-                                inputs);
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        halo2ProofResult = null;
-                        setState(() {
-                          _error = e;
-                        });
-                      }
-
-                      if (!mounted) return;
-
-                      setState(() {
-                        isProving = false;
-                        _halo2ProofResult = halo2ProofResult;
-                      });
-                    },
-                    child: const Text("Generate Proof")),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: OutlinedButton(
-                    onPressed: () async {
-                      if (_controllerOut.text.isEmpty || isProving) {
-                        return;
-                      }
-                      setState(() {
-                        _error = null;
-                        isProving = true;
-                      });
-
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      bool? valid;
-                      try {
-                        var proofResult = _halo2ProofResult;
-                        valid = await _moproFlutterPlugin.verifyHalo2Proof(
-                            "assets/plonk_fibonacci_srs.bin",
-                            "assets/plonk_fibonacci_vk.bin",
-                            proofResult!.proof,
-                            proofResult.inputs);
-                      } on Exception catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = e;
-                        });
-                      } on TypeError catch (e) {
-                        print("Error: $e");
-                        valid = false;
-                        setState(() {
-                          _error = Exception(e.toString());
-                        });
-                      }
-
-                      if (!mounted) return;
-
-                      setState(() {
-                        _halo2Valid = valid;
-                        isProving = false;
-                      });
-                    },
-                    child: const Text("Verify Proof")),
-              ),
-            ],
+          const SizedBox(height: 8),
+          Text(
+            'Algorithm: ${widget.algorithm}',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.text,
+            ),
           ),
-          if (_halo2ProofResult != null)
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('Proof is valid: ${_halo2Valid ?? false}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child:
-                      Text('Proof inputs: ${_halo2ProofResult?.inputs ?? ""}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('Proof: ${_halo2ProofResult?.proof ?? ""}'),
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNoirTab() {
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (isProving) const CircularProgressIndicator(),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                _error.toString(),
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
-          
-          // Hash Function Selector
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
+          const SizedBox(height: 12),
                 const Text(
-                  'Select Hash Function',
+            'Custom Input:',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textSecondary,
                   ),
                 ),
-                const SizedBox(height: 10),
+          const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.blue, width: 2),
+              color: AppTheme.background,
                     borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: DropdownButton<String>(
-                    value: _selectedNoirHashFunction,
-                    isExpanded: true,
-                    underline: const SizedBox(),
-                    items: const [
-                      DropdownMenuItem(value: 'MiMC', child: Text('MiMC')),
-                      DropdownMenuItem(value: 'Keccak256', child: Text('Keccak256')),
-                      DropdownMenuItem(value: 'Poseidon', child: Text('Poseidon')),
-                      DropdownMenuItem(value: 'Pedersen', child: Text('Pedersen')),
-                      DropdownMenuItem(value: 'SHA256', child: Text('SHA256')),
-                    ],
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedNoirHashFunction = newValue!;
-                        _error = null;
-                      });
-                    },
-                  ),
-                ),
-              ],
+              border: Border.all(color: AppTheme.border),
             ),
-          ),
-          
-          // Hardcoded input display
-          Padding(
-            padding: const EdgeInsets.all(8.0),
             child: Text(
-              'Using hardcoded 32-byte input',
-              style: TextStyle(
+              '"${widget.customInput}"',
+              style: const TextStyle(
                 fontSize: 14,
                 fontStyle: FontStyle.italic,
-                color: Colors.grey[600],
+                color: AppTheme.text,
               ),
             ),
-          ),
-          
-          // Prove and Verify Buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProofSection() {
+    return _buildCard(
+      title: 'Proof Generation',
+      child: Column(
+        children: [
+          if (_isGenerating)
+            const Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 12),
+                Text('Generating proof...'),
+              ],
+            )
+          else if (_proofData != null)
+            const Row(
+              children: [
+                Icon(Icons.check_circle, color: AppTheme.success, size: 20),
+                SizedBox(width: 12),
+                Text('Proof generated successfully'),
+              ],
+            )
+          else if (_error != null)
+            Row(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.play_arrow),
-                  label: const Text('Generate Proof'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  ),
-                  onPressed: () => _generateNoirProof(_selectedNoirHashFunction),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.verified),
-                  label: const Text('Verify Proof'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  ),
-                  onPressed: () => _verifyNoirProof(_selectedNoirHashFunction),
-                ),
-              ),
-            ],
-          ),
-          
-          // Display proof results based on selected hash function
-          _buildNoirProofResults(),
+                const Icon(Icons.error, color: AppTheme.danger, size: 20),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Error: $_error')),
+              ],
+            )
+          else
+            const Text('Ready to generate proof'),
         ],
       ),
     );
   }
   
-  Widget _buildNoirProofResults() {
-    Uint8List? currentProof;
-    bool? currentValid;
-    
-    switch (_selectedNoirHashFunction) {
-      case 'MiMC':
-        currentProof = _noirMimcProofResult;
-        currentValid = _noirMimcValid;
-        break;
-      case 'Keccak256':
-        currentProof = _noirKeccakProofResult;
-        currentValid = _noirKeccakValid;
-        break;
-      case 'Poseidon':
-        currentProof = _noirPoseidonProofResult;
-        currentValid = _noirPoseidonValid;
-        break;
-      case 'Pedersen':
-        currentProof = _noirPedersenProofResult;
-        currentValid = _noirPedersenValid;
-        break;
-      case 'SHA256':
-        currentProof = _noirSha256ProofResult;
-        currentValid = _noirSha256Valid;
-        break;
-    }
-    
-    if (currentProof == null) {
-      return const SizedBox.shrink();
-    }
-    
-    return Container(
-      margin: const EdgeInsets.all(16.0),
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: currentValid == true ? Colors.green : Colors.orange,
-          width: 2,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+  Widget _buildVerificationSection() {
+    return _buildCard(
+      title: 'Proof Verification',
+            child: Column(
+              children: [
+          if (_proofData == null)
+            const Text('Generate proof first')
+          else if (_isVerifying)
+            const Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 12),
+                Text('Verifying proof...'),
+              ],
+            )
+          else if (_isValid != null)
           Row(
-            children: [
+              children: [
               Icon(
-                currentValid == true ? Icons.check_circle : Icons.pending,
-                color: currentValid == true ? Colors.green : Colors.orange,
-                size: 28,
-              ),
-              const SizedBox(width: 8),
+                  _isValid! ? Icons.check_circle : Icons.cancel,
+                  color: _isValid! ? AppTheme.success : AppTheme.danger,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
               Text(
-                '$_selectedNoirHashFunction Proof',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  _isValid! ? 'Proof is valid' : 'Proof is invalid',
+                  style: TextStyle(
+                    color: _isValid! ? AppTheme.success : AppTheme.danger,
+                    fontWeight: FontWeight.w600,
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Valid: ${currentValid ?? "Not verified yet"}',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: currentValid == true ? Colors.green[700] : Colors.orange[700],
+            )
+          else
+            ElevatedButton(
+              onPressed: _verifyProof,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+              ),
+              child: const Text('Verify Proof'),
             ),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Proof Data:',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResultsSection() {
+    if (_proofData == null) return const SizedBox.shrink();
+
+    return _buildCard(
+      title: 'Proof Data',
+            child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+              color: AppTheme.background,
+                    borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppTheme.border),
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: SelectableText(
-                currentProof.toString(),
+                _proofData!,
                 style: const TextStyle(
-                  fontFamily: 'monospace',
                   fontSize: 12,
+                  fontFamily: 'monospace',
+                  color: AppTheme.text,
                 ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Show benchmarking results
+          _buildBenchmarkingSection(),
+          const SizedBox(height: 16),
+          // Show additional proof details based on framework
+          _buildProofDetails(),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildBenchmarkingSection() {
+    return _buildCard(
+      title: 'Benchmarking Results',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_proofGenerationTime != null)
+            _buildTimingRow(
+              'Proof Generation',
+              _proofGenerationTime!,
+              Icons.timer,
+              Colors.blue,
+            ),
+          if (_proofVerificationTime != null)
+            _buildTimingRow(
+              'Proof Verification',
+              _proofVerificationTime!,
+              Icons.verified,
+              Colors.green,
+            ),
+          if (_proofGenerationTime != null && _proofVerificationTime != null)
+            _buildTimingRow(
+              'Total Time',
+              Duration(
+                milliseconds: _proofGenerationTime!.inMilliseconds + 
+                           _proofVerificationTime!.inMilliseconds
+              ),
+              Icons.speed,
+              Colors.orange,
+            ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildTimingRow(String label, Duration duration, IconData icon, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+            children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.text,
+            ),
+          ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: color.withOpacity(0.3)),
+            ),
+            child: Text(
+              _formatDuration(duration),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: color,
               ),
             ),
           ),
@@ -1367,47 +795,318 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     );
   }
   
-  Future<void> _generateNoirProof(String hashFunction) async {
-    if (isProving) return;
+  String _formatDuration(Duration duration) {
+    if (duration.inSeconds > 0) {
+      return '${duration.inSeconds}.${(duration.inMilliseconds % 1000).toString().padLeft(3, '0')}s';
+    } else {
+      return '${duration.inMilliseconds}ms';
+    }
+  }
+  
+  Widget _buildProofDetails() {
+    switch (widget.framework.toLowerCase()) {
+      case 'circom':
+        return _buildCircomProofDetails();
+      case 'halo2':
+        return _buildHalo2ProofDetails();
+      case 'noir':
+        return _buildNoirProofDetails();
+      default:
+      return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildCircomProofDetails() {
+    if (_circomProofResult == null) return const SizedBox.shrink();
+    
+    return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+        Text(
+          'Proof Details:',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.secondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text('Protocol: ${_circomProofResult!.proof.protocol}'),
+        Text('Curve: ${_circomProofResult!.proof.curve}'),
+        Text('Public Signals: ${_circomProofResult!.inputs.toString()}'),
+        const SizedBox(height: 8),
+              Text(
+          'Proof Points:',
+          style: TextStyle(
+            fontSize: 14,
+                  fontWeight: FontWeight.bold,
+            color: AppTheme.secondary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text('π_a: [${_circomProofResult!.proof.a.x}, ${_circomProofResult!.proof.a.y}, ${_circomProofResult!.proof.a.z}]'),
+        Text('π_b: [${_circomProofResult!.proof.b.x.join(', ')}, ${_circomProofResult!.proof.b.y.join(', ')}, ${_circomProofResult!.proof.b.z.join(', ')}]'),
+        Text('π_c: [${_circomProofResult!.proof.c.x}, ${_circomProofResult!.proof.c.y}, ${_circomProofResult!.proof.c.z}]'),
+      ],
+    );
+  }
+
+  Widget _buildHalo2ProofDetails() {
+    if (_halo2ProofResult == null) return const SizedBox.shrink();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+          Text(
+          'Proof Details:',
+            style: TextStyle(
+              fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.secondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text('Proof Size: ${_halo2ProofResult!.proof.length} bytes'),
+        Text('Inputs: ${_halo2ProofResult!.inputs.toString()}'),
+      ],
+    );
+  }
+
+  Widget _buildNoirProofDetails() {
+    if (_noirProofResult == null) return const SizedBox.shrink();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Proof Details:',
+            style: TextStyle(
+            fontSize: 16,
+              fontWeight: FontWeight.bold,
+            color: AppTheme.secondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text('Proof Size: ${_noirProofResult!.length} bytes'),
+        Text('Algorithm: ${widget.algorithm}'),
+      ],
+    );
+  }
+
+  Widget _buildCard({required String title, required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+                style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.text,
+                ),
+              ),
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
+  }
+  
+  void _generateProof() async {
     setState(() {
+      _isGenerating = true;
       _error = null;
-      isProving = true;
+    });
+
+    try {
+      // Generate actual proof using MoPro framework
+      _proofData = await _generateRealProof();
+      
+      setState(() {
+        _isGenerating = false;
+      });
+            } catch (e) {
+      setState(() {
+        _isGenerating = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  Future<String> _generateRealProof() async {
+    final moproFlutterPlugin = MoproFlutter();
+    
+    switch (widget.framework.toLowerCase()) {
+      case 'circom':
+        return await _generateCircomProof(moproFlutterPlugin);
+      case 'halo2':
+        return await _generateHalo2Proof(moproFlutterPlugin);
+      case 'noir':
+        return await _generateNoirProof(moproFlutterPlugin);
+      default:
+        throw Exception('Unknown framework: ${widget.framework}');
+    }
+  }
+
+  Future<String> _generateCircomProof(MoproFlutter plugin) async {
+    // Convert user input to proper format
+    final inputs = _textToByteArrayJson(widget.customInput);
+    
+    // Get the appropriate zkey path based on algorithm
+    final zkeyPath = _getZkeyPath();
+    
+    // Start timing
+    final stopwatch = Stopwatch()..start();
+    
+    // Generate proof using actual MoPro
+    final proofResult = await plugin.generateCircomProof(
+      zkeyPath, 
+      inputs, 
+      ProofLib.arkworks
+    );
+    
+    // Stop timing and store
+    stopwatch.stop();
+    
+    if (proofResult == null) {
+      throw Exception('Failed to generate Circom proof');
+    }
+    
+    // Store the proof result for verification
+    setState(() {
+      _circomProofResult = proofResult;
+      _proofGenerationTime = stopwatch.elapsed;
     });
     
-    FocusManager.instance.primaryFocus?.unfocus();
+    // Format the actual proof data
+    return _formatCircomProofOutput(proofResult);
+  }
+
+  Future<String> _generateHalo2Proof(MoproFlutter plugin) async {
+    // Convert user input to Halo2 format
+    final inputs = {
+      "out": [widget.customInput]
+    };
     
-    try {
-      final List<String> hardcodedInputs = [
-        "40","202","21","44","148","225","219","127",
-        "125","137","45","39","181","182","116","221",
-        "65","64","40","99","92","60","3","33",
-        "40","159","154","251","14","238","144","106"
-      ];
+    // Start timing
+    final stopwatch = Stopwatch()..start();
+    
+    // Generate proof using actual MoPro
+    final proofResult = await plugin.generateHalo2Proof(
+      "assets/plonk_fibonacci_srs.bin",
+      "assets/plonk_fibonacci_pk.bin", 
+      inputs
+    );
+    
+    // Stop timing and store
+    stopwatch.stop();
+    
+    if (proofResult == null) {
+      throw Exception('Failed to generate Halo2 proof');
+    }
+    
+    // Store the proof result for verification
+    setState(() {
+      _halo2ProofResult = proofResult;
+      _proofGenerationTime = stopwatch.elapsed;
+    });
+    
+    // Format the actual proof data
+    return _formatHalo2ProofOutput(proofResult);
+  }
+
+  Future<String> _generateNoirProof(MoproFlutter plugin) async {
+    // Convert custom input to Noir format (32-byte padded byte array)
+    final List<String> customInputs = _textToNoirInput(widget.customInput);
+    
+    // Get the appropriate circuit path and settings
+    final (circuitPath, srsPath, onChain, vk) = await _getNoirSettings();
+    
+    // Start timing
+    final stopwatch = Stopwatch()..start();
+    
+    // Generate proof using actual MoPro with custom inputs
+    final proof = await plugin.generateNoirProof(
+      circuitPath,
+      srsPath,
+      customInputs,
+      onChain,
+      vk,
+      false // lowMemoryMode
+    );
+    
+    // Stop timing and store
+    stopwatch.stop();
+    
+    // Store the proof result for verification
+    setState(() {
+      _noirProofResult = proof;
+      _proofGenerationTime = stopwatch.elapsed;
+    });
+    
+    // Format the actual proof data
+    return _formatNoirProofOutput(proof);
+  }
+
+  String _getZkeyPath() {
+    switch (widget.algorithm.toLowerCase()) {
+      case 'sha256':
+        return "assets/sha256.zkey";
+      case 'keccak256':
+        return "assets/keccak.zkey";
+      case 'blake2s256':
+        return "assets/blake2s256.zkey";
+      case 'mimc256':
+        return "assets/mimc256.zkey";
+      case 'pedersen':
+        return "assets/pedersen.zkey";
+      case 'poseidon':
+        return "assets/poseidon.zkey";
+      default:
+        return "assets/sha256.zkey";
+    }
+  }
+
+  Future<(String, String, bool, Uint8List)> _getNoirSettings() async {
+    final moproFlutterPlugin = MoproFlutter();
+    const bool lowMemoryMode = false;
       
       String assetPath;
       String srsPath;
       bool onChain;
       Uint8List? verificationKey;
-      const bool lowMemoryMode = false;
-      
-      switch (hashFunction) {
-        case 'MiMC':
-          assetPath = "assets/mimc.json";
-          srsPath = "assets/mimc.srs";
+    
+    switch (widget.algorithm.toLowerCase()) {
+      case 'sha256':
+        assetPath = "assets/sha256.json";
+        srsPath = "assets/sha256.srs";
           onChain = true;
-          if (_noirMimcVerificationKey == null) {
+        if (_noirSha256VerificationKey == null) {
             try {
-              final vkAsset = await rootBundle.load('assets/mimc.vk');
-              _noirMimcVerificationKey = vkAsset.buffer.asUint8List();
+            final vkAsset = await rootBundle.load('assets/sha256.vk');
+            _noirSha256VerificationKey = vkAsset.buffer.asUint8List();
             } catch (e) {
-              _noirMimcVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
+            _noirSha256VerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
                 assetPath, srsPath, onChain, lowMemoryMode,
               );
             }
           }
-          verificationKey = _noirMimcVerificationKey;
+        verificationKey = _noirSha256VerificationKey;
           break;
-        case 'Keccak256':
+      case 'keccak256':
           assetPath = "assets/keccak256.json";
           srsPath = "assets/keccak256.srs";
           onChain = true;
@@ -1416,14 +1115,14 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               final vkAsset = await rootBundle.load('assets/keccak.vk');
               _noirKeccakVerificationKey = vkAsset.buffer.asUint8List();
             } catch (e) {
-              _noirKeccakVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
+            _noirKeccakVerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
                 assetPath, srsPath, onChain, lowMemoryMode,
               );
             }
           }
           verificationKey = _noirKeccakVerificationKey;
           break;
-        case 'Poseidon':
+      case 'poseidon':
           assetPath = "assets/poseidon.json";
           srsPath = "assets/poseidon.srs";
           onChain = false;
@@ -1432,14 +1131,30 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               final vkAsset = await rootBundle.load('assets/poseidon.vk');
               _noirPoseidonVerificationKey = vkAsset.buffer.asUint8List();
             } catch (e) {
-              _noirPoseidonVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
+            _noirPoseidonVerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
                 assetPath, srsPath, onChain, lowMemoryMode,
               );
             }
           }
           verificationKey = _noirPoseidonVerificationKey;
           break;
-        case 'Pedersen':
+      case 'mimc':
+        assetPath = "assets/mimc.json";
+        srsPath = "assets/mimc.srs";
+        onChain = true;
+        if (_noirMimcVerificationKey == null) {
+          try {
+            final vkAsset = await rootBundle.load('assets/mimc.vk');
+            _noirMimcVerificationKey = vkAsset.buffer.asUint8List();
+          } catch (e) {
+            _noirMimcVerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
+              assetPath, srsPath, onChain, lowMemoryMode,
+            );
+          }
+        }
+        verificationKey = _noirMimcVerificationKey;
+        break;
+      case 'pedersen':
           assetPath = "assets/pedersen.json";
           srsPath = "assets/pedersen.srs";
           onChain = true;
@@ -1448,14 +1163,14 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               final vkAsset = await rootBundle.load('assets/pedersen.vk');
               _noirPedersenVerificationKey = vkAsset.buffer.asUint8List();
             } catch (e) {
-              _noirPedersenVerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
+            _noirPedersenVerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
                 assetPath, srsPath, onChain, lowMemoryMode,
               );
             }
           }
           verificationKey = _noirPedersenVerificationKey;
           break;
-        case 'SHA256':
+      default:
           assetPath = "assets/sha256.json";
           srsPath = "assets/sha256.srs";
           onChain = true;
@@ -1464,193 +1179,207 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               final vkAsset = await rootBundle.load('assets/sha256.vk');
               _noirSha256VerificationKey = vkAsset.buffer.asUint8List();
             } catch (e) {
-              _noirSha256VerificationKey = await _moproFlutterPlugin.getNoirVerificationKey(
+            _noirSha256VerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
                 assetPath, srsPath, onChain, lowMemoryMode,
               );
             }
           }
           verificationKey = _noirSha256VerificationKey;
           break;
-        default:
-          throw Exception('Unknown hash function: $hashFunction');
-      }
-      
-      final proof = await _moproFlutterPlugin.generateNoirProof(
-        assetPath,
-        srsPath,
-        hardcodedInputs,
-        onChain,
-        verificationKey!,
-        lowMemoryMode,
-      );
-      
-      setState(() {
-        switch (hashFunction) {
-          case 'MiMC':
-            _noirMimcProofResult = proof;
-            _noirMimcValid = null;
-            break;
-          case 'Keccak256':
-            _noirKeccakProofResult = proof;
-            _noirKeccakValid = null;
-            break;
-          case 'Poseidon':
-            _noirPoseidonProofResult = proof;
-            _noirPoseidonValid = null;
-            break;
-          case 'Pedersen':
-            _noirPedersenProofResult = proof;
-            _noirPedersenValid = null;
-            break;
-          case 'SHA256':
-            _noirSha256ProofResult = proof;
-            _noirSha256Valid = null;
-            break;
-        }
-      });
-    } on Exception catch (e) {
-      setState(() { _error = e; });
-    } finally {
-      if (mounted) setState(() { isProving = false; });
     }
-  }
-  
-  Future<void> _verifyNoirProof(String hashFunction) async {
-    if (isProving) return;
     
+    return (assetPath, srsPath, onChain, verificationKey!);
+  }
+
+  String _formatCircomProofOutput(CircomProofResult proofResult) {
+    final proof = proofResult.proof;
+    final inputs = proofResult.inputs;
+    
+    return '''
+${widget.algorithm} Proof: ProofCalldata(
+  a: G1Point(
+    x: ${proof.a.x},
+    y: ${proof.a.y},
+    z: ${proof.a.z},
+  ),
+  b: G2Point(
+    x: [${proof.b.x.join(', ')}],
+    y: [${proof.b.y.join(', ')}],
+    z: [${proof.b.z.join(', ')}],
+  ),
+  c: G1Point(
+    x: ${proof.c.x},
+    y: ${proof.c.y},
+    z: ${proof.c.z},
+  ),
+  protocol: ${proof.protocol},
+  curve: ${proof.curve}
+)
+
+Public Signals: ${inputs.toString()}
+
+Framework: ${widget.framework}
+Algorithm: ${widget.algorithm}
+Input: "${widget.customInput}"
+Timestamp: ${DateTime.now().millisecondsSinceEpoch}
+''';
+  }
+
+  String _formatHalo2ProofOutput(Halo2ProofResult proofResult) {
+    return '''
+${widget.algorithm} Proof: Halo2ProofResult(
+  proof: ${proofResult.proof.toString()}
+  inputs: ${proofResult.inputs.toString()}
+)
+
+Framework: ${widget.framework}
+Algorithm: ${widget.algorithm}
+Input: "${widget.customInput}"
+Timestamp: ${DateTime.now().millisecondsSinceEpoch}
+''';
+  }
+
+  String _formatNoirProofOutput(Uint8List proof) {
+    return '''
+${widget.algorithm} Proof: NoirProof(
+  proof: ${proof.toString()}
+  size: ${proof.length} bytes
+)
+
+Framework: ${widget.framework}
+Algorithm: ${widget.algorithm}
+Input: "${widget.customInput}"
+Timestamp: ${DateTime.now().millisecondsSinceEpoch}
+''';
+  }
+
+
+
+
+
+  String _textToByteArrayJson(String text) {
+    // Convert text to 32-byte padded UTF-8 byte array for Circom
+    final bytes = utf8.encode(text);
+    final paddedBytes = List<int>.filled(32, 0);
+    for (int i = 0; i < bytes.length && i < 32; i++) {
+      paddedBytes[i] = bytes[i];
+    }
+    return '{"in": [${paddedBytes.map((b) => '"$b"').join(', ')}]}';
+  }
+
+
+  List<String> _textToNoirInput(String text) {
+    // Convert text to 32-byte padded UTF-8 byte array for Noir
+    final bytes = utf8.encode(text);
+    final paddedBytes = List<int>.filled(32, 0);
+    for (int i = 0; i < bytes.length && i < 32; i++) {
+      paddedBytes[i] = bytes[i];
+    }
+    return paddedBytes.map((b) => b.toString()).toList();
+  }
+
+  void _verifyProof() async {
     setState(() {
-      _error = null;
-      isProving = true;
+      _isVerifying = true;
     });
     
     try {
-      String assetPath;
-      bool onChain;
-      Uint8List? proof;
-      Uint8List? verificationKey;
-      const bool lowMemoryMode = false;
-      
-      switch (hashFunction) {
-        case 'MiMC':
-          assetPath = "assets/mimc.json";
-          onChain = true;
-          proof = _noirMimcProofResult;
-          verificationKey = _noirMimcVerificationKey;
-          break;
-        case 'Keccak256':
-          assetPath = "assets/keccak256.json";
-          onChain = true;
-          proof = _noirKeccakProofResult;
-          verificationKey = _noirKeccakVerificationKey;
-          break;
-        case 'Poseidon':
-          assetPath = "assets/poseidon.json";
-          onChain = false;
-          proof = _noirPoseidonProofResult;
-          verificationKey = _noirPoseidonVerificationKey;
-          break;
-        case 'Pedersen':
-          assetPath = "assets/pedersen.json";
-          onChain = true;
-          proof = _noirPedersenProofResult;
-          verificationKey = _noirPedersenVerificationKey;
-          break;
-        case 'SHA256':
-          assetPath = "assets/sha256.json";
-          onChain = true;
-          proof = _noirSha256ProofResult;
-          verificationKey = _noirSha256VerificationKey;
-          break;
-        default:
-          throw Exception('Unknown hash function: $hashFunction');
-      }
-      
-      if (proof == null) {
-        throw Exception('No proof available. Generate a proof first.');
-      }
-      
-      if (verificationKey == null) {
-        throw Exception('No verification key available.');
-      }
-      
-      final valid = await _moproFlutterPlugin.verifyNoirProof(
-        assetPath,
-        proof,
-        onChain,
-        verificationKey,
-        lowMemoryMode,
-      );
+      // Perform actual verification using MoPro framework
+      final isValid = await _performRealVerification();
       
       setState(() {
-        switch (hashFunction) {
-          case 'MiMC':
-            _noirMimcValid = valid;
-            break;
-          case 'Keccak256':
-            _noirKeccakValid = valid;
-            break;
-          case 'Poseidon':
-            _noirPoseidonValid = valid;
-            break;
-          case 'Pedersen':
-            _noirPedersenValid = valid;
-            break;
-          case 'SHA256':
-            _noirSha256Valid = valid;
-            break;
-        }
+        _isVerifying = false;
+        _isValid = isValid;
       });
-    } on Exception catch (e) {
+    } catch (e) {
       setState(() { 
-        _error = e;
-        switch (hashFunction) {
-          case 'MiMC':
-            _noirMimcValid = false;
-            break;
-          case 'Keccak256':
-            _noirKeccakValid = false;
-            break;
-          case 'Poseidon':
-            _noirPoseidonValid = false;
-            break;
-          case 'Pedersen':
-            _noirPedersenValid = false;
-            break;
-          case 'SHA256':
-            _noirSha256Valid = false;
-            break;
-        }
+        _isVerifying = false;
+        _isValid = false;
+        _error = e.toString();
       });
-    } finally {
-      if (mounted) setState(() { isProving = false; });
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Flutter App With MoPro'),
-          bottom: TabBar(
-            controller: _tabController,
-            tabs: const [
-              Tab(text: 'Circom'),
-              Tab(text: 'Halo2'),
-              Tab(text: 'Noir'),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            _buildCircomTab(),
-            _buildHalo2Tab(),
-            _buildNoirTab(),
-          ],
-        ),
-      ),
-    );
+  Future<bool> _performRealVerification() async {
+    final moproFlutterPlugin = MoproFlutter();
+    
+    switch (widget.framework.toLowerCase()) {
+      case 'circom':
+        return await _verifyCircomProof(moproFlutterPlugin);
+      case 'halo2':
+        return await _verifyHalo2Proof(moproFlutterPlugin);
+      case 'noir':
+        return await _verifyNoirProof(moproFlutterPlugin);
+        default:
+        throw Exception('Unknown framework: ${widget.framework}');
+    }
   }
+
+  Future<bool> _verifyCircomProof(MoproFlutter plugin) async {
+    if (_circomProofResult == null) {
+      throw Exception('No proof available for verification');
+    }
+    
+    final zkeyPath = _getZkeyPath();
+    
+    // Start timing
+    final stopwatch = Stopwatch()..start();
+    
+    final result = await plugin.verifyCircomProof(zkeyPath, _circomProofResult!, ProofLib.arkworks);
+    
+    // Stop timing and store
+    stopwatch.stop();
+    setState(() {
+      _proofVerificationTime = stopwatch.elapsed;
+    });
+    
+    return result;
+  }
+
+  Future<bool> _verifyHalo2Proof(MoproFlutter plugin) async {
+    if (_halo2ProofResult == null) {
+      throw Exception('No proof available for verification');
+    }
+    
+    // Start timing
+    final stopwatch = Stopwatch()..start();
+    
+    final result = await plugin.verifyHalo2Proof(
+      "assets/plonk_fibonacci_srs.bin",
+      "assets/plonk_fibonacci_vk.bin",
+      _halo2ProofResult!.proof,
+      _halo2ProofResult!.inputs
+    );
+    
+    // Stop timing and store
+    stopwatch.stop();
+      setState(() {
+      _proofVerificationTime = stopwatch.elapsed;
+    });
+    
+    return result;
+  }
+
+  Future<bool> _verifyNoirProof(MoproFlutter plugin) async {
+    if (_noirProofResult == null) {
+      throw Exception('No proof available for verification');
+    }
+    
+    final (circuitPath, srsPath, onChain, vk) = await _getNoirSettings();
+    
+    // Start timing
+    final stopwatch = Stopwatch()..start();
+    
+    final result = await plugin.verifyNoirProof(circuitPath, _noirProofResult!, onChain, vk, false);
+    
+    // Stop timing and store
+    stopwatch.stop();
+    setState(() {
+      _proofVerificationTime = stopwatch.elapsed;
+    });
+    
+    return result;
+  }
+
 }
+
