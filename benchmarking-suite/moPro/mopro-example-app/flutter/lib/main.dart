@@ -845,7 +845,9 @@ class _ProofResultPageState extends State<ProofResultPage> {
         ),
         const SizedBox(height: 4),
         Text('π_a: [${_circomProofResult!.proof.a.x}, ${_circomProofResult!.proof.a.y}, ${_circomProofResult!.proof.a.z}]'),
-        Text('π_b: [${_circomProofResult!.proof.b.x.join(', ')}, ${_circomProofResult!.proof.b.y.join(', ')}, ${_circomProofResult!.proof.b.z.join(', ')}]'),
+        Text('π_b.x: [${_circomProofResult!.proof.b.x.join(', ')}]'),
+        Text('π_b.y: [${_circomProofResult!.proof.b.y.join(', ')}]'),
+        Text('π_b.z: [${_circomProofResult!.proof.b.z.join(', ')}]'),
         Text('π_c: [${_circomProofResult!.proof.c.x}, ${_circomProofResult!.proof.c.y}, ${_circomProofResult!.proof.c.z}]'),
       ],
     );
