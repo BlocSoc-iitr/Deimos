@@ -996,9 +996,13 @@ class _ProofResultPageState extends State<ProofResultPage> {
   }
 
   Future<String> _generateHalo2Proof(MoproFlutter plugin) async {
-    // Convert user input to Halo2 format
+    // Validate and convert user input to Halo2 format
+    int? numericInput = int.tryParse(widget.customInput);
+    if (numericInput == null) {
+      throw Exception('Input for Halo2 Fibonacci circuit must be a numeric value');
+    }
     final inputs = {
-      "out": [widget.customInput]
+      "out": [numericInput]
     };
     
     // Start timing
