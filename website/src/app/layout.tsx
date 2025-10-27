@@ -16,14 +16,34 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full bg-gray-50">
+    <html lang="en" className="h-full bg-white">
       <body className={`${inter.className} min-h-screen flex flex-col`}>
-        <header className="">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <header className="border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex justify-between items-center">
-              <Link href="/" className="text-2xl font-bold text-blue-400">
+              <Link href="/" className="text-2xl font-bold text-blue-600">
                 Deimos
               </Link>
+              <nav className="hidden md:flex space-x-6">
+                <Link href="/documentation" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  Docs
+                </Link>
+                <Link href="/get-started" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  Get Started
+                </Link>
+                <Link href="/circuits" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  Circuits
+                </Link>
+                <Link href="/mopro" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  MoPro
+                </Link>
+                <Link href="/contributing" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  Contributing
+                </Link>
+                <Link href="/about" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  About
+                </Link>
+              </nav>
             </div>
           </div>
         </header>
