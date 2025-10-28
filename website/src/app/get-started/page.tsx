@@ -7,13 +7,17 @@ export default function GetStarted() {
       
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Prerequisites</h2>
-        <p className="mb-4">Before you begin, make sure you have the following installed:</p>
+        <p className="mb-4"><strong>System Requirements:</strong></p>
         <ul className="list-disc ml-6 mb-4">
-          <li><strong>Node.js</strong> (v18 or higher) - For running the website and snarkjs</li>
-          <li><strong>Rust</strong> - For building MoPro bindings and Circom compiler</li>
-          <li><strong>Git</strong> - For cloning the repository</li>
-          <li><strong>Circom</strong> (v2.1.6+) - For compiling circuits</li>
-          <li><strong>snarkjs</strong> - For generating and verifying proofs</li>
+          <li><strong>Node.js</strong> 18+ for website development</li>
+          <li><strong>Rust</strong> toolchain (stable) for mobile app compilation</li>
+          <li><strong>Git</strong> for version control</li>
+        </ul>
+        <p className="mb-4"><strong>Circuit Development Tools:</strong></p>
+        <ul className="list-disc ml-6 mb-4">
+          <li><strong>Circom</strong> compiler (v2.1.6)</li>
+          <li><strong>snarkjs</strong> (npm global installation)</li>
+          <li><strong>Noir/Nargo</strong> (v1.0.0-beta.8)</li>
         </ul>
       </section>
 
@@ -22,8 +26,8 @@ export default function GetStarted() {
         <h3 className="text-xl font-bold mb-2">1. Clone the Repository</h3>
         <div className="bg-gray-50 p-4 rounded mb-4">
           <pre className="text-sm overflow-x-auto">
-{`git clone https://github.com/BlocSoc-iitr/deimos.git
-cd deimos`}
+{`git clone https://github.com/aryanbaranwal001/temp_deimos.git
+cd temp_deimos`}
           </pre>
         </div>
 
@@ -117,7 +121,7 @@ circom circom.circom --r1cs --wasm --sym --c
 
         <h3 className="text-xl font-bold mb-2">Generating Proving Key</h3>
         <p className="mb-4">
-          You need a Powers of Tau file. The required size depends on your circuit's constraint count.
+          You need a Powers of Tau file. The required size depends on your circuit&apos;s constraint count.
         </p>
         <div className="bg-gray-50 p-4 rounded mb-4">
           <pre className="text-sm overflow-x-auto">
@@ -285,13 +289,13 @@ cargo test -- --nocapture`}
         <h2 className="text-2xl font-bold mb-4">Common Issues and Solutions</h2>
         
         <h3 className="text-xl font-bold mb-2">Circuit Compilation Errors</h3>
-        <p className="mb-4"><strong>Issue:</strong> "Too many values for input signal"</p>
+        <p className="mb-4"><strong>Issue:</strong> &quot;Too many values for input signal&quot;</p>
         <p className="mb-4">
           <strong>Solution:</strong> Make sure your input JSON only contains fields that match circuit inputs. 
-          Remove any extra fields like 'hash', 'N', etc.
+          Remove any extra fields like &apos;hash&apos;, &apos;N&apos;, etc.
         </p>
 
-        <p className="mb-4"><strong>Issue:</strong> "Not enough coefficients"</p>
+        <p className="mb-4"><strong>Issue:</strong> &quot;Not enough coefficients&quot;</p>
         <p className="mb-4">
           <strong>Solution:</strong> Your Powers of Tau file is too small. Use a larger pot file 
           (pot14 → pot16 → pot18 → pot20).
@@ -306,7 +310,7 @@ cargo test -- --nocapture`}
         <h3 className="text-xl font-bold mb-2">MoPro Build Issues</h3>
         <p className="mb-4"><strong>Issue:</strong> UniFFI version mismatch</p>
         <p className="mb-4">
-          <strong>Solution:</strong> Make sure you're using UniFFI version 0.29.0 as specified in Cargo.toml.
+          <strong>Solution:</strong> Make sure you&apos;re using UniFFI version 0.29.0 as specified in Cargo.toml.
         </p>
 
         <p className="mb-4"><strong>Issue:</strong> Android build fails</p>

@@ -40,6 +40,9 @@ export default function MoPro() {
 
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Directory Structure</h2>
+        <p className="mb-4">
+          Each MoPro implementation follows a consistent pattern:
+        </p>
         <div className="bg-gray-50 p-4 rounded mb-4">
           <pre className="text-sm overflow-x-auto">
 {`moPro/
@@ -61,6 +64,16 @@ export default function MoPro() {
     └── (same structure)`}
           </pre>
         </div>
+        <p className="mb-4">
+          Key directories in each MoPro implementation:
+        </p>
+        <ul className="list-disc ml-6 mb-4">
+          <li><strong>src/:</strong> Rust library with ZK proof functions</li>
+          <li><strong>android/:</strong> Android application with Kotlin integration</li>
+          <li><strong>MoproAndroidBindings/:</strong> Generated FFI bindings</li>
+          <li><strong>test-vectors/:</strong> Test data for circuits</li>
+          <li><strong>Cargo.toml:</strong> Rust dependencies</li>
+        </ul>
       </section>
 
       <section className="mb-12">
@@ -478,7 +491,7 @@ xcodebuild test -project MoproApp.xcodeproj -scheme MoproApp`}
           <strong>Issue:</strong> Build fails with UniFFI errors
         </p>
         <p className="mb-4">
-          <strong>Solution:</strong> Ensure you're using UniFFI version 0.29.0 as specified in Cargo.toml. 
+          <strong>Solution:</strong> Ensure you&apos;re using UniFFI version 0.29.0 as specified in Cargo.toml. 
           This version is pinned for compatibility.
         </p>
 

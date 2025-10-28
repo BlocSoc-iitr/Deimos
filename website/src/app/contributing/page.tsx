@@ -13,19 +13,40 @@ export default function Contributing() {
       </section>
 
       <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-4">Before You Start</h2>
+        <h2 className="text-2xl font-bold mb-4">Contribution Workflow</h2>
         <p className="mb-4">
-          Before starting development, please create an issue on GitHub to:
+          Before starting development, contributors should create an issue to open discussion, validate that the PR is wanted, and coordinate implementation details.
         </p>
-        <ul className="list-disc ml-6 mb-4">
-          <li>Open the discussion about your proposed changes</li>
-          <li>Validate that the PR is wanted</li>
-          <li>Coordinate overall implementation details</li>
-          <li>Get feedback from maintainers</li>
-        </ul>
         <p className="mb-4">
           <strong>GitHub Issues:</strong> https://github.com/BlocSoc-iitr/Deimos/issues/new/choose
         </p>
+      </section>
+
+      <section className="mb-12">
+        <h2 className="text-2xl font-bold mb-4">Standard Workflow</h2>
+        <p className="mb-4">
+          The typical contribution workflow includes:
+        </p>
+        <ul className="list-disc ml-6 mb-4">
+          <li>Fork the repository and keep it synchronized</li>
+          <li>Branch from <code>dev</code> with descriptive branch names</li>
+          <li>Make changes and commit with proper messages</li>
+          <li>Run tests and linters before submission</li>
+          <li>Create pull requests with issue references</li>
+          <li>Address maintainer feedback</li>
+        </ul>
+      </section>
+
+      <section className="mb-12">
+        <h2 className="text-2xl font-bold mb-4">Code Quality Requirements</h2>
+        <p className="mb-4">
+          All code must pass the following checks:
+        </p>
+        <ul className="list-disc ml-6 mb-4">
+          <li>Rust formatting with <code>cargo fmt</code></li>
+          <li>Clippy linting with all warnings as errors</li>
+          <li>Typo checking</li>
+        </ul>
       </section>
 
       <section className="mb-12">
@@ -175,9 +196,9 @@ git push origin -u fix/some-bug-short-description-#123`}
         <h3 className="text-xl font-bold mb-2">7. Create Pull Request</h3>
         <ul className="list-disc ml-6 mb-4">
           <li>Go to https://github.com/BlocSoc-iitr/Deimos</li>
-          <li>Click "New Pull Request"</li>
+          <li>Click &quot;New Pull Request&quot;</li>
           <li>Select your branch</li>
-          <li>Begin the body with "Fixes #123" or "Resolves #123"</li>
+          <li>Begin the body with &quot;Fixes #123&quot; or &quot;Resolves #123&quot;</li>
           <li>Provide clear description of changes</li>
           <li>Include screenshots for UI changes</li>
           <li>List any breaking changes</li>
@@ -186,7 +207,7 @@ git push origin -u fix/some-bug-short-description-#123`}
         <h3 className="text-xl font-bold mb-2">8. Address Review Feedback</h3>
         <p className="mb-4">
           Maintainers will review your code and may request changes. Please pay attention to feedback 
-          as it's necessary to maintain code quality standards.
+          as it&apos;s necessary to maintain code quality standards.
         </p>
         <div className="bg-gray-50 p-4 rounded mb-4">
           <pre className="text-sm overflow-x-auto">
@@ -339,7 +360,7 @@ wip`}
         </div>
         <p className="mb-4">Format:</p>
         <ul className="list-disc ml-6 mb-4">
-          <li>Use imperative mood ("Add" not "Added")</li>
+          <li>Use imperative mood (&quot;Add&quot; not &quot;Added&quot;)</li>
           <li>Keep first line under 72 characters</li>
           <li>Reference issue numbers</li>
           <li>Be specific about what changed</li>
@@ -394,7 +415,7 @@ wip`}
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Good First Issues</h2>
         <p className="mb-4">
-          If you're new to the project, look for issues labeled "Good first issue". These are 
+          If you&apos;re new to the project, look for issues labeled &quot;Good first issue&quot;. These are 
           beginner-friendly tasks that will help you get familiar with the codebase.
         </p>
         <p className="mb-4">

@@ -252,7 +252,7 @@ component main {public[in]} = YourHashBench(32);`}
           </pre>
         </div>
         <p className="mb-4">
-          This is "Hello World! This is a test msg." in decimal bytes.
+          This is &quot;Hello World! This is a test msg.&quot; in decimal bytes.
         </p>
 
         <h3 className="text-xl font-bold mb-2">Step 5: Compile Circuit</h3>
@@ -364,10 +364,10 @@ bits_to_bytes[i].in[j]`}
         
         <h3 className="text-xl font-bold mb-2">Too Many Values for Input Signal</h3>
         <p className="mb-4">
-          <strong>Cause:</strong> Input JSON has fields that don't match circuit inputs.
+          <strong>Cause:</strong> Input JSON has fields that don&apos;t match circuit inputs.
         </p>
         <p className="mb-4">
-          <strong>Fix:</strong> Circuit expects only 'in', remove any other fields like 'hash', 'N', etc.
+          <strong>Fix:</strong> Circuit expects only &apos;in&apos;, remove any other fields like &apos;hash&apos;, &apos;N&apos;, etc.
         </p>
 
         <h3 className="text-xl font-bold mb-2">Assert Failed or Wrong Hash Output</h3>
@@ -401,7 +401,7 @@ bits_to_bytes[i].in[j]`}
         <ul className="list-disc ml-6 mb-4">
           <li>Circuit compiles without errors</li>
           <li>Test with all-zeros input matches known test vector</li>
-          <li>Test with "Hello World" matches expected hash</li>
+          <li>Test with &quot;Hello World&quot; matches expected hash</li>
           <li>Proof generation succeeds</li>
           <li>Proof verification succeeds (OK!)</li>
           <li>Public inputs/outputs are correctly configured</li>
@@ -430,7 +430,7 @@ bits_to_bytes[i].in[j]`}
         <p className="mb-4">Comprehensive testing is essential:</p>
         <ul className="list-disc ml-6 mb-4">
           <li><strong>Zero Input Test:</strong> All zeros should produce known hash</li>
-          <li><strong>Known Vector Test:</strong> "Hello World" or standard test strings</li>
+          <li><strong>Known Vector Test:</strong> &quot;Hello World&quot; or standard test strings</li>
           <li><strong>Edge Cases:</strong> Maximum input size, minimum input size</li>
           <li><strong>Random Inputs:</strong> Multiple random inputs to verify consistency</li>
           <li><strong>Cross-Verification:</strong> Compare with reference implementations</li>

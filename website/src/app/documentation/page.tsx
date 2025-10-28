@@ -8,14 +8,63 @@ export default function Documentation() {
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-4">What is Deimos?</h2>
         <p className="mb-4">
-          Deimos is an open-source benchmarking suite for evaluating zero-knowledge virtual machines (zkVMs) on mobile devices. 
-          It provides consistent, repeatable performance tests across various zkVM tools, starting with MoPro.
+          Deimos is an open-source project similar to L2Beat, designed to display comprehensive benchmark data that allows users to compare the performance of different zkVMs across various devices. This enables developers to choose the most suitable zkVM based on their target device requirements.
         </p>
+        <p className="mb-4">
+          Deimos serves two primary functions:
+        </p>
+        <ul className="list-disc ml-6 mb-4">
+          <li><strong>Benchmarking Suite:</strong> A comprehensive toolkit for evaluating zero-knowledge virtual machines (zkVMs) on mobile devices</li>
+          <li><strong>Public Dashboard:</strong> A web-based service where users can view and compare all benchmark results</li>
+        </ul>
         <p className="mb-4">
           The project aims to benchmark zkVM performance for mobile-specific environments, compare multiple tools 
           (initially MoPro, imp1, and ProveKit), and measure performance of common cryptographic and proof-related 
-          functions such as Poseidon2, SHA-256, Keccak-256, and EdDSA.
+          functions across different frameworks (Circom, Noir, Halo2).
         </p>
+      </section>
+
+      <section className="mb-12">
+        <h2 className="text-2xl font-bold mb-4">Technology Stack</h2>
+        <h3 className="text-xl font-bold mb-2">Circuit Development</h3>
+        <p className="mb-4"><strong>Circom Ecosystem:</strong></p>
+        <ul className="list-disc ml-6 mb-4">
+          <li><strong>Circom Compiler:</strong> Version 2.1.6 for circuit compilation</li>
+          <li><strong>snarkjs:</strong> Groth16 proof generation and verification</li>
+          <li><strong>circomlib:</strong> Standard library of circuits</li>
+          <li><strong>hash-circuits:</strong> Library for Blake2s circuit</li>
+          <li><strong>keccak256-circom:</strong> Library for Keccak256 circuit</li>
+        </ul>
+        <p className="mb-4"><strong>Noir Ecosystem:</strong></p>
+        <ul className="list-disc ml-6 mb-4">
+          <li><strong>Noir:</strong> Version 1.0.0-beta.8</li>
+          <li><strong>Nargo:</strong> Build and compilation toolchain</li>
+        </ul>
+        <h3 className="text-xl font-bold mb-2">Mobile Development</h3>
+        <p className="mb-4"><strong>Rust Core:</strong></p>
+        <ul className="list-disc ml-6 mb-4">
+          <li><strong>mopro-wasm:</strong> WebAssembly support</li>
+          <li><strong>mopro-ffi:</strong> FFI bindings with Circom, Halo2, and Noir adapters</li>
+          <li><strong>uniffi:</strong> Version 0.29.0 for cross-language bindings</li>
+          <li><strong>rust-witness:</strong> Version 0.1 for witness generation</li>
+        </ul>
+        <p className="mb-4"><strong>Android Platform:</strong></p>
+        <ul className="list-disc ml-6 mb-4">
+          <li>Kotlin for application logic</li>
+          <li>Jetpack Compose for UI</li>
+          <li>Material Design components</li>
+        </ul>
+        <p className="mb-4"><strong>iOS Platform:</strong></p>
+        <ul className="list-disc ml-6 mb-4">
+          <li>Swift for application logic</li>
+          <li>SwiftUI/UIKit for UI</li>
+        </ul>
+        <h3 className="text-xl font-bold mb-2">Website Dashboard</h3>
+        <ul className="list-disc ml-6 mb-4">
+          <li><strong>Framework:</strong> Next.js 15.5.3 with Turbopack</li>
+          <li><strong>Language:</strong> TypeScript</li>
+          <li><strong>Styling:</strong> Tailwind CSS</li>
+        </ul>
       </section>
 
       <section className="mb-12">
@@ -57,17 +106,32 @@ export default function Documentation() {
       </section>
 
       <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-4">Benchmarked Frameworks</h2>
-        <h3 className="text-xl font-bold mb-2">Currently Supported</h3>
+        <h2 className="text-2xl font-bold mb-4">Current Support</h2>
+        <p className="mb-4">
+          Deimos currently supports <strong>MoPro</strong> with the following frameworks and circuits:
+        </p>
+        <h3 className="text-xl font-bold mb-2">Circom Framework</h3>
         <ul className="list-disc ml-6 mb-4">
-          <li>MoPro - Mobile-first ZK proving toolkit</li>
+          <li>SHA-256</li>
+          <li>Keccak-256</li>
+          <li>BLAKE2s-256</li>
+          <li>MiMC-256</li>
+          <li>Pedersen</li>
+          <li>Poseidon</li>
+        </ul>
+        <h3 className="text-xl font-bold mb-2">Noir Framework</h3>
+        <ul className="list-disc ml-6 mb-4">
+          <li>SHA-256</li>
+          <li>Keccak-256</li>
+          <li>MiMC</li>
+          <li>Poseidon</li>
         </ul>
         <h3 className="text-xl font-bold mb-2">Planned Integration</h3>
         <ul className="list-disc ml-6 mb-4">
-          <li>imp1 - Ingonyama's mobile proving solution</li>
-          <li>ProveKit - Worldcoin's Noir-based toolkit</li>
+          <li>imp1 - Ingonyama&apos;s mobile proving solution</li>
+          <li>ProveKit - Worldcoin&apos;s Noir-based toolkit</li>
           <li>RISC Zero - General-purpose zkVM</li>
-          <li>SP1 - Succinct's zkVM</li>
+          <li>SP1 - Succinct&apos;s zkVM</li>
         </ul>
       </section>
 
@@ -96,15 +160,44 @@ export default function Documentation() {
 
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Measured Metrics</h2>
-        <p className="mb-4">The benchmarking suite collects the following performance metrics:</p>
+        <p className="mb-4">The benchmarking suite collects comprehensive performance data:</p>
         <ul className="list-disc ml-6 mb-4">
-          <li><strong>Proving Time</strong> - Time to generate ZK proof (milliseconds)</li>
-          <li><strong>Verification Time</strong> - Time to verify proof (milliseconds)</li>
-          <li><strong>Peak Memory Usage</strong> - Maximum RAM consumption during proving (MB)</li>
-          <li><strong>Proof Size</strong> - Generated proof artifact size (bytes)</li>
-          <li><strong>Battery Impact</strong> - Energy consumption per proof (planned)</li>
-          <li><strong>Success Rate</strong> - Percentage of successful operations</li>
+          <li><strong>Proof Generation Time</strong> - Time required to generate ZK proofs</li>
+          <li><strong>Proof Verification Time</strong> - Duration of proof validation</li>
         </ul>
+      </section>
+
+      <section className="mb-12">
+        <h2 className="text-2xl font-bold mb-4">System Architecture</h2>
+        <h3 className="text-xl font-bold mb-2">High-Level Architecture</h3>
+        <p className="mb-4">
+          Deimos is divided into two main components:
+        </p>
+        <ul className="list-disc ml-6 mb-4">
+          <li><strong>Website Dashboard</strong> - A frontend interface where users can access project documentation and view all benchmark data</li>
+          <li><strong>Mobile Applications</strong> - Android and iOS apps used for benchmarking different zkVMs with various circuits and frameworks</li>
+        </ul>
+        <h3 className="text-xl font-bold mb-2">Mobile App: MoPro Architecture and Implementation</h3>
+        <p className="mb-4">
+          The mobile app currently uses the <strong>MoPro framework</strong>, which enables cross-platform mobile ZK proof generation through a layered approach with native bindings via Rust FFI and UniFFI.
+        </p>
+        <p className="mb-4"><strong>Key Components:</strong></p>
+        <ul className="list-disc ml-6 mb-4">
+          <li><strong>Rust Core:</strong> Circuit integration, FFI functions, and multi-backend support</li>
+          <li><strong>Android Integration:</strong> Performance benchmarking, UI components, and memory monitoring</li>
+          <li><strong>Generated Bindings:</strong> Type-safe FFI, memory management, and error handling</li>
+        </ul>
+        <h3 className="text-xl font-bold mb-2">Circuit Implementation Architecture</h3>
+        <p className="mb-4">
+          The circuit layer supports multiple frameworks with a consistent structure:
+        </p>
+        <ul className="list-disc ml-6 mb-4">
+          <li><strong>Circom Circuits:</strong> Located in <code>benchmarking-suite/frameworks/circom/circuits/</code> with implementations for SHA-256, Keccak-256, BLAKE2s, Poseidon, MiMC, and Pedersen</li>
+          <li><strong>Noir Circuits:</strong> Located in <code>benchmarking-suite/frameworks/noir/circuits/</code></li>
+        </ul>
+        <p className="mb-4">
+          Each circuit follows a byte-to-bits conversion pattern with proper bit ordering considerations (MSB-first for SHA-256, LSB-first for Keccak-256).
+        </p>
       </section>
 
       <section className="mb-12">
@@ -173,6 +266,14 @@ component main {public[in]} = HashBench(32);`}
           <li>Native bindings through Rust FFI and UniFFI</li>
           <li>Performance benchmarking tools for mobile ZK operations</li>
         </ul>
+        <h3 className="text-xl font-bold mb-2">Rust FFI Implementation</h3>
+        <p className="mb-4">
+          The Rust core uses the <code>mopro_ffi</code> macro to generate FFI bindings for proof generation and verification functions across multiple backends.
+        </p>
+        <h3 className="text-xl font-bold mb-2">Circuit Configuration</h3>
+        <p className="mb-4">
+          Circuits are registered using the <code>set_circom_circuits!</code> macro with witness generation functions.
+        </p>
         <h3 className="text-xl font-bold mb-2">Benchmarking Features</h3>
         <ul className="list-disc ml-6 mb-4">
           <li>Single run testing for individual proof generation</li>
@@ -185,19 +286,24 @@ component main {public[in]} = HashBench(32);`}
 
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-4">CI/CD Pipeline</h2>
+        <h3 className="text-xl font-bold mb-2">Circuit Validation Workflow</h3>
         <p className="mb-4">
-          The project includes automated circuit validation through GitHub Actions. The workflow:
+          The project includes an automated circuit validation workflow that triggers on pull requests affecting circuit files.
+        </p>
+        <h3 className="text-xl font-bold mb-2">Validation Steps</h3>
+        <p className="mb-4">
+          The workflow performs the following validations:
         </p>
         <ul className="list-disc ml-6 mb-4">
-          <li>Detects changed circuit files in pull requests</li>
-          <li>Compiles Circom circuits with proper library paths</li>
-          <li>Compiles Noir projects with nargo</li>
-          <li>Validates that circuits have proper main components</li>
-          <li>Generates R1CS, WASM, and symbol files</li>
-          <li>Reports validation results in PR summaries</li>
+          <li><strong>Dependency Installation:</strong> Caches and installs system dependencies, Rust toolchain, Node.js, Circom, and Noir</li>
+          <li><strong>Change Detection:</strong> Identifies modified circuit files in pull requests</li>
+          <li><strong>Circom Compilation:</strong> Compiles changed Circom circuits with R1CS generation</li>
+          <li><strong>Noir Compilation:</strong> Checks and compiles changed Noir projects</li>
+          <li><strong>Summary Generation:</strong> Provides detailed validation results</li>
         </ul>
+        <h3 className="text-xl font-bold mb-2">Circuit Compilation Rules</h3>
         <p className="mb-4">
-          The workflow uses caching for Circom, Noir, and system dependencies to speed up validation.
+          The workflow skips library circuits without a main component and validates only circuits with a main component declaration.
         </p>
       </section>
 
@@ -245,14 +351,46 @@ component main {public[in]} = HashBench(32);`}
       </section>
 
       <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-4">Resources</h2>
+        <h2 className="text-2xl font-bold mb-4">Website Documentation</h2>
+        <h3 className="text-xl font-bold mb-2">Documentation Structure</h3>
+        <p className="mb-4">
+          The website provides comprehensive documentation organized into logical sections:
+        </p>
+        <ul className="list-disc ml-6 mb-4">
+          <li><strong>Home</strong> - Landing page with project overview</li>
+          <li><strong>Documentation</strong> - Complete technical documentation</li>
+          <li><strong>Get Started</strong> - Step-by-step setup guide</li>
+          <li><strong>Circuits</strong> - Circuit implementation guide</li>
+          <li><strong>MoPro</strong> - MoPro integration documentation</li>
+          <li><strong>Contributing</strong> - Contribution guidelines</li>
+          <li><strong>About</strong> - Project information and roadmap</li>
+          <li><strong>Benchmarks</strong> - Future benchmark dashboard</li>
+        </ul>
+        <h3 className="text-xl font-bold mb-2">Design Philosophy</h3>
+        <p className="mb-4">
+          The documentation website follows a simple, content-focused approach with emphasis on:
+        </p>
+        <ul className="list-disc ml-6 mb-4">
+          <li>Information rather than aesthetics</li>
+          <li>Clear explanations</li>
+          <li>Complete information in one place</li>
+          <li>Easy navigation</li>
+        </ul>
+      </section>
+
+      <section className="mb-12">
+        <h2 className="text-2xl font-bold mb-4">Resources and References</h2>
+        <h3 className="text-xl font-bold mb-2">Official Documentation</h3>
         <ul className="list-disc ml-6 mb-4">
           <li><strong>MoPro Documentation:</strong> https://zkmopro.org</li>
           <li><strong>Circom Language:</strong> https://docs.circom.io</li>
-          <li><strong>snarkjs Guide:</strong> https://github.com/iden3/snarkjs</li>
           <li><strong>UniFFI Guide:</strong> https://mozilla.github.io/uniffi-rs</li>
-          <li><strong>circomlib Repository:</strong> https://github.com/iden3/circomlib</li>
-          <li><strong>Powers of Tau:</strong> https://github.com/iden3/snarkjs#powers-of-tau</li>
+          <li><strong>snarkjs:</strong> https://github.com/iden3/snarkjs</li>
+        </ul>
+        <h3 className="text-xl font-bold mb-2">Community</h3>
+        <ul className="list-disc ml-6 mb-4">
+          <li><strong>Twitter:</strong> @zkmopro</li>
+          <li><strong>Telegram:</strong> @zkmopro</li>
         </ul>
       </section>
     </div>

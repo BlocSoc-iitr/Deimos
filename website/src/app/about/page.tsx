@@ -13,7 +13,7 @@ export default function About() {
           tools to help developers understand and optimize ZK proof generation on mobile platforms.
         </p>
         <p className="mb-4">
-          The name "Deimos" comes from one of Mars' moons, symbolizing the project's mission to explore and 
+          The name &quot;Deimos&quot; comes from one of Mars&apos; moons, symbolizing the project&apos;s mission to explore and 
           measure the performance landscape of mobile zero-knowledge proving.
         </p>
       </section>
@@ -46,7 +46,7 @@ export default function About() {
         </ul>
         <p className="mb-4">
           Deimos addresses these challenges by providing real-world performance data from actual mobile devices, 
-          helping developers understand what's feasible and optimize their implementations accordingly.
+          helping developers understand what&apos;s feasible and optimize their implementations accordingly.
         </p>
       </section>
 
