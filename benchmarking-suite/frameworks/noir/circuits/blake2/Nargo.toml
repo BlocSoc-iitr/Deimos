@@ -1,0 +1,6 @@
+[package]
+name = "blake2"
+type = "bin"
+authors = [""]
+
+[dependencies]
