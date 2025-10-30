@@ -25,11 +25,23 @@ export default function RootLayout({
                 Deimos
               </Link>
               <nav className="hidden md:flex space-x-6">
-                <Link href="/" className="text-gray-600 hover:text-gray-900 transition-colors">
-                  Home
-                </Link>
-                <Link href="/docs" className="text-gray-600 hover:text-gray-900 transition-colors">
+                <Link href="/documentation" className="text-gray-600 hover:text-gray-900 transition-colors">
                   Docs
+                </Link>
+                <Link href="/get-started" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  Get Started
+                </Link>
+                <Link href="/circuits" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  Circuits
+                </Link>
+                <Link href="/mopro" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  MoPro
+                </Link>
+                <Link href="/contributing" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  Contributing
+                </Link>
+                <Link href="/about" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  About
                 </Link>
               </nav>
             </div>
