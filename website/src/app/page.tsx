@@ -5,11 +5,13 @@ import { benchmarkData } from './table';
 export default function Home() {
   const [filterCircuit, setFilterCircuit] = useState<string>('all');
   const [filterFramework, setFilterFramework] = useState<string>('all');
+  const [filterLanguage, setFilterLanguage] = useState<string>('all');
   const [filterPlatform, setFilterPlatform] = useState<string>('all');
 
   // Get unique values for filters
   const circuits = ['all', ...Array.from(new Set(benchmarkData.map(d => d.circuit)))];
   const frameworks = ['all', ...Array.from(new Set(benchmarkData.map(d => d.framework)))];
+  const languages = ['all', ...Array.from(new Set(benchmarkData.map(d => d.language)))];
   const platforms = ['all', ...Array.from(new Set(benchmarkData.map(d => d.platform)))];
 
   // Filter data
@@ -17,6 +19,7 @@ export default function Home() {
     return (
       (filterCircuit === 'all' || item.circuit === filterCircuit) &&
       (filterFramework === 'all' || item.framework === filterFramework) &&
+      (filterLanguage === 'all' || item.language === filterLanguage) &&
       (filterPlatform === 'all' || item.platform === filterPlatform)
     );
   });
@@ -25,16 +28,7 @@ export default function Home() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            zkVM Mobile
-            <br />
-            <span className="text-blue-600">Benchmarking Suite</span>
-          </h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Compare zero-knowledge proof performance across different circuits, frameworks, and mobile platforms
-          </p>
-        </div>
+
 
         {/* Filters */}
         <div className="mb-8 flex flex-wrap gap-4 justify-center">
@@ -69,6 +63,21 @@ export default function Home() {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
+            <select
+              value={filterLanguage}
+              onChange={(e) => setFilterLanguage(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {languages.map(language => (
+                <option key={language} value={language}>
+                  {language === 'all' ? 'All Languages' : language}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
             <select
               value={filterPlatform}
@@ -97,6 +106,9 @@ export default function Home() {
                     Framework
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Language
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Platform
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -118,7 +130,16 @@ export default function Home() {
                         {item.circuit}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {item.framework}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          {item.framework}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          item.language === 'Circom' ? 'bg-orange-100 text-orange-800' : 'bg-indigo-100 text-indigo-800'
+                        }`}>
+                          {item.language}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -140,7 +161,7 @@ export default function Home() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">
+                    <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">
                       No benchmark data matches the selected filters
                     </td>
                   </tr>
@@ -171,6 +192,20 @@ export default function Home() {
             </div>
           </div>
         )}
+
+{/* Hero Section */}
+<div className="text-center mt-12">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            zkVM Mobile
+            <br />
+            <span className="text-blue-600">Benchmarking Suite</span>
+          </h1>
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            Compare zero-knowledge proof performance across different circuits, frameworks, and mobile platforms
+          </p>
+        </div>
+
+
       </section>
     </div>
   );

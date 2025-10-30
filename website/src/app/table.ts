@@ -1,6 +1,7 @@
 export interface BenchmarkData {
   circuit: string;
   framework: string;
+  language: string;
   platform: string;
   device: string;
   provingTime: number; // in seconds
@@ -11,7 +12,8 @@ export const benchmarkData: BenchmarkData[] = [
   // MoPro - Circom - SHA-256
   {
     circuit: "SHA-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "Android",
     device: "Samsung Galaxy S21",
     provingTime: 2.45,
@@ -19,7 +21,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "SHA-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "Android",
     device: "Google Pixel 6",
     provingTime: 2.38,
@@ -27,7 +30,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "SHA-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "iOS",
     device: "iPhone 13 Pro",
     provingTime: 1.89,
@@ -35,7 +39,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "SHA-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "iOS",
     device: "iPhone 12",
     provingTime: 2.12,
@@ -45,7 +50,8 @@ export const benchmarkData: BenchmarkData[] = [
   // MoPro - Circom - Keccak-256
   {
     circuit: "Keccak-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "Android",
     device: "Samsung Galaxy S21",
     provingTime: 8.76,
@@ -53,7 +59,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "Keccak-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "Android",
     device: "Google Pixel 6",
     provingTime: 8.52,
@@ -61,7 +68,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "Keccak-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "iOS",
     device: "iPhone 13 Pro",
     provingTime: 6.84,
@@ -69,7 +77,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "Keccak-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "iOS",
     device: "iPhone 12",
     provingTime: 7.45,
@@ -79,7 +88,8 @@ export const benchmarkData: BenchmarkData[] = [
   // MoPro - Circom - BLAKE2s-256
   {
     circuit: "BLAKE2s-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "Android",
     device: "Samsung Galaxy S21",
     provingTime: 3.12,
@@ -87,7 +97,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "BLAKE2s-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "Android",
     device: "Google Pixel 6",
     provingTime: 3.05,
@@ -95,7 +106,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "BLAKE2s-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "iOS",
     device: "iPhone 13 Pro",
     provingTime: 2.34,
@@ -103,7 +115,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "BLAKE2s-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "iOS",
     device: "iPhone 12",
     provingTime: 2.67,
@@ -113,7 +126,8 @@ export const benchmarkData: BenchmarkData[] = [
   // MoPro - Circom - Poseidon
   {
     circuit: "Poseidon",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "Android",
     device: "Samsung Galaxy S21",
     provingTime: 0.18,
@@ -121,7 +135,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "Poseidon",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "Android",
     device: "Google Pixel 6",
     provingTime: 0.17,
@@ -129,7 +144,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "Poseidon",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "iOS",
     device: "iPhone 13 Pro",
     provingTime: 0.14,
@@ -137,7 +153,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "Poseidon",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "iOS",
     device: "iPhone 12",
     provingTime: 0.16,
@@ -147,7 +164,8 @@ export const benchmarkData: BenchmarkData[] = [
   // MoPro - Circom - MiMC-256
   {
     circuit: "MiMC-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "Android",
     device: "Samsung Galaxy S21",
     provingTime: 0.24,
@@ -155,7 +173,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "MiMC-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "Android",
     device: "Google Pixel 6",
     provingTime: 0.23,
@@ -163,7 +182,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "MiMC-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "iOS",
     device: "iPhone 13 Pro",
     provingTime: 0.19,
@@ -171,7 +191,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "MiMC-256",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "iOS",
     device: "iPhone 12",
     provingTime: 0.21,
@@ -181,7 +202,8 @@ export const benchmarkData: BenchmarkData[] = [
   // MoPro - Circom - Pedersen
   {
     circuit: "Pedersen",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "Android",
     device: "Samsung Galaxy S21",
     provingTime: 0.32,
@@ -189,7 +211,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "Pedersen",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "Android",
     device: "Google Pixel 6",
     provingTime: 0.31,
@@ -197,7 +220,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "Pedersen",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "iOS",
     device: "iPhone 13 Pro",
     provingTime: 0.25,
@@ -205,7 +229,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "Pedersen",
-    framework: "MoPro (Circom)",
+    framework: "MoPro",
+    language: "Circom",
     platform: "iOS",
     device: "iPhone 12",
     provingTime: 0.28,
@@ -215,7 +240,8 @@ export const benchmarkData: BenchmarkData[] = [
   // MoPro - Noir - SHA-256
   {
     circuit: "SHA-256",
-    framework: "MoPro (Noir)",
+    framework: "MoPro",
+    language: "Noir",
     platform: "Android",
     device: "Samsung Galaxy S21",
     provingTime: 2.67,
@@ -223,7 +249,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "SHA-256",
-    framework: "MoPro (Noir)",
+    framework: "MoPro",
+    language: "Noir",
     platform: "iOS",
     device: "iPhone 13 Pro",
     provingTime: 2.05,
@@ -233,7 +260,8 @@ export const benchmarkData: BenchmarkData[] = [
   // MoPro - Noir - Keccak-256
   {
     circuit: "Keccak-256",
-    framework: "MoPro (Noir)",
+    framework: "MoPro",
+    language: "Noir",
     platform: "Android",
     device: "Samsung Galaxy S21",
     provingTime: 9.12,
@@ -241,7 +269,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "Keccak-256",
-    framework: "MoPro (Noir)",
+    framework: "MoPro",
+    language: "Noir",
     platform: "iOS",
     device: "iPhone 13 Pro",
     provingTime: 7.23,
@@ -251,7 +280,8 @@ export const benchmarkData: BenchmarkData[] = [
   // MoPro - Noir - Poseidon
   {
     circuit: "Poseidon",
-    framework: "MoPro (Noir)",
+    framework: "MoPro",
+    language: "Noir",
     platform: "Android",
     device: "Samsung Galaxy S21",
     provingTime: 0.21,
@@ -259,7 +289,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "Poseidon",
-    framework: "MoPro (Noir)",
+    framework: "MoPro",
+    language: "Noir",
     platform: "iOS",
     device: "iPhone 13 Pro",
     provingTime: 0.16,
@@ -269,7 +300,8 @@ export const benchmarkData: BenchmarkData[] = [
   // MoPro - Noir - MiMC
   {
     circuit: "MiMC",
-    framework: "MoPro (Noir)",
+    framework: "MoPro",
+    language: "Noir",
     platform: "Android",
     device: "Samsung Galaxy S21",
     provingTime: 0.26,
@@ -277,7 +309,8 @@ export const benchmarkData: BenchmarkData[] = [
   },
   {
     circuit: "MiMC",
-    framework: "MoPro (Noir)",
+    framework: "MoPro",
+    language: "Noir",
     platform: "iOS",
     device: "iPhone 13 Pro",
     provingTime: 0.20,
