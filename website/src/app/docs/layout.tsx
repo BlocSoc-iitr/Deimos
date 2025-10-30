@@ -11,6 +11,15 @@ interface SidebarItem {
 
 const sidebarItems: SidebarItem[] = [
   {
+    title: 'Documentation',
+    children: [
+      { title: 'What is Deimos?', href: '/docs#what-is-deimos' },
+      { title: 'Technology Stack', href: '/docs#technology-stack' },
+      { title: 'Repository Structure', href: '/docs#repository-structure' },
+      { title: 'Quick Links', href: '/docs#quick-links' },
+    ],
+  },
+  {
     title: 'Getting Started',
     children: [
       { title: 'Overview', href: '/docs/getstarted' },
@@ -58,6 +67,7 @@ export default function DocsLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentHash, setCurrentHash] = useState('');
   const [expandedSections, setExpandedSections] = useState<string[]>([
+    'Documentation',
     'Getting Started',
     'Circuits',
     'MoPro',
@@ -123,9 +133,6 @@ export default function DocsLayout({
         } md:translate-x-0 fixed md:sticky top-0 left-0 z-40 w-64 h-screen transition-transform bg-gray-50 border-r border-gray-200`}
       >
         <div className="h-full px-3 py-4 overflow-y-auto">
-          <div className="mb-6 px-3">
-            <h2 className="text-lg font-bold text-gray-900">Documentation</h2>
-          </div>
           <ul className="space-y-1">
             {sidebarItems.map((section) => {
               return (
