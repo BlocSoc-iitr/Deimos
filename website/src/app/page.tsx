@@ -196,12 +196,10 @@ export default function Home() {
 {/* Hero Section */}
 <div className="text-center mt-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            zkVM Mobile
-            <br />
-            <span className="text-blue-600">Benchmarking Suite</span>
+            <span className="text-blue-600">DEIMOS</span>
           </h1>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Compare zero-knowledge proof performance across different circuits, frameworks, and mobile platforms
+            Compare zero-knowledge proof performance across different circuits, languages, frameworks, and mobile platforms
           </p>
         </div>
 

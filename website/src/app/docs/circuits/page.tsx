@@ -50,7 +50,7 @@ component main {public[in]} = HashBench(32);`}
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Implemented Circuits</h2>
         
-        <h3 className="text-xl font-bold mb-2">SHA-256</h3>
+        <h3 id="sha-256" className="text-xl font-bold mb-2">SHA-256</h3>
         <p className="mb-4">
           <strong>Location:</strong> <code>circuits/sha256/</code>
         </p>
@@ -78,7 +78,7 @@ component main {public[in]} = Sha256Bench(32);`}
           </pre>
         </div>
 
-        <h3 className="text-xl font-bold mb-2">Keccak-256</h3>
+        <h3 id="keccak-256" className="text-xl font-bold mb-2">Keccak-256</h3>
         <p className="mb-4">
           <strong>Location:</strong> <code>circuits/keccak256/</code>
         </p>
@@ -101,7 +101,7 @@ component main {public[in]} = Sha256Bench(32);`}
           <li>Bit-by-bit comparison for verification</li>
         </ul>
 
-        <h3 className="text-xl font-bold mb-2">BLAKE2s-256</h3>
+        <h3 id="blake2s-256" className="text-xl font-bold mb-2">BLAKE2s-256</h3>
         <p className="mb-4">
           <strong>Location:</strong> <code>circuits/blake2s256/</code>
         </p>
@@ -112,7 +112,7 @@ component main {public[in]} = Sha256Bench(32);`}
           <strong>Constraints:</strong> ~32,600 per chunk, ~509 per byte
         </p>
 
-        <h3 className="text-xl font-bold mb-2">Poseidon</h3>
+        <h3 id="poseidon" className="text-xl font-bold mb-2">Poseidon</h3>
         <p className="mb-4">
           <strong>Location:</strong> <code>circuits/poseidon/</code>
         </p>
@@ -126,7 +126,7 @@ component main {public[in]} = Sha256Bench(32);`}
           ZK-friendly hash function optimized for arithmetic circuits. Significantly fewer constraints than traditional hashes.
         </p>
 
-        <h3 className="text-xl font-bold mb-2">MiMC-256</h3>
+        <h3 id="mimc-256" className="text-xl font-bold mb-2">MiMC-256</h3>
         <p className="mb-4">
           <strong>Location:</strong> <code>circuits/mimc256/</code>
         </p>

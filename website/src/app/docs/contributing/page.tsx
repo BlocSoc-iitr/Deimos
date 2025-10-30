@@ -37,7 +37,7 @@ export default function Contributing() {
         </ul>
       </section>
 
-      <section className="mb-12">
+      <section id="code-style-guidelines" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Code Quality Requirements</h2>
         <p className="mb-4">
           All code must pass the following checks:
@@ -105,7 +105,7 @@ export default function Contributing() {
         </ul>
       </section>
 
-      <section className="mb-12">
+      <section id="development-workflow" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Development Workflow</h2>
         
         <h3 className="text-xl font-bold mb-2">1. Fork and Clone</h3>

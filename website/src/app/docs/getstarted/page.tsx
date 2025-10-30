@@ -21,7 +21,7 @@ export default function GetStarted() {
         </ul>
       </section>
 
-      <section className="mb-12">
+      <section id="quick-start" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Quick Start</h2>
         <h3 className="text-xl font-bold mb-2">1. Clone the Repository</h3>
         <div className="bg-gray-50 p-4 rounded mb-4">
@@ -51,7 +51,7 @@ npm run dev`}
         </p>
       </section>
 
-      <section className="mb-12">
+      <section id="installation" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Installing Dependencies</h2>
         
         <h3 className="text-xl font-bold mb-2">Install Rust</h3>

@@ -18,7 +18,7 @@ export default function MoPro() {
         </p>
       </section>
 
-      <section className="mb-12">
+      <section id="architecture" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Architecture</h2>
         <div className="bg-gray-50 p-4 rounded mb-4">
           <pre className="text-sm">
@@ -76,7 +76,7 @@ export default function MoPro() {
         </ul>
       </section>
 
-      <section className="mb-12">
+      <section id="setting-up-mopro" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Setting Up MoPro</h2>
         
         <h3 className="text-xl font-bold mb-2">Prerequisites</h3>
@@ -201,7 +201,7 @@ default = ["mopro-ffi/circom"]
         </div>
       </section>
 
-      <section className="mb-12">
+      <section id="android-integration" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Android Integration</h2>
         
         <h3 className="text-xl font-bold mb-2">Opening the Project</h3>
@@ -274,7 +274,7 @@ val benchmarkResult = BenchmarkResult(
         </div>
       </section>
 
-      <section className="mb-12">
+      <section id="ios-integration" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">iOS Integration</h2>
         
         <h3 className="text-xl font-bold mb-2">Opening the Project</h3>
