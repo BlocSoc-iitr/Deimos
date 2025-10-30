@@ -5,7 +5,7 @@ export default function Documentation() {
     <div className="max-w-4xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold mb-8">Documentation</h1>
       
-      <section className="mb-12">
+      <section id="what-is-deimos" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">What is Deimos?</h2>
         <p className="mb-4">
           Deimos is an open-source project similar to L2Beat, designed to display comprehensive benchmark data that allows users to compare the performance of different zkVMs across various devices. This enables developers to choose the most suitable zkVM based on their target device requirements.
@@ -24,7 +24,7 @@ export default function Documentation() {
         </p>
       </section>
 
-      <section className="mb-12">
+      <section id="technology-stack" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Technology Stack</h2>
         <h3 className="text-xl font-bold mb-2">Circuit Development</h3>
         <p className="mb-4"><strong>Circom Ecosystem:</strong></p>
@@ -67,7 +67,7 @@ export default function Documentation() {
         </ul>
       </section>
 
-      <section className="mb-12">
+      <section id="repository-structure" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Repository Structure</h2>
         <div className="bg-gray-50 p-4 rounded mb-4">
           <pre className="text-sm overflow-x-auto">
@@ -105,7 +105,7 @@ export default function Documentation() {
         </div>
       </section>
 
-      <section className="mb-12">
+      <section id="quick-links" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Quick Links</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <a
