@@ -77,6 +77,8 @@ flutter:
     - assets/sha256.zkey
     - assets/sha256.srs
     - assets/sha256.json
+    - assets/blake2.json
+    - assets/blake2.srs
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
