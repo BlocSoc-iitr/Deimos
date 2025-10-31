@@ -8,7 +8,7 @@ This guide explains how to integrate Circom circuits into the MoPro (Mobile Prov
 
 - Completed circuit development using the [Adding Hash Functions guide](../frameworks/circom/ADDING_HASH_FUNCTIONS.md)
 - MoPro CLI installed (`cargo install --path mopro/cli`)
-- Android Studio (for Android development) or a USB-cable to test with actual mobile
+- Android Studio (for Android development) or a USB cable to test with actual mobile
 - Working Circom circuit with `.zkey` and `.wasm` files
 
 ---
