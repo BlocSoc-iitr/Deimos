@@ -424,7 +424,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
       case 'halo2':
         return ['Fibonacci'];
       case 'noir':
-        return ['SHA256', 'Keccak256', 'Poseidon', 'MiMC', 'Pedersen'];
+        return ['SHA256', 'Keccak256', 'Poseidon', 'MiMC', 'Pedersen', 'blake2'];
       default:
         return [];
     }
@@ -494,6 +494,7 @@ class _ProofResultPageState extends State<ProofResultPage> {
   Uint8List? _noirPoseidonVerificationKey;
   Uint8List? _noirPedersenVerificationKey;
   Uint8List? _noirSha256VerificationKey;
+    Uint8List? _noirBlake2VerificationKey;
   
   // Benchmarking timing
   Duration? _proofGenerationTime;
@@ -1014,7 +1015,7 @@ class _ProofResultPageState extends State<ProofResultPage> {
     final proofResult = await plugin.generateHalo2Proof(
       "assets/plonk_fibonacci_srs.bin",
       "assets/plonk_fibonacci_pk.bin", 
-      inputs
+      inputs.cast<String, List<String>>()
     );
     
     // Stop timing and store
@@ -1175,6 +1176,22 @@ class _ProofResultPageState extends State<ProofResultPage> {
             }
           }
           verificationKey = _noirPedersenVerificationKey;
+          break;
+          case 'blake2':
+          assetPath = "assets/blake2.json";
+          srsPath = "assets/blake2.srs";
+          onChain = true;
+          if (_noirBlake2VerificationKey == null) {
+            try {
+              final vkAsset = await rootBundle.load('assets/blake2.vk');
+              _noirBlake2VerificationKey = vkAsset.buffer.asUint8List();
+            } catch (e) {
+            _noirBlake2VerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
+                assetPath, srsPath, onChain, lowMemoryMode,
+              );
+            }
+          }
+          verificationKey = _noirBlake2VerificationKey;
           break;
       default:
           assetPath = "assets/sha256.json";
