@@ -26,7 +26,7 @@ MoPro enables mobile zero-knowledge proof generation through:
 
 ## 🚀 **Step-by-Step Integration**
 
-The  integration process for adding new Circom circuits to MoPro is much simpler than creating new projects. You work within the existing `mopro-example-app` structure:
+The integration process for adding new Circom circuits to MoPro is much simpler than creating new projects. You work within the existing `mopro-example-app` structure:
 
 ### Step 1: Setup Rust Witness and Circuits (`mopro-example-app/src/lib.rs`)
 
