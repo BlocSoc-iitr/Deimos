@@ -494,7 +494,7 @@ class _ProofResultPageState extends State<ProofResultPage> {
   Uint8List? _noirPoseidonVerificationKey;
   Uint8List? _noirPedersenVerificationKey;
   Uint8List? _noirSha256VerificationKey;
-    Uint8List? _noirBlake2VerificationKey;
+  Uint8List? _noirBlake2VerificationKey;
   
   // Benchmarking timing
   Duration? _proofGenerationTime;
