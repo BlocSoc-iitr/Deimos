@@ -1177,7 +1177,7 @@ class _ProofResultPageState extends State<ProofResultPage> {
           }
           verificationKey = _noirPedersenVerificationKey;
           break;
-          case 'blake2':
+      case 'blake2':
           assetPath = "assets/blake2.json";
           srsPath = "assets/blake2.srs";
           onChain = true;
