@@ -5,20 +5,26 @@ export default function GetStarted() {
     <div className="max-w-4xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold mb-8">Getting Started</h1>
       
-      <section className="mb-12">
+      <section id="prerequisites" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Prerequisites</h2>
         <p className="mb-4"><strong>System Requirements:</strong></p>
         <ul className="list-disc ml-6 mb-4">
-          <li><strong>Node.js</strong> 18+ for website development</li>
-          <li><strong>Rust</strong> toolchain (stable) for mobile app compilation</li>
+          <li><strong>Node.js</strong> for website development</li>
+          <li><strong>Rust</strong> for mobile app compilation</li>
           <li><strong>Git</strong> for version control</li>
         </ul>
         <p className="mb-4"><strong>Circuit Development Tools:</strong></p>
         <ul className="list-disc ml-6 mb-4">
-          <li><strong>Circom</strong> compiler (v2.1.6)</li>
-          <li><strong>snarkjs</strong> (npm global installation)</li>
-          <li><strong>Noir/Nargo</strong> (v1.0.0-beta.8)</li>
+          <li><strong>Circom</strong></li>
+          <li><strong>snarkjs</strong> </li>
+          <li><strong>Noir/Nargo</strong> </li>
         </ul>
+        <p className="mb-4"><strong>App Development Tools:</strong></p>
+        <ul className="list-disc ml-6 mb-4">
+          <li><strong>Mopro CLI</strong> </li>
+          <li><strong>Flutter</strong> </li>
+          <li><strong>Android Studio</strong> </li>
+        </ul>        
       </section>
 
       <section id="quick-start" className="mb-12">
@@ -26,8 +32,8 @@ export default function GetStarted() {
         <h3 className="text-xl font-bold mb-2">1. Clone the Repository</h3>
         <div className="bg-gray-50 p-4 rounded mb-4">
           <pre className="text-sm overflow-x-auto">
-{`git clone https://github.com/aryanbaranwal001/temp_deimos.git
-cd temp_deimos`}
+{`git clone https://github.com/BlocSoc-iitr/Deimos.git
+cd Deimos`}
           </pre>
         </div>
 
@@ -42,143 +48,105 @@ npm run dev`}
         <p className="mb-4">
           The website will be available at http://localhost:3000
         </p>
-
-        <h3 className="text-xl font-bold mb-2">3. Run Mobile Benchmarks</h3>
-        <p className="mb-4">
-          Navigate to the corresponding mobile app directory (e.g., benchmarking-suite/moPro/mopro-sha256/android/).
-          Follow the platform-specific README for setup instructions. Build and run on physical devices for accurate 
-          performance measurements.
-        </p>
       </section>
 
-      <section id="installation" className="mb-12">
-        <h2 className="text-2xl font-bold mb-4">Installing Dependencies</h2>
-        
-        <h3 className="text-xl font-bold mb-2">Install Rust</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
-{`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source $HOME/.cargo/env`}
-          </pre>
-        </div>
 
-        <h3 className="text-xl font-bold mb-2">Install Circom</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
-{`git clone https://github.com/iden3/circom.git
-cd circom
-git checkout v2.1.6
-cargo build --release
-cargo install --path circom
-cd ..`}
-          </pre>
-        </div>
-
-        <h3 className="text-xl font-bold mb-2">Install snarkjs</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
-{`npm install -g snarkjs`}
-          </pre>
-        </div>
-
-        <h3 className="text-xl font-bold mb-2">Install MoPro CLI</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
-{`git clone https://github.com/zkmopro/mopro
-cd mopro/cli
-cargo install --path .
-cd ../..`}
-          </pre>
-        </div>
-
-        <h3 className="text-xl font-bold mb-2">Install Noir (Optional)</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
-{`curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
-noirup --version v1.0.0-beta.8`}
-          </pre>
-        </div>
-      </section>
-
-      <section className="mb-12">
+      <section id="working-with-circom-circuits" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Working with Circom Circuits</h2>
         
-        <h3 className="text-xl font-bold mb-2">Compiling a Circuit</h3>
+        <h3 className="text-xl font-bold mb-2">Step 1: Compiling a Circuit</h3>
         <div className="bg-gray-50 p-4 rounded mb-4">
           <pre className="text-sm overflow-x-auto">
 {`cd benchmarking-suite/frameworks/circom/circuits/sha256
 
-# Compile circuit
 circom circom.circom --r1cs --wasm --sym --c
-
-# This generates:
-# - circom.r1cs (constraint system)
-# - circom_js/circom.wasm (witness generator)
-# - circom.sym (symbol table)
-# - circom_cpp/ (C++ witness generator)`}
+`}
           </pre>
         </div>
 
-        <h3 className="text-xl font-bold mb-2">Generating Proving Key</h3>
+        <h3 className="text-xl font-bold mb-2">Step 2: Computing the Witness</h3>
         <p className="mb-4">
-          You need a Powers of Tau file. The required size depends on your circuit&apos;s constraint count.
+          First, copy the <code>input.json</code> file from <code>inputs/sha256/</code> to the appropriate directory:
+        </p>
+        <ul className="list-disc ml-6 mb-4">
+          <li>For WebAssembly: <code>circuits/sha256/circom_js/</code></li>
+          <li>For C++: <code>circuits/sha256/circom_cpp/</code></li>
+        </ul>
+
+        <p className="mb-2"><strong>Option 1: Computing Witness with WebAssembly</strong></p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`cd benchmarking-suite/frameworks/circom/circuits/sha256/circom_js/
+
+node generate_witness.js circom.wasm input.json witness.wtns`}
+          </pre>
+        </div>
+
+        <p className="mb-2"><strong>Option 2: Computing Witness with C++</strong></p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`cd benchmarking-suite/frameworks/circom/circuits/sha256/circom_cpp/
+
+make
+./circom input.json witness.wtns`}
+          </pre>
+        </div>
+
+        <h3 className="text-xl font-bold mb-2">Step 3: Generating Proving Keys</h3>
+        
+        <p className="mb-2"><strong>3a. Powers of Tau Ceremony (Circuit-Independent)</strong></p>
+        <p className="mb-4">
+          The Powers of Tau ceremony is a one-time setup that doesn&apos;t depend on a specific circuit. 
         </p>
         <div className="bg-gray-50 p-4 rounded mb-4">
           <pre className="text-sm overflow-x-auto">
-{`# Download Powers of Tau (example for pot18)
-# pot14 = 16,384 constraints
-# pot16 = 65,536 constraints
-# pot18 = 262,144 constraints
-# pot20 = 1,048,576 constraints
+{`# Start new ceremony
+snarkjs powersoftau new bn128 12 pot12_0000.ptau -v
 
-# Generate proving key
-snarkjs groth16 setup \\
-  circom.r1cs \\
-  ../../phase1/pot18_final.ptau \\
-  sha256_0000.zkey
-
-# Export verification key
-snarkjs zkey export verificationkey \\
-  sha256_0000.zkey \\
-  verification_key.json`}
+# Contribute randomness
+snarkjs powersoftau contribute pot12_0000.ptau pot12_0001.ptau --name="First contribution" -v`}
           </pre>
         </div>
 
-        <h3 className="text-xl font-bold mb-2">Generating and Verifying Proofs</h3>
+        <p className="mb-2"><strong>3b. Generating zkey and verification key (Circuit-Dependent)</strong></p>
+        <p className="mb-4">
+          These steps are specific to your circuit and must be done for each circuit you compile.
+        </p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`# Prepare for phase 2
+snarkjs powersoftau prepare phase2 pot12_0001.ptau pot12_final.ptau -v
+
+# Generate proving key
+snarkjs groth16 setup circom.r1cs pot12_final.ptau circuit_0000.zkey
+
+# Contribute to the proving key
+snarkjs zkey contribute circuit_0000.zkey circuit_0001.zkey --name="1st Contributor Name" -v
+
+# Export verification key
+snarkjs zkey export verificationkey circuit_0001.zkey verification_key.json`}
+          </pre>
+        </div>
+
+        <h3 className="text-xl font-bold mb-2">Step 4: Generating and Verifying Proofs</h3>
+        <p className="mb-4">
+          Once you have the proving key and witness, you can generate and verify proofs.
+        </p>
         <div className="bg-gray-50 p-4 rounded mb-4">
           <pre className="text-sm overflow-x-auto">
 {`# Generate proof
-snarkjs groth16 fullprove \\
-  ../../inputs/sha256/input_9.json \\
-  circom_js/circom.wasm \\
-  sha256_0000.zkey \\
-  proof.json \\
-  public.json
+snarkjs groth16 prove circuit_0001.zkey witness.wtns proof.json public.json
 
 # Verify proof
-snarkjs groth16 verify \\
-  verification_key.json \\
-  public.json \\
-  proof.json
+snarkjs groth16 verify verification_key.json public.json proof.json
 
-# Should output: [INFO] snarkJS: OK!`}
+# Expected output: [INFO] snarkJS: OK!`}
           </pre>
         </div>
 
-        <h3 className="text-xl font-bold mb-2">Testing Circuits</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
-{`# Run circuit tests
-cd benchmarking-suite/frameworks/circom
-cargo test
-
-# Test specific circuit
-cargo test test_sha256`}
-          </pre>
-        </div>
       </section>
 
-      <section className="mb-12">
+      <section id="setting-up-mopro-mobile-apps" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Setting Up MoPro Mobile Apps</h2>
         
         <h3 className="text-xl font-bold mb-2">Initialize MoPro Project</h3>
@@ -244,7 +212,7 @@ cargo test -- --nocapture`}
         </div>
       </section>
 
-      <section className="mb-12">
+      <section id="project-structure-navigation" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Project Structure Navigation</h2>
         
         <h3 className="text-xl font-bold mb-2">Circuit Implementations</h3>
@@ -285,7 +253,7 @@ cargo test -- --nocapture`}
         </ul>
       </section>
 
-      <section className="mb-12">
+      <section id="common-issues-and-solutions" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Common Issues and Solutions</h2>
         
         <h3 className="text-xl font-bold mb-2">Circuit Compilation Errors</h3>
@@ -325,29 +293,6 @@ cargo test -- --nocapture`}
           <strong>Solution:</strong> This is expected for large circuits. Use physical devices instead of emulators 
           for accurate benchmarks. Consider using ZK-friendly hash functions like Poseidon for better performance.
         </p>
-      </section>
-
-      <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-4">Next Steps</h2>
-        <ul className="list-disc ml-6 mb-4">
-          <li>Read the full documentation to understand the architecture</li>
-          <li>Explore existing circuit implementations</li>
-          <li>Try running benchmarks on your mobile device</li>
-          <li>Contribute new circuits or improvements</li>
-          <li>Join the community and share your results</li>
-        </ul>
-      </section>
-
-      <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-4">Getting Help</h2>
-        <p className="mb-4">If you encounter issues:</p>
-        <ul className="list-disc ml-6 mb-4">
-          <li>Check the documentation and README files</li>
-          <li>Look at existing circuit implementations for reference</li>
-          <li>Create an issue on GitHub with detailed information</li>
-          <li>Join the MoPro community on Telegram: @zkmopro</li>
-          <li>Follow updates on Twitter: @zkmopro</li>
-        </ul>
       </section>
     </div>
   );
