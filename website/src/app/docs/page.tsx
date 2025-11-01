@@ -8,7 +8,7 @@ export default function Documentation() {
       <section id="what-is-deimos" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">What is Deimos?</h2>
         <p className="mb-4">
-          Deimos is an open-source project similar to L2Beat, designed to display comprehensive benchmark data that allows users to compare the performance of different zkVMs across various devices. This enables developers to choose the most suitable zkVM based on their target device requirements.
+          Deimos is an open-source project, designed to provide comprehensive benchmark data that allows developers to compare the performance of different zkVMs across various devices. This enables developers to choose the most suitable zkVM based on their target device requirements.
         </p>
         <p className="mb-4">
           Deimos serves two primary functions:
@@ -18,53 +18,54 @@ export default function Documentation() {
           <li><strong>Public Dashboard:</strong> A web-based service where users can view and compare all benchmark results</li>
         </ul>
         <p className="mb-4">
-          The project aims to benchmark zkVM performance for mobile-specific environments, compare multiple tools 
-          (initially MoPro, imp1, and ProveKit), and measure performance of common cryptographic and proof-related 
-          functions across different frameworks (Circom, Noir, Halo2).
+          The project aims to benchmark zkVM performance for mobile-specific environments, compare multiple frameworks  
+          (initially MoPro, imp1, and ProveKit), measure performance of common cryptographic & proof-related 
+          hash functions  across different langauges (Circom, Noir, Halo2) 
+          and make this information accessible to users via a public dashboard.
         </p>
       </section>
 
       <section id="technology-stack" className="mb-12">
         <h2 className="text-2xl font-bold mb-4">Technology Stack</h2>
         <h3 className="text-xl font-bold mb-2">Circuit Development</h3>
+
+        <div className="ml-4">
         <p className="mb-4"><strong>Circom Ecosystem:</strong></p>
+
+
         <ul className="list-disc ml-6 mb-4">
           <li><strong>Circom Compiler:</strong> Version 2.1.6 for circuit compilation</li>
           <li><strong>snarkjs:</strong> Groth16 proof generation and verification</li>
+          </ul>
+          
+        <p className="mb-4"><strong>Circom Libraries:</strong></p>
+          <ul className="list-disc ml-6 mb-4">
           <li><strong>circomlib:</strong> Standard library of circuits</li>
           <li><strong>hash-circuits:</strong> Library for Blake2s circuit</li>
           <li><strong>keccak256-circom:</strong> Library for Keccak256 circuit</li>
         </ul>
+        
         <p className="mb-4"><strong>Noir Ecosystem:</strong></p>
         <ul className="list-disc ml-6 mb-4">
           <li><strong>Noir:</strong> Version 1.0.0-beta.8</li>
           <li><strong>Nargo:</strong> Build and compilation toolchain</li>
         </ul>
-        <h3 className="text-xl font-bold mb-2">Mobile Development</h3>
-        <p className="mb-4"><strong>Rust Core:</strong></p>
+        </div>
+
+        <h3 className="text-xl font-bold mb-2">Mobile Application</h3>
         <ul className="list-disc ml-6 mb-4">
-          <li><strong>mopro-wasm:</strong> WebAssembly support</li>
-          <li><strong>mopro-ffi:</strong> FFI bindings with Circom, Halo2, and Noir adapters</li>
-          <li><strong>uniffi:</strong> Version 0.29.0 for cross-language bindings</li>
-          <li><strong>rust-witness:</strong> Version 0.1 for witness generation</li>
+          <li><strong>Framework:</strong> Flutter</li>
+          <li><strong>Language:</strong> Dart</li>
+          <li><strong>Support:</strong> Android & iOS</li>
         </ul>
-        <p className="mb-4"><strong>Android Platform:</strong></p>
-        <ul className="list-disc ml-6 mb-4">
-          <li>Kotlin for application logic</li>
-          <li>Jetpack Compose for UI</li>
-          <li>Material Design components</li>
-        </ul>
-        <p className="mb-4"><strong>iOS Platform:</strong></p>
-        <ul className="list-disc ml-6 mb-4">
-          <li>Swift for application logic</li>
-          <li>SwiftUI/UIKit for UI</li>
-        </ul>
+
         <h3 className="text-xl font-bold mb-2">Website Dashboard</h3>
         <ul className="list-disc ml-6 mb-4">
           <li><strong>Framework:</strong> Next.js 15.5.3 with Turbopack</li>
           <li><strong>Language:</strong> TypeScript</li>
           <li><strong>Styling:</strong> Tailwind CSS</li>
         </ul>
+      
       </section>
 
       <section id="repository-structure" className="mb-12">

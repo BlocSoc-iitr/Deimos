@@ -22,20 +22,24 @@ const sidebarItems: SidebarItem[] = [
   {
     title: 'Getting Started',
     children: [
-      { title: 'Overview', href: '/docs/getstarted' },
-      { title: 'Installation', href: '/docs/getstarted#installation' },
+      { title: 'Prerequisites', href: '/docs/getstarted#prerequisites' },
       { title: 'Quick Start', href: '/docs/getstarted#quick-start' },
+      { title: 'Working with Circom Circuits', href: '/docs/getstarted#working-with-circom-circuits' },
+      { title: 'Setting Up MoPro Mobile App', href: '/docs/getstarted#setting-up-mopro-mobile-apps' },
+      { title: 'Project Structure Navigation', href: '/docs/getstarted#project-structure-navigation' },
+      { title: 'Common Issues and Solutions', href: '/docs/getstarted#common-issues-and-solutions' },
     ],
   },
   {
     title: 'Circuits',
     children: [
-      { title: 'Overview', href: '/docs/circuits' },
-      { title: 'SHA-256', href: '/docs/circuits#sha-256' },
-      { title: 'Keccak-256', href: '/docs/circuits#keccak-256' },
-      { title: 'BLAKE2s-256', href: '/docs/circuits#blake2s-256' },
-      { title: 'Poseidon', href: '/docs/circuits#poseidon' },
-      { title: 'MiMC-256', href: '/docs/circuits#mimc-256' },
+      { title: 'Overview', href: '/docs/circuits#overview' },
+      { title: 'Circuit Pattern', href: '/docs/circuits#circuit-pattern' },
+      { title: 'Implemented Circuits', href: '/docs/circuits#implemented-circuits' },
+      { title: 'Adding New Hash Functions', href: '/docs/circuits#adding-new-hash-functions' },
+      { title: 'Common Issues', href: '/docs/circuits#common-issues' },
+      { title: 'Circuit Verification Checklist', href: '/docs/circuits#circuit-verification-checklist' },
+      { title: 'Performance Optimization', href: '/docs/circuits#performance-optimization' },
     ],
   },
   {
