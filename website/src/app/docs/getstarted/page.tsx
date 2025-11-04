@@ -480,7 +480,7 @@ mopro update`}
         </p>
         <ul className="list-disc ml-6 mb-4">
           <li><code>mopro-sha256/</code> - SHA-256 benchmarking app</li>
-          <li><code>mopro-keccack256/</code> - Keccak-256 benchmarking app</li>
+          <li><code>mopro-keccak256/</code> - Keccak-256 benchmarking app</li>
           <li><code>mopro-example-app/</code> - Example implementation</li>
         </ul>
 
