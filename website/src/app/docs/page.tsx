@@ -20,7 +20,7 @@ export default function Documentation() {
         <p className="mb-4">
           The project aims to benchmark zkVM performance for mobile-specific environments, compare multiple frameworks  
           (initially MoPro, imp1, and ProveKit), measure performance of common cryptographic & proof-related 
-          hash functions  across different langauges (Circom, Noir, Halo2) 
+          hash functions  across different languages (Circom, Noir, Halo2) 
           and make this information accessible to users via a public dashboard.
         </p>
       </section>
