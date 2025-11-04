@@ -7,6 +7,8 @@ export default function Home() {
   const [filterFramework, setFilterFramework] = useState<string>('all');
   const [filterLanguage, setFilterLanguage] = useState<string>('all');
   const [filterPlatform, setFilterPlatform] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
   // Get unique values for filters
   const circuits = ['all', ...Array.from(new Set(benchmarkData.map(d => d.circuit)))];
@@ -24,10 +26,63 @@ export default function Home() {
     );
   });
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedData = filteredData.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  const handleFilterChange = (setter: (value: string) => void, value: string) => {
+    setter(value);
+    setCurrentPage(1);
+  };
+
+  // Reset to page 1 when items per page changes
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1);
+  };
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxPagesToShow = 5;
+
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-8">
 
 
         {/* Filters */}
@@ -36,7 +91,7 @@ export default function Home() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Circuit</label>
             <select
               value={filterCircuit}
-              onChange={(e) => setFilterCircuit(e.target.value)}
+              onChange={(e) => handleFilterChange(setFilterCircuit, e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {circuits.map(circuit => (
@@ -51,7 +106,7 @@ export default function Home() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Framework</label>
             <select
               value={filterFramework}
-              onChange={(e) => setFilterFramework(e.target.value)}
+              onChange={(e) => handleFilterChange(setFilterFramework, e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {frameworks.map(framework => (
@@ -66,7 +121,7 @@ export default function Home() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
             <select
               value={filterLanguage}
-              onChange={(e) => setFilterLanguage(e.target.value)}
+              onChange={(e) => handleFilterChange(setFilterLanguage, e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {languages.map(language => (
@@ -81,7 +136,7 @@ export default function Home() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
             <select
               value={filterPlatform}
-              onChange={(e) => setFilterPlatform(e.target.value)}
+              onChange={(e) => handleFilterChange(setFilterPlatform, e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {platforms.map(platform => (
@@ -123,9 +178,9 @@ export default function Home() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredData.length > 0 ? (
-                  filteredData.map((item, index) => (
-                    <tr key={index} className="hover:bg-gray-50 transition-colors">
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((item, index) => (
+                    <tr key={startIndex + index} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {item.circuit}
                       </td>
@@ -169,6 +224,82 @@ export default function Home() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {filteredData.length > 0 && (
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+              {/* Items per page selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-700">Show</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={30}>30</option>
+                  <option value={40}>40</option>
+                  <option value={50}>50</option>
+                </select>
+                <span className="text-sm text-gray-700">per page</span>
+              </div>
+
+              {/* Page info */}
+              <div className="text-sm text-gray-700">
+                Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
+                <span className="font-medium">{Math.min(endIndex, filteredData.length)}</span> of{' '}
+                <span className="font-medium">{filteredData.length}</span> results
+              </div>
+
+              {/* Page numbers */}
+              <div className="flex items-center gap-1">
+                {/* Previous button */}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                    currentPage === 1
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-300'
+                  }`}
+                >
+                  Previous
+                </button>
+
+                {/* Page numbers */}
+                {getPageNumbers().map((page, index) => (
+                  <button
+                    key={index}
+                    onClick={() => typeof page === 'number' && setCurrentPage(page)}
+                    disabled={page === '...'}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                      page === currentPage
+                        ? 'bg-blue-600 text-white'
+                        : page === '...'
+                        ? 'bg-white text-gray-400 cursor-default'
+                        : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-300'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                {/* Next button */}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                    currentPage === totalPages
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-300'
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Summary Stats */}
