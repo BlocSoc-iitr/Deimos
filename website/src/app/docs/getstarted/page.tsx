@@ -378,10 +378,14 @@ flutter run`}
         <p className="mb-4">Circuit input format (flat one-dimensional JSON string mapping):</p>
         <div className="bg-gray-50 p-4 rounded mb-4">
           <pre className="text-sm overflow-x-auto">
-{`"{
-    \\"a\\": [\\"3\\"],
-    \\"b\\": [\\"5\\"]
-}"`}
+{`{
+  "in": [
+    "72", "101", "108", "108", "111", "32", "87", "111",
+    "114", "108", "100", "33", "32", "84", "104", "105",
+    "115", "32", "105", "115", "32", "97", "32", "116",
+    "101", "115", "116", "32", "109", "115", "103", "46"
+  ]
+}`}
           </pre>
         </div>
 
@@ -396,7 +400,14 @@ flutter run`}
         <p className="mb-4">Circuit input format (flat one-dimensional Vec&lt;String&gt;):</p>
         <div className="bg-gray-50 p-4 rounded mb-4">
           <pre className="text-sm overflow-x-auto">
-{`["3", "5"]`}
+{`{
+  "in": [
+    "72", "101", "108", "108", "111", "32", "87", "111",
+    "114", "108", "100", "33", "32", "84", "104", "105",
+    "115", "32", "105", "115", "32", "97", "32", "116",
+    "101", "115", "116", "32", "109", "115", "103", "46"
+  ]
+}`}
           </pre>
         </div>
 
