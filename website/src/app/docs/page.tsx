@@ -124,11 +124,18 @@ export default function Documentation() {
             <p className="text-green-700">Explore circuit implementations</p>
           </a>
           <a
-            href="/docs/mopro"
+            href="/docs/circom-integration"
             className="block p-6 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
           >
-            <h3 className="text-xl font-bold text-purple-900 mb-2">MoPro</h3>
-            <p className="text-purple-700">Mobile proving integration guide</p>
+            <h3 className="text-xl font-bold text-purple-900 mb-2">Circom Integration</h3>
+            <p className="text-purple-700">Mobile Circom circuit integration guide</p>
+          </a>
+          <a
+            href="/docs/noir-integration"
+            className="block p-6 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+          >
+            <h3 className="text-xl font-bold text-indigo-900 mb-2">Noir Integration</h3>
+            <p className="text-indigo-700">Mobile Noir circuit integration guide</p>
           </a>
           <a
             href="/docs/contributing"
