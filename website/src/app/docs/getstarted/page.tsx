@@ -147,68 +147,298 @@ snarkjs groth16 verify verification_key.json public.json proof.json
       </section>
 
       <section id="setting-up-mopro-mobile-apps" className="mb-12">
-        <h2 className="text-2xl font-bold mb-4">Setting Up MoPro Mobile Apps</h2>
+        <h2 className="text-2xl font-bold mb-4">Setting Up MoPro Mobile App</h2>
         
-        <h3 className="text-xl font-bold mb-2">Initialize MoPro Project</h3>
+        <p className="mb-6 text-lg">
+          This tutorial walks you through building a static library from scratch using the Circom, Halo2, or Noir adapter, 
+          and demonstrates how to integrate it with Android, iOS, and Web platforms.
+        </p>
+
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+          <p className="mb-2"><strong>📝 Note:</strong></p>
+          <ul className="list-disc ml-6 text-sm">
+            <li>If you already have an existing Rust project, check out the Rust Setup guide for detailed instructions.</li>
+            <li>If you already have an existing mobile frontend, follow Steps 0-3 to generate bindings, then proceed to the relevant integration guide.</li>
+          </ul>
+        </div>
+
+        <h3 className="text-xl font-bold mb-2 mt-8">Step 0: Prerequisites</h3>
+        <p className="mb-4">Make sure you&apos;ve installed the prerequisites before proceeding.</p>
+
+        <h3 className="text-xl font-bold mb-2 mt-8">Step 1: Install MoPro CLI</h3>
+        <p className="mb-4">Install the published CLI:</p>
         <div className="bg-gray-50 p-4 rounded mb-4">
           <pre className="text-sm overflow-x-auto">
-{`cd benchmarking-suite/moPro/mopro-sha256
+{`cargo install mopro-cli`}
+          </pre>
+        </div>
+        
+        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
+          <p className="mb-2"><strong>💡 Alternative:</strong> Get the latest CLI from GitHub</p>
+          <div className="bg-gray-50 p-3 rounded mt-2">
+            <pre className="text-sm overflow-x-auto">
+{`git clone https://github.com/zkmopro/mopro
+cd mopro/cli
+cargo install --path .`}
+            </pre>
+          </div>
+        </div>
 
-# Initialize MoPro configuration
-mopro init
+        <p className="mb-4">Verify installation and see available commands:</p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`mopro --help
+mopro init --help  # See details for specific commands`}
+          </pre>
+        </div>
 
-# Build native bindings
-mopro build
+        <h3 className="text-xl font-bold mb-2 mt-8">Step 2: Initialize Adapters</h3>
+        <p className="mb-4">Navigate to the folder where you want to build the app and select the adapters:</p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`mopro init`}
+          </pre>
+        </div>
 
-# Generate platform templates
-mopro create
+        <p className="mb-4">The following prompt will appear:</p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`$ mopro init
+✔ Project name · mopro-example-app
+? Pick the adapters you want (multiple selection with space)
+⬚ circom
+⬚ halo2
+⬚ noir
+⬚ none of above
+🚀 Project 'mopro-example-app' initialized successfully! 🎉`}
+          </pre>
+        </div>
 
-# Update bindings after changes
+        <p className="mb-4">Navigate to your project directory:</p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`cd mopro-example-app`}
+          </pre>
+        </div>
+
+        <h3 className="text-xl font-bold mb-2 mt-8">Step 3: Build Bindings</h3>
+        <p className="mb-4">
+          Build bindings for specific targets (iOS, Android, Web). This step builds example circuits 
+          (Circom: multiplier2, Halo2: fibonacci, Noir: multiplier2).
+        </p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`mopro build`}
+          </pre>
+        </div>
+
+        <p className="mb-4">The following prompt will appear:</p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`$ mopro build
+? Build mode ›
+  debug
+> release
+? Select platform(s) to build for (multiple selection with space) ›
+⬚ ios
+⬚ android
+⬚ web
+? Select ios architecture(s) to compile ›
+⬚ aarch64-apple-ios
+⬚ aarch64-apple-ios-sim
+⬚ x86_64-apple-ios
+? Select android architecture(s) to compile >
+⬚ x86_64-linux-android
+⬚ i686-linux-android
+⬚ armv7-linux-androideabi
+⬚ aarch64-linux-android`}
+          </pre>
+        </div>
+
+        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
+          <p className="mb-2"><strong>⚠️ Warning:</strong> The process of building bindings may take a few minutes.</p>
+        </div>
+
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+          <p className="mb-2"><strong>💡 Performance Tip:</strong></p>
+          <p className="text-sm">
+            Running your project in release mode significantly enhances performance compared to debug mode. 
+            The Rust compiler applies optimizations that improve runtime speed and reduce binary size.
+          </p>
+        </div>
+
+        <h3 className="text-xl font-bold mb-2 mt-8">Step 4: Create Templates</h3>
+        <p className="mb-4">Create templates for developing your mobile app:</p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`mopro create`}
+          </pre>
+        </div>
+
+        <p className="mb-4">The following prompt will appear:</p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`$ mopro create
+? Create template ›
+  ios
+  android
+  web
+  flutter
+  react-native`}
+          </pre>
+        </div>
+
+        <p className="mb-4 text-sm text-gray-600">
+          <em>Note: Only one template can be selected at a time. To build for additional frameworks, run mopro create again.</em>
+        </p>
+
+        <h4 className="text-lg font-bold mb-2 mt-6">Opening Development Tools</h4>
+        
+        <p className="mb-2"><strong>For iOS:</strong></p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`open ios/MoproApp.xcodeproj`}
+          </pre>
+        </div>
+
+        <p className="mb-2"><strong>For Android:</strong></p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`open android -a Android\\ Studio`}
+          </pre>
+        </div>
+
+        <p className="mb-2"><strong>For Web:</strong></p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`cd web && yarn && yarn start`}
+          </pre>
+        </div>
+
+        <p className="mb-2"><strong>For React Native:</strong></p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`cd react-native && npm install
+
+# Setup ANDROID_HOME environment for Android
+export ANDROID_HOME=~/Library/Android/sdk
+
+npm run ios           # for iOS simulator
+npm run ios:device    # for iOS device
+npm run android       # for Android emulator/devices`}
+          </pre>
+        </div>
+
+        <p className="mb-2"><strong>For Flutter:</strong></p>
+        <p className="mb-4 text-sm">Make sure Flutter is installed on your system.</p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`flutter doctor
+flutter pub get
+
+# Connect devices or turn on simulators before running
+flutter run`}
+          </pre>
+        </div>
+
+        <h3 className="text-xl font-bold mb-2 mt-8">Step 5: Update Circuits</h3>
+
+        <h4 className="text-lg font-bold mb-2 mt-6">For Circom Circuits</h4>
+        <ul className="list-disc ml-6 mb-4">
+          <li>Ensure <code>circom</code> feature is activated in <code>mopro-ffi</code></li>
+          <li>Follow the Circom documentation to generate the <code>.wasm</code> and <code>.zkey</code> files</li>
+          <li>Place the <code>.wasm</code> and <code>.zkey</code> files in the <code>test-vectors/circom</code> directory</li>
+        </ul>
+
+        <p className="mb-4">Generate the execution function using the rust_witness macro:</p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`rust_witness::witness!(circuitname);
+
+// ⚠️ The name should be the name of the wasm file all lowercase
+// ⚠️ with all special characters removed
+// ⚠️ Avoid using 'main' as your circuit name
+//
+// Examples:
+// multiplier2 -> multiplier2
+// keccak_256_256_main -> keccak256256main
+// aadhaar-verifier -> aadhaarverifier`}
+          </pre>
+        </div>
+
+        <p className="mb-4">Bind the <code>.zkey</code> file to the witness generation function:</p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`mopro_ffi::set_circom_circuits! {
+    ("circuitname.zkey", mopro_ffi::witness::WitnessFn::RustWitness(circuitname_witness))
+}`}
+          </pre>
+        </div>
+
+        <p className="mb-4">Circuit input format (flat one-dimensional JSON string mapping):</p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`"{
+    \\"a\\": [\\"3\\"],
+    \\"b\\": [\\"5\\"]
+}"`}
+          </pre>
+        </div>
+
+        <h4 className="text-lg font-bold mb-2 mt-6">For Noir Circuits</h4>
+        <ul className="list-disc ml-6 mb-4">
+          <li>Ensure <code>noir</code> feature is activated in <code>mopro-ffi</code></li>
+          <li>Follow the Noir documentation to generate the <code>.json</code> file</li>
+          <li>Download SRS to generate the <code>.srs</code> file</li>
+          <li>Place the <code>.json</code> and <code>.srs</code> files in the <code>test-vectors/noir</code> directory</li>
+        </ul>
+
+        <p className="mb-4">Circuit input format (flat one-dimensional Vec&lt;String&gt;):</p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`["3", "5"]`}
+          </pre>
+        </div>
+
+        <h3 className="text-xl font-bold mb-2 mt-8">Step 6: Update Bindings</h3>
+        <p className="mb-4">
+          If you make changes to <code>src/lib.rs</code>—such as updating circuits or adding functions 
+          with <code>#[uniffi::export]</code>—run:
+        </p>
+        <div className="bg-gray-50 p-4 rounded mb-4">
+          <pre className="text-sm overflow-x-auto">
+{`mopro build
 mopro update`}
           </pre>
         </div>
 
-        <h3 className="text-xl font-bold mb-2">Android Development</h3>
-        <p className="mb-4">Prerequisites: Android Studio, Android SDK, Java 11+</p>
+        <p className="mb-4">This automatically updates bindings in all platform templates. For custom paths:</p>
         <div className="bg-gray-50 p-4 rounded mb-4">
           <pre className="text-sm overflow-x-auto">
-{`# Open in Android Studio
-open android -a Android\\ Studio
-
-# Or build from command line
-cd android
-./gradlew build
-
-# Run on device
-./gradlew installDebug`}
+{`mopro update --src ./my_bindings --dest ../MyMobileApp`}
           </pre>
         </div>
 
-        <h3 className="text-xl font-bold mb-2">iOS Development</h3>
-        <p className="mb-4">Prerequisites: Xcode, macOS, CocoaPods</p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
-{`# Open in Xcode
-open ios/MoproApp.xcodeproj
+        <h3 className="text-xl font-bold mb-2 mt-8">Step 7: What&apos;s Next</h3>
+        <ul className="list-disc ml-6 mb-4">
+          <li>
+            <strong>Update your ZK circuits:</strong> After making changes, run <code>mopro build</code> and <code>mopro update</code>
+          </li>
+          <li>
+            <strong>Build your mobile app frontend:</strong> Implement your business logic and user flow
+          </li>
+          <li>
+            <strong>Expose additional Rust functionality:</strong> Add required Rust crates in <code>Cargo.toml</code> 
+            and annotate functions with <code>#[uniffi::export]</code>
+          </li>
+        </ul>
 
-# Or build from command line
-cd ios
-xcodebuild -project MoproApp.xcodeproj -scheme MoproApp build`}
-          </pre>
-        </div>
-
-        <h3 className="text-xl font-bold mb-2">Running Tests</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
-{`# Run Rust tests
-cargo test
-
-# Test specific circuit
-cargo test test_circom
-
-# Run with verbose output
-cargo test -- --nocapture`}
-          </pre>
+        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
+          <p className="mb-2"><strong>⚠️ Important for React Native and Flutter:</strong></p>
+          <p className="text-sm">
+            Don&apos;t forget to update the module&apos;s API definitions to ensure the framework can access 
+            the new Swift/Kotlin bindings.
+          </p>
         </div>
       </section>
 
@@ -243,14 +473,6 @@ cargo test -- --nocapture`}
           <li><code>mopro-example-app/</code> - Example implementation</li>
         </ul>
 
-        <h3 className="text-xl font-bold mb-2">Documentation</h3>
-        <ul className="list-disc ml-6 mb-4">
-          <li><code>README.md</code> - Project overview</li>
-          <li><code>CONTRIBUTING.md</code> - Contribution guidelines</li>
-          <li><code>APP_INTEGRATION_GUIDE.md</code> - Integration guide</li>
-          <li><code>benchmarking-suite/frameworks/circom/ADDING_HASH_FUNCTIONS.md</code> - Circuit development guide</li>
-          <li><code>benchmarking-suite/moPro/README.md</code> - MoPro documentation</li>
-        </ul>
       </section>
 
       <section id="common-issues-and-solutions" className="mb-12">
