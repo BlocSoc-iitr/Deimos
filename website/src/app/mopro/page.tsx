@@ -57,7 +57,7 @@ export default function MoPro() {
 │   ├── Cargo.toml              # Rust dependencies
 │   └── README.md               # Setup instructions
 │
-├── mopro-keccack256/            # Keccak-256 implementation
+├── mopro-keccak256/            # Keccak-256 implementation
 │   └── (same structure)
 │
 └── mopro-example-app/           # Example implementation
