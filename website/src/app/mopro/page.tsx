@@ -567,7 +567,7 @@ xcodebuild test -project MoproApp.xcodeproj -scheme MoproApp`}
         </p>
         <ul className="list-disc ml-6 mb-4">
           <li><strong>mopro-sha256:</strong> SHA-256 hash benchmarking app</li>
-          <li><strong>mopro-keccack256:</strong> Keccak-256 hash benchmarking app</li>
+          <li><strong>mopro-keccak256:</strong> Keccak-256 hash benchmarking app</li>
           <li><strong>mopro-example-app:</strong> Basic example with all features</li>
         </ul>
       </section>
