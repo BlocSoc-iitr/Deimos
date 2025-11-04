@@ -69,9 +69,15 @@ const sidebarItems: SidebarItem[] = [
   {
     title: 'Contributing',
     children: [
-      { title: 'Overview', href: '/docs/contributing' },
-      { title: 'Workflow', href: '/docs/contributing#development-workflow' },
-      { title: 'Code Style', href: '/docs/contributing#code-style-guidelines' },
+      { title: 'Ways to Contribute', href: '/docs/contributing#ways-to-contribute' },
+      { title: 'Development Workflow', href: '/docs/contributing#development-workflow' },
+      { title: 'Adding New Applications', href: '/docs/contributing#adding-new-applications' },
+      { title: 'Code Style Guidelines', href: '/docs/contributing#code-style-guidelines' },
+      { title: 'Testing Requirements', href: '/docs/contributing#testing-requirements' },
+      { title: 'Documentation Requirements', href: '/docs/contributing#documentation-requirements' },
+      { title: 'Git Guidelines', href: '/docs/contributing#git-guidelines' },
+      { title: 'Getting Help', href: '/docs/contributing#getting-help' },
+      { title: 'Code of Conduct', href: '/docs/contributing#code-of-conduct' },
     ],
   },
 ];
