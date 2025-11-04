@@ -43,13 +43,27 @@ const sidebarItems: SidebarItem[] = [
     ],
   },
   {
-    title: 'MoPro',
+    title: 'Circom Integration',
     children: [
-      { title: 'Overview', href: '/docs/mopro' },
-      { title: 'Architecture', href: '/docs/mopro#architecture' },
-      { title: 'Setup', href: '/docs/mopro#setting-up-mopro' },
-      { title: 'Android Integration', href: '/docs/mopro#android-integration' },
-      { title: 'iOS Integration', href: '/docs/mopro#ios-integration' },
+      { title: 'Prerequisites', href: '/docs/circom-integration#prerequisites' },
+      { title: 'Integration Overview', href: '/docs/circom-integration#integration-overview' },
+      { title: 'Step-by-Step Integration', href: '/docs/circom-integration#step-by-step-integration' },
+      { title: 'Flutter UI Integration', href: '/docs/circom-integration#flutter-ui-integration' },
+      { title: 'Advanced Patterns', href: '/docs/circom-integration#advanced-patterns' },
+      { title: 'Troubleshooting', href: '/docs/circom-integration#troubleshooting' },
+      { title: 'Next Steps', href: '/docs/circom-integration#next-steps' },
+      { title: 'Key Learnings', href: '/docs/circom-integration#key-learnings' },
+    ],
+  },
+  {
+    title: 'Noir Integration',
+    children: [
+      { title: 'Prerequisites', href: '/docs/noir-integration#prerequisites' },
+      { title: 'Integration Overview', href: '/docs/noir-integration#integration-overview' },
+      { title: 'Step-by-Step Integration', href: '/docs/noir-integration#step-by-step-integration' },
+      { title: 'Troubleshooting', href: '/docs/noir-integration#troubleshooting' },
+      { title: 'Compiler Compatibility', href: '/docs/noir-integration#compiler-compatibility' },
+      { title: 'QA Checklist', href: '/docs/noir-integration#qa-checklist' },
     ],
   },
   {
@@ -74,7 +88,8 @@ export default function DocsLayout({
     'Documentation',
     'Getting Started',
     'Circuits',
-    'MoPro',
+    'Circom Integration',
+    'Noir Integration',
     'Contributing',
   ]);
 
