@@ -1,14 +1,13 @@
-# Deimos — zkVM Mobile Benchmarking Suite
+# Deimos — Client-Side Mobile Benchmarking Suite
 
-**Deimos** is an open-source benchmarking suite for evaluating zero-knowledge virtual machines (zkVMs) on mobile devices. It provides consistent, repeatable performance tests across various zkVM tools, starting with [MoPro](https://github.com/zkmopro/mopro).
+**Deimos** is an open-source benchmarking suite for computing zero-knowledge proofs on mobile devices. It provides consistent, repeatable performance tests across various frameworks, starting with [MoPro](https://github.com/zkmopro/mopro).
 
 ## Overview
 
 The goal of Deimos is to:
-* Benchmark zkVM performance for mobile-specific environments.
-* Compare multiple tools (initially **MoPro**, **imp1**, and **ProveKit**).
-* Measure performance of common cryptographic and proof-related functions such as **Poseidon2**, **SHA-256**, **Keccak-256**, and **EdDSA**.
-* Present results via a centralized **website dashboard**.
+* Benchmark performance of common cryptographic and proof-related functions such as **Poseidon2**, **SHA-256**, **Keccak-256**, and **EdDSA** for mobile-specific environments.
+* Compare multiple benchmarking tools such as DSLs like Circom, Noir and ZkVMs like RiscZero, Cairo
+* Present results via a public **website dashboard**.
 
 > **Note:** This project is under active development and undergoes frequent changes in the `dev` branch.
 
@@ -18,47 +17,36 @@ The goal of Deimos is to:
 
 ```
 deimos/
-│
-├── website/                  # Dashboard for displaying benchmark results
-│   ├── frontend/            # React-based UI
-│   ├── backend/             # API server and database
+├── website/                    # Dashboard for displaying benchmark results
+│   ├── src/app/               # Next.js application
 │   └── package.json
 │
-├── mobile-apps/              # Mobile benchmarking apps for each zkVM
-│   ├── mopro/
-│   │   ├── poseidon2/        # Poseidon2 hash benchmark
-│   │   │   ├── android/
-│   │   │   ├── ios/
-│   │   │   └── README.md
-│   │   ├── sha256/           # SHA-256 hash benchmark
-│   │   │   ├── android/
-│   │   │   ├── ios/
-│   │   │   └── README.md
-│   │   ├── keccak/           # Keccak-256 hash benchmark
-│   │   │   ├── android/
-│   │   │   ├── ios/
-│   │   │   └── README.md
-│   │   ├── eddsa/            # EdDSA signature benchmark
-│   │   │   ├── android/
-│   │   │   ├── ios/
-│   │   │   └── README.md
-│   │   └── README.md
+├── benchmarking-suite/        # Core benchmarking implementation
+│   ├── frameworks/
+│   │   ├── circom/           # Circom circuit implementations
+│   │   │   ├── circuits/     # Hash function circuits
+│   │   │   │   ├── sha256/
+│   │   │   │   ├── keccak256/
+│   │   │   │   ├── blake2s256/
+│   │   │   │   ├── poseidon/
+│   │   │   │   ├── mimc256/
+│   │   │   │   └── pedersen/
+│   │   │   └── inputs/       # Test vectors
+│   │   └── noir/             # Noir implementations 
 │   │
-│   ├── imp1/                 # imp1 benchmarks (coming soon)
-│   ├── provekit/             # ProveKit benchmarks (coming soon)
-│   └── README.md
+│   └── moPro/                # MoPro mobile integration
+│       ├── mopro-sha256/     # SHA256 mobile app
+│       ├── mopro-keccack256/ # Keccak256 mobile app
+│       └── mopro-example-app/
 │
-├── .github/                  # CI/CD and benchmark automation scripts
-│   └── workflows/
+├── .github/workflows/         # CI/CD automation
+│   └── validate-circuits.yml # Circuit validation
 │
-├── docs/                     # Documentation and methodology
-├── .gitignore
 ├── README.md
 ├── CONTRIBUTING.md
-├── proposal.md
+├── APP_INTEGRATION_GUIDE.md
 └── LICENSE
 ```
-
 ---
 
 ## Benchmarked Frameworks
@@ -67,10 +55,8 @@ deimos/
 <!-- * **[MoPro](https://zkmopro.org/)** — Mobile-first ZK proving toolkit -->
 
 ### Planned Integration
-<!-- * **[imp1](https://github.com/ingonyama-zk/zkml)** — Ingonyama's mobile proving solution
+<!-- * **[imp1](https://github.com/ingonyama-zk/zkml)** — Ingonyama's mobile proving toolkit
 * **[ProveKit](https://github.com/worldfnd/ProveKit)** — Worldcoin's Noir-based toolkit
-* **RISC Zero** — General-purpose zkVM
-* **SP1** — Succinct's zkVM -->
 
 ## Benchmarked Primitives
 
@@ -103,6 +89,7 @@ deimos/
 1. **Clone the repository**
    ```bash
    git clone https://github.com/BlocSoc-iitr/deimos.git
+   git checkout dev
    cd deimos
    ```
 
