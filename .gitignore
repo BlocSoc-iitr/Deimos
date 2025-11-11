@@ -1,1 +1,5 @@
 *.ptau
+*.so
+*.a
+*.dylib
+*.dll
