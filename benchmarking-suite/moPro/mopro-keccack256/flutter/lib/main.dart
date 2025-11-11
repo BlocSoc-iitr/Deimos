@@ -20,11 +20,14 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   Halo2ProofResult? _halo2ProofResult;
   Uint8List? _noirProofResult;
   Uint8List? _noirVerificationKey;
+  Risc0ProofOutput? _risc0ProofResult;
+  Risc0VerifyOutput? _risc0VerifyResult;
   bool? _circomValid;
   bool? _halo2Valid;
   bool? _noirValid;
   final _moproFlutterPlugin = MoproFlutter();
   bool isProving = false;
+  bool isVerifying = false;
   Exception? _error;
   late TabController _tabController;
 
@@ -34,6 +37,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   final TextEditingController _controllerOut = TextEditingController();
   final TextEditingController _controllerNoirA = TextEditingController();
   final TextEditingController _controllerNoirB = TextEditingController();
+  final TextEditingController _controllerRisc0Input = TextEditingController();
 
   @override
   void initState() {
@@ -43,7 +47,8 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     _controllerOut.text = "55";
     _controllerNoirA.text = "5";
     _controllerNoirB.text = "3";
-    _tabController = TabController(length: 3, vsync: this);
+    _controllerRisc0Input.text = "42";
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -561,6 +566,189 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     );
   }
 
+  Widget _buildRisc0Tab() {
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (isProving || isVerifying) const CircularProgressIndicator(),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                padding: const EdgeInsets.all(12.0),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  border: Border.all(color: Colors.red.shade200),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Text(
+                  _error.toString(),
+                  style: TextStyle(color: Colors.red.shade700),
+                ),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextFormField(
+              controller: _controllerRisc0Input,
+              decoration: const InputDecoration(
+                labelText: "Input value (u32)",
+                hintText: "For example, 42",
+              ),
+              keyboardType: TextInputType.number,
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: SizedBox(
+                  width: 160,
+                  height: 48,
+                  child: OutlinedButton(
+                    onPressed: (_controllerRisc0Input.text.isEmpty || isProving || isVerifying)
+                      ? null
+                      : () async {
+                        HapticFeedback.lightImpact();
+
+                        setState(() {
+                          _error = null;
+                          isProving = true;
+                          _risc0VerifyResult = null;
+                        });
+
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        Risc0ProofOutput? risc0ProofResult;
+                        try {
+                          final inputValue = int.parse(_controllerRisc0Input.text);
+                          if (inputValue < 0 || inputValue > 4294967295) {
+                            throw Exception("Input must be a valid u32 (0 to 4294967295)");
+                          }
+                          risc0ProofResult = await _moproFlutterPlugin.generateRisc0Proof(inputValue);
+                        } on Exception catch (e) {
+                          print("Error: $e");
+                          risc0ProofResult = null;
+                          setState(() {
+                            _error = e;
+                          });
+                        } on FormatException catch (e) {
+                          print("Error: $e");
+                          risc0ProofResult = null;
+                          setState(() {
+                            _error = Exception("Invalid input format. Please enter a valid number.");
+                          });
+                        }
+
+                        if (!mounted) return;
+
+                        setState(() {
+                          isProving = false;
+                          _risc0ProofResult = risc0ProofResult;
+                        });
+                      },
+                    child: isProving
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Text("Proving..."),
+                          ],
+                        )
+                      : const Text("Generate Proof"),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: SizedBox(
+                  width: 160,
+                  height: 48,
+                  child: OutlinedButton(
+                    onPressed: (_risc0ProofResult != null && !isProving && !isVerifying)
+                      ? () async {
+                        HapticFeedback.lightImpact();
+
+                        setState(() {
+                          _error = null;
+                          isVerifying = true;
+                        });
+
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        Risc0VerifyOutput? verifyResult;
+                        try {
+                          verifyResult = await _moproFlutterPlugin.verifyRisc0Proof(_risc0ProofResult!.receipt);
+                        } on Exception catch (e) {
+                          print("Error: $e");
+                          verifyResult = null;
+                          setState(() {
+                            _error = e;
+                          });
+                        }
+
+                        if (!mounted) return;
+
+                        setState(() {
+                          _risc0VerifyResult = verifyResult;
+                          isVerifying = false;
+                        });
+                      }
+                      : null,
+                    child: isVerifying
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Text("Verifying..."),
+                          ],
+                        )
+                      : const Text("Verify Proof"),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_risc0ProofResult != null)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text('Proof Generated Successfully!'),
+                  const SizedBox(height: 8),
+                  Text('Receipt size: ${(_risc0ProofResult!.receipt.length / 1024).toStringAsFixed(1)} KB'),
+                  if (_risc0VerifyResult != null) ...[
+                    const SizedBox(height: 16),
+                    Text('Verification: ${_risc0VerifyResult!.isValid ? "PASSED" : "FAILED"}'),
+                    const SizedBox(height: 4),
+                    Text('Output value: ${_risc0VerifyResult!.outputValue}'),
+                  ],
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -574,6 +762,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               Tab(text: 'Circom'),
               Tab(text: 'Halo2'),
               Tab(text: 'Noir'),
+              Tab(text: 'RISC Zero'),
             ],
           ),
         ),
@@ -583,6 +772,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
             _buildCircomTab(),
             _buildHalo2Tab(),
             _buildNoirTab(),
+            _buildRisc0Tab(),
           ],
         ),
       ),

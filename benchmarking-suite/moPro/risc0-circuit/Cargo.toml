@@ -1,0 +1,13 @@
+[package]
+name = "risc0-circuit"
+version = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+methods = { path = "./methods" }
+risc0-zkvm = { version = "3.0.3", features = ["client", "prove"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+serde = "1.0"
+
+[build-dependencies]
+risc0-build = { version = "3.0.3" }
