@@ -1800,7 +1800,7 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
          * on the intended use case:
          *
          * - `on_chain = true`: Uses Keccak hash for Solidity verifier compatibility
-         * - `on_chain = false`: Uses Poseidon hash fotr better performance
+         * - `on_chain = false`: Uses Poseidon hash for better performance
          */
     @Throws(MoproException::class) fun `getNoirVerificationKey`(`circuitPath`: kotlin.String, `srsPath`: kotlin.String?, `onChain`: kotlin.Boolean, `lowMemoryMode`: kotlin.Boolean): kotlin.ByteArray {
             return FfiConverterByteArray.lift(
