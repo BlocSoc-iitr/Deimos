@@ -58,4 +58,12 @@ abstract class MoproFlutterPlatform extends PlatformInterface {
   Future<Uint8List> getNoirVerificationKey(String circuitPath, String? srsPath, bool onChain, bool lowMemoryMode) {
     throw UnimplementedError('getNoirVerificationKey() has not been implemented.');
   }
+
+  Future<Risc0ProofOutput> generateRisc0Proof(int input) {
+    throw UnimplementedError('generateRisc0Proof() has not been implemented.');
+  }
+
+  Future<Risc0VerifyOutput> verifyRisc0Proof(Uint8List receiptBytes) {
+    throw UnimplementedError('verifyRisc0Proof() has not been implemented.');
+  }
 }

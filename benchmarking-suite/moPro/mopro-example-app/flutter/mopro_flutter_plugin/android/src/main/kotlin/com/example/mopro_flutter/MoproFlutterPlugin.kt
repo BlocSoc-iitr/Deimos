@@ -314,6 +314,41 @@ class MoproFlutterPlugin : FlutterPlugin, MethodCallHandler {
             val res = getNoirVerificationKey(circuitPath, srsPath, onChain, lowMemoryMode)
             result.success(res)
 
+        } else if (call.method== "generateRisc0Proof") {
+            val input = call.argument<Int>("input") ?: return result.error(
+                "ARGUMENT_ERROR",
+                "Missing input",
+                null
+            )
+
+            try {
+                val res = risc0Prove(input.toUInt())
+                val resultMap = mapOf(
+                    "receipt" to res.receipt
+                )
+                result.success(resultMap)
+            } catch (e: Exception) {
+                result.error("PROOF_GENERATION_ERROR", "Failed to generate RISC0 proof", e.message)
+            }
+
+        } else if (call.method== "verifyRisc0Proof") {
+            val receiptBytes = call.argument<ByteArray>("receiptBytes") ?: return result.error(
+                "ARGUMENT_ERROR",
+                "Missing receiptBytes",
+                null
+            )
+
+            try {
+                val res = risc0Verify(receiptBytes)
+                val resultMap = mapOf(
+                    "isValid" to res.isValid,
+                    "outputValue" to res.outputValue.toInt()
+                )
+                result.success(resultMap)
+            } catch (e: Exception) {
+                result.error("PROOF_VERIFICATION_ERROR", "Failed to verify RISC0 proof", e.message)
+            }
+            
         } else {
             result.notImplemented()
         }
