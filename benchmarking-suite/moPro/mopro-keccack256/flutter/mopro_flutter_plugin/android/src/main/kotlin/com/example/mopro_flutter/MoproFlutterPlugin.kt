@@ -229,9 +229,10 @@ class MoproFlutterPlugin : FlutterPlugin, MethodCallHandler {
 
             val srsPath = call.argument<String>("srsPath") 
 
-            val inputs = call.argument<List<String>>("inputs") ?: return result.error(
+            val inputs: List<String> = call.argument<List<Any>>("inputs")
+            ?.map { it.toString() } ?: return result.error(
                 "ARGUMENT_ERROR",
-                "Missing inputs",
+                "Missing or invalid inputs",
                 null
             )
 

@@ -199,9 +199,17 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
                   Icons.nightlight_round,
                   'noir',
                 ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildFrameworkButton(
+                  'risc0',
+                  Icons.developer_board,
+                  'riscv',
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -211,11 +219,16 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
     final isSelected = _selectedFramework == value;
     return GestureDetector(
       onTap: () {
-                        setState(() {
+        setState(() {
           _selectedFramework = value;
           _selectedAlgorithm = null; // Reset algorithm when framework changes
-                      });
-                    },
+          if (value == 'riscv') {
+            _customInputController.text = '17'; // Default numeric input for risc-v
+          } else {
+            _customInputController.text = "Hello World! This is a test msg.";
+          }
+        });
+      },
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -306,14 +319,15 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
   }
 
   Widget _buildCustomInput() {
+    bool isRiscV = _selectedFramework == 'riscv';
     return _buildCard(
       title: 'Custom Input',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Enter text to hash',
-            style: TextStyle(
+          Text(
+            isRiscV ? 'Enter a number' : 'Enter text to hash',
+            style: const TextStyle(
               fontSize: 14,
               color: AppTheme.textSecondary,
             ),
@@ -321,8 +335,9 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
           const SizedBox(height: 12),
           TextField(
             controller: _customInputController,
+            keyboardType: isRiscV ? TextInputType.number : TextInputType.text,
             decoration: InputDecoration(
-              hintText: 'Enter your custom text here...',
+              hintText: isRiscV ? 'Enter a number here...' : 'Enter your custom text here...',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: AppTheme.border),
@@ -333,7 +348,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
-            maxLines: 3,
+            maxLines: isRiscV ? 1 : 3,
           ),
         ],
       ),
@@ -425,6 +440,8 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
         return ['Fibonacci'];
       case 'noir':
         return ['SHA256', 'Keccak256', 'Poseidon', 'MiMC', 'Pedersen', 'blake2', 'blake3'];
+      case 'riscv':
+        return ['Factor'];
       default:
         return [];
     }
@@ -433,15 +450,13 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
   void _runBenchmark() async {
     if (_selectedFramework == null || _selectedAlgorithm == null) return;
 
-                      setState(() {
+    setState(() {
       _isLoading = true;
     });
 
-    // Simulate loading time
-    await Future.delayed(const Duration(seconds: 2));
-
     if (mounted) {
-      Navigator.push(
+      // Wait for the ProofResultPage to be popped before setting isLoading to false
+      await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => ProofResultPage(
@@ -453,9 +468,11 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
       );
     }
 
-                        setState(() {
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 }
 
@@ -487,6 +504,10 @@ class _ProofResultPageState extends State<ProofResultPage> {
   CircomProofResult? _circomProofResult;
   Halo2ProofResult? _halo2ProofResult;
   Uint8List? _noirProofResult;
+  
+  // RISC-V results
+  Risc0ProofOutput? _risc0ProofResult;
+  Risc0VerifyOutput? _risc0VerifyResult;
   
   // Store Noir verification keys (like in old implementation)
   Uint8List? _noirMimcVerificationKey;
@@ -813,6 +834,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
         return _buildHalo2ProofDetails();
       case 'noir':
         return _buildNoirProofDetails();
+      case 'riscv':
+        return _buildRiscvProofDetails();
       default:
       return const SizedBox.shrink();
     }
@@ -897,6 +920,32 @@ class _ProofResultPageState extends State<ProofResultPage> {
     );
   }
 
+  Widget _buildRiscvProofDetails() {
+    if (_risc0ProofResult == null) return const SizedBox.shrink();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Proof Details:',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            color: AppTheme.secondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text('Receipt size: ${(_risc0ProofResult!.receipt.length / 1024).toStringAsFixed(1)} KB'),
+        if (_risc0VerifyResult != null) ...[
+            const SizedBox(height: 16),
+            Text('Verification: ${_risc0VerifyResult!.isValid ? "PASSED" : "FAILED"}'),
+            const SizedBox(height: 4),
+            Text('Output value: ${_risc0VerifyResult!.outputValue}'),
+          ],
+      ],
+    );
+  }
+
   Widget _buildCard({required String title, required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -960,6 +1009,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
         return await _generateHalo2Proof(moproFlutterPlugin);
       case 'noir':
         return await _generateNoirProof(moproFlutterPlugin);
+      case 'riscv':
+        return await _generateRiscvProof(moproFlutterPlugin);
       default:
         throw Exception('Unknown framework: ${widget.framework}');
     }
@@ -1067,6 +1118,32 @@ class _ProofResultPageState extends State<ProofResultPage> {
     
     // Format the actual proof data
     return _formatNoirProofOutput(proof);
+  }
+
+  Future<String> _generateRiscvProof(MoproFlutter plugin) async {
+    // Validate and convert user input
+    int? numericInput = int.tryParse(widget.customInput);
+    if (numericInput == null) {
+      throw Exception('Input for zkVM risc0 Factor circuit must be a numeric value');
+    }
+    
+    // Start timing
+    final stopwatch = Stopwatch()..start();
+    
+    // Generate proof using actual MoPro
+    final proofResult = await plugin.generateRisc0Proof(numericInput);
+    
+    // Stop timing and store
+    stopwatch.stop();
+    
+    // Store the proof result for verification
+    setState(() {
+      _risc0ProofResult = proofResult;
+      _proofGenerationTime = stopwatch.elapsed;
+    });
+    
+    // Format the actual proof data
+    return _formatRiscvProofOutput(proofResult);
   }
 
   String _getZkeyPath() {
@@ -1293,6 +1370,19 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
 ''';
   }
 
+  String _formatRiscvProofOutput(Risc0ProofOutput proofResult) {
+    return '''
+${widget.algorithm} Proof: Risc0ProofOutput(
+  receipt: ${proofResult.receipt.toString()}
+)
+
+Framework: ${widget.framework}
+Algorithm: ${widget.algorithm}
+Input: "${widget.customInput}"
+Timestamp: ${DateTime.now().millisecondsSinceEpoch}
+''';
+  }
+
 
 
 
@@ -1350,6 +1440,8 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
         return await _verifyHalo2Proof(moproFlutterPlugin);
       case 'noir':
         return await _verifyNoirProof(moproFlutterPlugin);
+      case 'riscv':
+        return await _verifyRiscvProof(moproFlutterPlugin);
         default:
         throw Exception('Unknown framework: ${widget.framework}');
     }
@@ -1419,6 +1511,26 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     });
     
     return result;
+  }
+
+  Future<bool> _verifyRiscvProof(MoproFlutter plugin) async {
+    if (_risc0ProofResult == null) {
+      throw Exception('No proof available for verification');
+    }
+    
+    // Start timing
+    final stopwatch = Stopwatch()..start();
+    
+    final verifyResult = await plugin.verifyRisc0Proof(_risc0ProofResult!.receipt);
+    
+    // Stop timing and store
+    stopwatch.stop();
+    setState(() {
+      _proofVerificationTime = stopwatch.elapsed;
+      _risc0VerifyResult = verifyResult;
+    });
+    
+    return verifyResult.isValid;
   }
 
 }
