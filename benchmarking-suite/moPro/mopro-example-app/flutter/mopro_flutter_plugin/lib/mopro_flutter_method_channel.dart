@@ -109,4 +109,32 @@ class MethodChannelMoproFlutter extends MoproFlutterPlatform {
     });
     return result ?? Uint8List(0);
   }
+
+  @override
+  Future<Risc0ProofOutput> generateRisc0Proof(int input) async {
+    final proofResult = await methodChannel
+        .invokeMethod<Map<Object?, Object?>>('generateRisc0Proof', {
+      'input': input,
+    });
+
+    if (proofResult == null) {
+      throw Exception('Failed to generate RISC0 proof');
+    }
+
+    return Risc0ProofOutput.fromMap(proofResult);
+  }
+
+  @override
+  Future<Risc0VerifyOutput> verifyRisc0Proof(Uint8List receiptBytes) async {
+    final verifyResult = await methodChannel
+        .invokeMethod<Map<Object?, Object?>>('verifyRisc0Proof', {
+      'receiptBytes': receiptBytes,
+    });
+
+    if (verifyResult == null) {
+      throw Exception('Failed to verify RISC0 proof');
+    }
+
+    return Risc0VerifyOutput.fromMap(verifyResult);
+  }
 }

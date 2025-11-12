@@ -727,6 +727,10 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is 
 // rather `InterfaceTooLargeException`, caused by too many methods 
@@ -751,6 +755,10 @@ fun uniffi_mopro_example_app_checksum_func_generate_noir_proof(
 fun uniffi_mopro_example_app_checksum_func_get_noir_verification_key(
 ): Short
 fun uniffi_mopro_example_app_checksum_func_mopro_uniffi_hello_world(
+): Short
+fun uniffi_mopro_example_app_checksum_func_risc0_prove(
+): Short
+fun uniffi_mopro_example_app_checksum_func_risc0_verify(
 ): Short
 fun uniffi_mopro_example_app_checksum_func_verify_circom_proof(
 ): Short
@@ -812,6 +820,10 @@ fun uniffi_mopro_example_app_fn_func_generate_noir_proof(`circuitPath`: RustBuff
 fun uniffi_mopro_example_app_fn_func_get_noir_verification_key(`circuitPath`: RustBuffer.ByValue,`srsPath`: RustBuffer.ByValue,`onChain`: Byte,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 fun uniffi_mopro_example_app_fn_func_mopro_uniffi_hello_world(uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_mopro_example_app_fn_func_risc0_prove(`input`: Int,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_mopro_example_app_fn_func_risc0_verify(`receiptBytes`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 fun uniffi_mopro_example_app_fn_func_verify_circom_proof(`zkeyPath`: RustBuffer.ByValue,`proofResult`: RustBuffer.ByValue,`proofLib`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): Byte
@@ -960,6 +972,12 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_mopro_example_app_checksum_func_mopro_uniffi_hello_world() != 57387.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_mopro_example_app_checksum_func_risc0_prove() != 44720.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_mopro_example_app_checksum_func_risc0_verify() != 58691.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_mopro_example_app_checksum_func_verify_circom_proof() != 8858.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1022,6 +1040,29 @@ inline fun <T : Disposable?, R> T.use(block: (T) -> R) =
  * @suppress
  * */
 object NoPointer
+
+/**
+ * @suppress
+ */
+public object FfiConverterUInt: FfiConverter<UInt, Int> {
+    override fun lift(value: Int): UInt {
+        return value.toUInt()
+    }
+
+    override fun read(buf: ByteBuffer): UInt {
+        return lift(buf.getInt())
+    }
+
+    override fun lower(value: UInt): Int {
+        return value.toInt()
+    }
+
+    override fun allocationSize(value: UInt) = 4UL
+
+    override fun write(value: UInt, buf: ByteBuffer) {
+        buf.putInt(value.toInt())
+    }
+}
 
 /**
  * @suppress
@@ -1304,6 +1345,66 @@ public object FfiConverterTypeHalo2ProofResult: FfiConverterRustBuffer<Halo2Proo
 
 
 
+data class Risc0ProofOutput (
+    var `receipt`: kotlin.ByteArray
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRisc0ProofOutput: FfiConverterRustBuffer<Risc0ProofOutput> {
+    override fun read(buf: ByteBuffer): Risc0ProofOutput {
+        return Risc0ProofOutput(
+            FfiConverterByteArray.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: Risc0ProofOutput) = (
+            FfiConverterByteArray.allocationSize(value.`receipt`)
+    )
+
+    override fun write(value: Risc0ProofOutput, buf: ByteBuffer) {
+            FfiConverterByteArray.write(value.`receipt`, buf)
+    }
+}
+
+
+
+data class Risc0VerifyOutput (
+    var `isValid`: kotlin.Boolean, 
+    var `outputValue`: kotlin.UInt
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRisc0VerifyOutput: FfiConverterRustBuffer<Risc0VerifyOutput> {
+    override fun read(buf: ByteBuffer): Risc0VerifyOutput {
+        return Risc0VerifyOutput(
+            FfiConverterBoolean.read(buf),
+            FfiConverterUInt.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: Risc0VerifyOutput) = (
+            FfiConverterBoolean.allocationSize(value.`isValid`) +
+            FfiConverterUInt.allocationSize(value.`outputValue`)
+    )
+
+    override fun write(value: Risc0VerifyOutput, buf: ByteBuffer) {
+            FfiConverterBoolean.write(value.`isValid`, buf)
+            FfiConverterUInt.write(value.`outputValue`, buf)
+    }
+}
+
+
+
 
 
 sealed class MoproException: kotlin.Exception() {
@@ -1432,6 +1533,128 @@ public object FfiConverterTypeProofLib: FfiConverterRustBuffer<ProofLib> {
 }
 
 
+
+
+
+
+
+sealed class Risc0Exception: kotlin.Exception() {
+    
+    class ProveException(
+        
+        val v1: kotlin.String
+        ) : Risc0Exception() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+    class SerializeException(
+        
+        val v1: kotlin.String
+        ) : Risc0Exception() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+    class VerifyException(
+        
+        val v1: kotlin.String
+        ) : Risc0Exception() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+    class DecodeException(
+        
+        val v1: kotlin.String
+        ) : Risc0Exception() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+
+    companion object ErrorHandler : UniffiRustCallStatusErrorHandler<Risc0Exception> {
+        override fun lift(error_buf: RustBuffer.ByValue): Risc0Exception = FfiConverterTypeRisc0Error.lift(error_buf)
+    }
+
+    
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRisc0Error : FfiConverterRustBuffer<Risc0Exception> {
+    override fun read(buf: ByteBuffer): Risc0Exception {
+        
+
+        return when(buf.getInt()) {
+            1 -> Risc0Exception.ProveException(
+                FfiConverterString.read(buf),
+                )
+            2 -> Risc0Exception.SerializeException(
+                FfiConverterString.read(buf),
+                )
+            3 -> Risc0Exception.VerifyException(
+                FfiConverterString.read(buf),
+                )
+            4 -> Risc0Exception.DecodeException(
+                FfiConverterString.read(buf),
+                )
+            else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: Risc0Exception): ULong {
+        return when(value) {
+            is Risc0Exception.ProveException -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+            is Risc0Exception.SerializeException -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+            is Risc0Exception.VerifyException -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+            is Risc0Exception.DecodeException -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+        }
+    }
+
+    override fun write(value: Risc0Exception, buf: ByteBuffer) {
+        when(value) {
+            is Risc0Exception.ProveException -> {
+                buf.putInt(1)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+            is Risc0Exception.SerializeException -> {
+                buf.putInt(2)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+            is Risc0Exception.VerifyException -> {
+                buf.putInt(3)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+            is Risc0Exception.DecodeException -> {
+                buf.putInt(4)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+
+}
 
 
 
@@ -1597,6 +1820,26 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     uniffiRustCall() { _status ->
     UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_mopro_uniffi_hello_world(
         _status)
+}
+    )
+    }
+    
+
+    @Throws(Risc0Exception::class) fun `risc0Prove`(`input`: kotlin.UInt): Risc0ProofOutput {
+            return FfiConverterTypeRisc0ProofOutput.lift(
+    uniffiRustCallWithError(Risc0Exception) { _status ->
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_risc0_prove(
+        FfiConverterUInt.lower(`input`),_status)
+}
+    )
+    }
+    
+
+    @Throws(Risc0Exception::class) fun `risc0Verify`(`receiptBytes`: kotlin.ByteArray): Risc0VerifyOutput {
+            return FfiConverterTypeRisc0VerifyOutput.lift(
+    uniffiRustCallWithError(Risc0Exception) { _status ->
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_risc0_verify(
+        FfiConverterByteArray.lower(`receiptBytes`),_status)
 }
     )
     }
