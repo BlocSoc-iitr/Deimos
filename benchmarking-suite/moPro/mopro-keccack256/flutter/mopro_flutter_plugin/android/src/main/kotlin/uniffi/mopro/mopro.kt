@@ -58,7 +58,7 @@ open class RustBuffer : Structure() {
     companion object {
         internal fun alloc(size: ULong = 0UL) = uniffiRustCall() { status ->
             // Note: need to convert the size to a `Long` value to make this work with JVM.
-            UniffiLib.INSTANCE.ffi_mopro_keccack256_rustbuffer_alloc(size.toLong(), status)
+            UniffiLib.INSTANCE.ffi_mopro_example_app_rustbuffer_alloc(size.toLong(), status)
         }.also {
             if(it.data == null) {
                throw RuntimeException("RustBuffer.alloc() returned null data pointer (size=${size})")
@@ -74,7 +74,7 @@ open class RustBuffer : Structure() {
         }
 
         internal fun free(buf: RustBuffer.ByValue) = uniffiRustCall() { status ->
-            UniffiLib.INSTANCE.ffi_mopro_keccack256_rustbuffer_free(buf, status)
+            UniffiLib.INSTANCE.ffi_mopro_example_app_rustbuffer_free(buf, status)
         }
     }
 
@@ -374,7 +374,7 @@ private fun findLibraryName(componentName: String): String {
     if (libOverride != null) {
         return libOverride
     }
-    return "mopro_keccack256"
+    return "mopro_example_app"
 }
 
 private inline fun <reified Lib : Library> loadIndirect(
@@ -746,27 +746,27 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 // when the library is loaded.
 internal interface IntegrityCheckingUniffiLib : Library {
     // Integrity check functions only
-    fun uniffi_mopro_keccack256_checksum_func_generate_circom_proof(
+    fun uniffi_mopro_example_app_checksum_func_generate_circom_proof(
 ): Short
-fun uniffi_mopro_keccack256_checksum_func_generate_halo2_proof(
+fun uniffi_mopro_example_app_checksum_func_generate_halo2_proof(
 ): Short
-fun uniffi_mopro_keccack256_checksum_func_generate_noir_proof(
+fun uniffi_mopro_example_app_checksum_func_generate_noir_proof(
 ): Short
-fun uniffi_mopro_keccack256_checksum_func_get_noir_verification_key(
+fun uniffi_mopro_example_app_checksum_func_get_noir_verification_key(
 ): Short
-fun uniffi_mopro_keccack256_checksum_func_mopro_uniffi_hello_world(
+fun uniffi_mopro_example_app_checksum_func_mopro_uniffi_hello_world(
 ): Short
-fun uniffi_mopro_keccack256_checksum_func_risc0_prove(
+fun uniffi_mopro_example_app_checksum_func_risc0_prove(
 ): Short
-fun uniffi_mopro_keccack256_checksum_func_risc0_verify(
+fun uniffi_mopro_example_app_checksum_func_risc0_verify(
 ): Short
-fun uniffi_mopro_keccack256_checksum_func_verify_circom_proof(
+fun uniffi_mopro_example_app_checksum_func_verify_circom_proof(
 ): Short
-fun uniffi_mopro_keccack256_checksum_func_verify_halo2_proof(
+fun uniffi_mopro_example_app_checksum_func_verify_halo2_proof(
 ): Short
-fun uniffi_mopro_keccack256_checksum_func_verify_noir_proof(
+fun uniffi_mopro_example_app_checksum_func_verify_noir_proof(
 ): Short
-fun ffi_mopro_keccack256_uniffi_contract_version(
+fun ffi_mopro_example_app_uniffi_contract_version(
 ): Int
 
 }
@@ -776,7 +776,7 @@ fun ffi_mopro_keccack256_uniffi_contract_version(
 internal interface UniffiLib : Library {
     companion object {
         internal val INSTANCE: UniffiLib by lazy {
-            val componentName = "mopro_keccack256"
+            val componentName = "mopro_example_app"
             // For large crates we prevent `MethodTooLargeException` (see #2340)
             // N.B. the name of the extension is very misleading, since it is 
             // rather `InterfaceTooLargeException`, caused by too many methods 
@@ -811,137 +811,137 @@ internal interface UniffiLib : Library {
     }
 
     // FFI functions
-    fun uniffi_mopro_keccack256_fn_func_generate_circom_proof(`zkeyPath`: RustBuffer.ByValue,`circuitInputs`: RustBuffer.ByValue,`proofLib`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_mopro_example_app_fn_func_generate_circom_proof(`zkeyPath`: RustBuffer.ByValue,`circuitInputs`: RustBuffer.ByValue,`proofLib`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
-fun uniffi_mopro_keccack256_fn_func_generate_halo2_proof(`srsPath`: RustBuffer.ByValue,`pkPath`: RustBuffer.ByValue,`circuitInputs`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+fun uniffi_mopro_example_app_fn_func_generate_halo2_proof(`srsPath`: RustBuffer.ByValue,`pkPath`: RustBuffer.ByValue,`circuitInputs`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
-fun uniffi_mopro_keccack256_fn_func_generate_noir_proof(`circuitPath`: RustBuffer.ByValue,`srsPath`: RustBuffer.ByValue,`inputs`: RustBuffer.ByValue,`onChain`: Byte,`vk`: RustBuffer.ByValue,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
+fun uniffi_mopro_example_app_fn_func_generate_noir_proof(`circuitPath`: RustBuffer.ByValue,`srsPath`: RustBuffer.ByValue,`inputs`: RustBuffer.ByValue,`onChain`: Byte,`vk`: RustBuffer.ByValue,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
-fun uniffi_mopro_keccack256_fn_func_get_noir_verification_key(`circuitPath`: RustBuffer.ByValue,`srsPath`: RustBuffer.ByValue,`onChain`: Byte,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
+fun uniffi_mopro_example_app_fn_func_get_noir_verification_key(`circuitPath`: RustBuffer.ByValue,`srsPath`: RustBuffer.ByValue,`onChain`: Byte,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
-fun uniffi_mopro_keccack256_fn_func_mopro_uniffi_hello_world(uniffi_out_err: UniffiRustCallStatus, 
+fun uniffi_mopro_example_app_fn_func_mopro_uniffi_hello_world(uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
-fun uniffi_mopro_keccack256_fn_func_risc0_prove(`input`: Int,uniffi_out_err: UniffiRustCallStatus, 
+fun uniffi_mopro_example_app_fn_func_risc0_prove(`input`: Int,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
-fun uniffi_mopro_keccack256_fn_func_risc0_verify(`receiptBytes`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+fun uniffi_mopro_example_app_fn_func_risc0_verify(`receiptBytes`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
-fun uniffi_mopro_keccack256_fn_func_verify_circom_proof(`zkeyPath`: RustBuffer.ByValue,`proofResult`: RustBuffer.ByValue,`proofLib`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+fun uniffi_mopro_example_app_fn_func_verify_circom_proof(`zkeyPath`: RustBuffer.ByValue,`proofResult`: RustBuffer.ByValue,`proofLib`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): Byte
-fun uniffi_mopro_keccack256_fn_func_verify_halo2_proof(`srsPath`: RustBuffer.ByValue,`vkPath`: RustBuffer.ByValue,`proof`: RustBuffer.ByValue,`publicInput`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+fun uniffi_mopro_example_app_fn_func_verify_halo2_proof(`srsPath`: RustBuffer.ByValue,`vkPath`: RustBuffer.ByValue,`proof`: RustBuffer.ByValue,`publicInput`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): Byte
-fun uniffi_mopro_keccack256_fn_func_verify_noir_proof(`circuitPath`: RustBuffer.ByValue,`proof`: RustBuffer.ByValue,`onChain`: Byte,`vk`: RustBuffer.ByValue,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
+fun uniffi_mopro_example_app_fn_func_verify_noir_proof(`circuitPath`: RustBuffer.ByValue,`proof`: RustBuffer.ByValue,`onChain`: Byte,`vk`: RustBuffer.ByValue,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
 ): Byte
-fun ffi_mopro_keccack256_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
-fun ffi_mopro_keccack256_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
-fun ffi_mopro_keccack256_rustbuffer_free(`buf`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rustbuffer_free(`buf`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): Unit
-fun ffi_mopro_keccack256_rustbuffer_reserve(`buf`: RustBuffer.ByValue,`additional`: Long,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rustbuffer_reserve(`buf`: RustBuffer.ByValue,`additional`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
-fun ffi_mopro_keccack256_rust_future_poll_u8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+fun ffi_mopro_example_app_rust_future_poll_u8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_cancel_u8(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_cancel_u8(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_free_u8(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_free_u8(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_complete_u8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rust_future_complete_u8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): Byte
-fun ffi_mopro_keccack256_rust_future_poll_i8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+fun ffi_mopro_example_app_rust_future_poll_i8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_cancel_i8(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_cancel_i8(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_free_i8(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_free_i8(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_complete_i8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rust_future_complete_i8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): Byte
-fun ffi_mopro_keccack256_rust_future_poll_u16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+fun ffi_mopro_example_app_rust_future_poll_u16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_cancel_u16(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_cancel_u16(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_free_u16(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_free_u16(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_complete_u16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rust_future_complete_u16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): Short
-fun ffi_mopro_keccack256_rust_future_poll_i16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+fun ffi_mopro_example_app_rust_future_poll_i16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_cancel_i16(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_cancel_i16(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_free_i16(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_free_i16(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_complete_i16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rust_future_complete_i16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): Short
-fun ffi_mopro_keccack256_rust_future_poll_u32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+fun ffi_mopro_example_app_rust_future_poll_u32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_cancel_u32(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_cancel_u32(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_free_u32(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_free_u32(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_complete_u32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rust_future_complete_u32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): Int
-fun ffi_mopro_keccack256_rust_future_poll_i32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+fun ffi_mopro_example_app_rust_future_poll_i32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_cancel_i32(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_cancel_i32(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_free_i32(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_free_i32(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_complete_i32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rust_future_complete_i32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): Int
-fun ffi_mopro_keccack256_rust_future_poll_u64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+fun ffi_mopro_example_app_rust_future_poll_u64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_cancel_u64(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_cancel_u64(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_free_u64(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_free_u64(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_complete_u64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rust_future_complete_u64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): Long
-fun ffi_mopro_keccack256_rust_future_poll_i64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+fun ffi_mopro_example_app_rust_future_poll_i64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_cancel_i64(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_cancel_i64(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_free_i64(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_free_i64(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_complete_i64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rust_future_complete_i64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): Long
-fun ffi_mopro_keccack256_rust_future_poll_f32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+fun ffi_mopro_example_app_rust_future_poll_f32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_cancel_f32(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_cancel_f32(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_free_f32(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_free_f32(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_complete_f32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rust_future_complete_f32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): Float
-fun ffi_mopro_keccack256_rust_future_poll_f64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+fun ffi_mopro_example_app_rust_future_poll_f64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_cancel_f64(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_cancel_f64(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_free_f64(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_free_f64(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_complete_f64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rust_future_complete_f64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): Double
-fun ffi_mopro_keccack256_rust_future_poll_pointer(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+fun ffi_mopro_example_app_rust_future_poll_pointer(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_cancel_pointer(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_cancel_pointer(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_free_pointer(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_free_pointer(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_complete_pointer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rust_future_complete_pointer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): Pointer
-fun ffi_mopro_keccack256_rust_future_poll_rust_buffer(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+fun ffi_mopro_example_app_rust_future_poll_rust_buffer(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_cancel_rust_buffer(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_cancel_rust_buffer(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_free_rust_buffer(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_free_rust_buffer(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_complete_rust_buffer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rust_future_complete_rust_buffer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
-fun ffi_mopro_keccack256_rust_future_poll_void(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+fun ffi_mopro_example_app_rust_future_poll_void(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_cancel_void(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_cancel_void(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_free_void(`handle`: Long,
+fun ffi_mopro_example_app_rust_future_free_void(`handle`: Long,
 ): Unit
-fun ffi_mopro_keccack256_rust_future_complete_void(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+fun ffi_mopro_example_app_rust_future_complete_void(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): Unit
 
 }
@@ -950,41 +950,41 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
     // Get the bindings contract version from our ComponentInterface
     val bindings_contract_version = 29
     // Get the scaffolding contract version by calling the into the dylib
-    val scaffolding_contract_version = lib.ffi_mopro_keccack256_uniffi_contract_version()
+    val scaffolding_contract_version = lib.ffi_mopro_example_app_uniffi_contract_version()
     if (bindings_contract_version != scaffolding_contract_version) {
         throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
     }
 }
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
-    if (lib.uniffi_mopro_keccack256_checksum_func_generate_circom_proof() != 29732.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_generate_circom_proof() != 27552.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_keccack256_checksum_func_generate_halo2_proof() != 5256.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_generate_halo2_proof() != 12749.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_keccack256_checksum_func_generate_noir_proof() != 57291.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_generate_noir_proof() != 54298.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_keccack256_checksum_func_get_noir_verification_key() != 27382.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_get_noir_verification_key() != 38748.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_keccack256_checksum_func_mopro_uniffi_hello_world() != 24446.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_mopro_uniffi_hello_world() != 57387.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_keccack256_checksum_func_risc0_prove() != 11087.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_risc0_prove() != 44720.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_keccack256_checksum_func_risc0_verify() != 13891.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_risc0_verify() != 58691.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_keccack256_checksum_func_verify_circom_proof() != 2137.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_verify_circom_proof() != 8858.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_keccack256_checksum_func_verify_halo2_proof() != 42206.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_verify_halo2_proof() != 24595.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_keccack256_checksum_func_verify_noir_proof() != 7780.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_verify_noir_proof() != 40491.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -1757,7 +1757,7 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     @Throws(MoproException::class) fun `generateCircomProof`(`zkeyPath`: kotlin.String, `circuitInputs`: kotlin.String, `proofLib`: ProofLib): CircomProofResult {
             return FfiConverterTypeCircomProofResult.lift(
     uniffiRustCallWithError(MoproException) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_keccack256_fn_func_generate_circom_proof(
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_generate_circom_proof(
         FfiConverterString.lower(`zkeyPath`),FfiConverterString.lower(`circuitInputs`),FfiConverterTypeProofLib.lower(`proofLib`),_status)
 }
     )
@@ -1767,27 +1767,45 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     @Throws(MoproException::class) fun `generateHalo2Proof`(`srsPath`: kotlin.String, `pkPath`: kotlin.String, `circuitInputs`: Map<kotlin.String, List<kotlin.String>>): Halo2ProofResult {
             return FfiConverterTypeHalo2ProofResult.lift(
     uniffiRustCallWithError(MoproException) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_keccack256_fn_func_generate_halo2_proof(
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_generate_halo2_proof(
         FfiConverterString.lower(`srsPath`),FfiConverterString.lower(`pkPath`),FfiConverterMapStringSequenceString.lower(`circuitInputs`),_status)
 }
     )
     }
     
 
+        /**
+         * Generates a Noir proof with automatic hash function selection
+         *
+         * This is the main proof generation function that automatically chooses
+         * the appropriate hash function based on the intended use case:
+         *
+         * - `on_chain = true`: Uses Keccak hash for Solidity verifier compatibility
+         * - `on_chain = false`: Uses Poseidon hash for better performance
+         */
     @Throws(MoproException::class) fun `generateNoirProof`(`circuitPath`: kotlin.String, `srsPath`: kotlin.String?, `inputs`: List<kotlin.String>, `onChain`: kotlin.Boolean, `vk`: kotlin.ByteArray, `lowMemoryMode`: kotlin.Boolean): kotlin.ByteArray {
             return FfiConverterByteArray.lift(
     uniffiRustCallWithError(MoproException) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_keccack256_fn_func_generate_noir_proof(
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_generate_noir_proof(
         FfiConverterString.lower(`circuitPath`),FfiConverterOptionalString.lower(`srsPath`),FfiConverterSequenceString.lower(`inputs`),FfiConverterBoolean.lower(`onChain`),FfiConverterByteArray.lower(`vk`),FfiConverterBoolean.lower(`lowMemoryMode`),_status)
 }
     )
     }
     
 
+        /**
+         * Generates a verification key with automatic hash function selection
+         *
+         * This function automatically chooses the appropriate hash function based
+         * on the intended use case:
+         *
+         * - `on_chain = true`: Uses Keccak hash for Solidity verifier compatibility
+         * - `on_chain = false`: Uses Poseidon hash fotr better performance
+         */
     @Throws(MoproException::class) fun `getNoirVerificationKey`(`circuitPath`: kotlin.String, `srsPath`: kotlin.String?, `onChain`: kotlin.Boolean, `lowMemoryMode`: kotlin.Boolean): kotlin.ByteArray {
             return FfiConverterByteArray.lift(
     uniffiRustCallWithError(MoproException) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_keccack256_fn_func_get_noir_verification_key(
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_get_noir_verification_key(
         FfiConverterString.lower(`circuitPath`),FfiConverterOptionalString.lower(`srsPath`),FfiConverterBoolean.lower(`onChain`),FfiConverterBoolean.lower(`lowMemoryMode`),_status)
 }
     )
@@ -1800,7 +1818,7 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
          */ fun `moproUniffiHelloWorld`(): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_keccack256_fn_func_mopro_uniffi_hello_world(
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_mopro_uniffi_hello_world(
         _status)
 }
     )
@@ -1810,7 +1828,7 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     @Throws(Risc0Exception::class) fun `risc0Prove`(`input`: kotlin.UInt): Risc0ProofOutput {
             return FfiConverterTypeRisc0ProofOutput.lift(
     uniffiRustCallWithError(Risc0Exception) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_keccack256_fn_func_risc0_prove(
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_risc0_prove(
         FfiConverterUInt.lower(`input`),_status)
 }
     )
@@ -1820,7 +1838,7 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     @Throws(Risc0Exception::class) fun `risc0Verify`(`receiptBytes`: kotlin.ByteArray): Risc0VerifyOutput {
             return FfiConverterTypeRisc0VerifyOutput.lift(
     uniffiRustCallWithError(Risc0Exception) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_keccack256_fn_func_risc0_verify(
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_risc0_verify(
         FfiConverterByteArray.lower(`receiptBytes`),_status)
 }
     )
@@ -1830,7 +1848,7 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     @Throws(MoproException::class) fun `verifyCircomProof`(`zkeyPath`: kotlin.String, `proofResult`: CircomProofResult, `proofLib`: ProofLib): kotlin.Boolean {
             return FfiConverterBoolean.lift(
     uniffiRustCallWithError(MoproException) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_keccack256_fn_func_verify_circom_proof(
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_verify_circom_proof(
         FfiConverterString.lower(`zkeyPath`),FfiConverterTypeCircomProofResult.lower(`proofResult`),FfiConverterTypeProofLib.lower(`proofLib`),_status)
 }
     )
@@ -1840,17 +1858,26 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     @Throws(MoproException::class) fun `verifyHalo2Proof`(`srsPath`: kotlin.String, `vkPath`: kotlin.String, `proof`: kotlin.ByteArray, `publicInput`: kotlin.ByteArray): kotlin.Boolean {
             return FfiConverterBoolean.lift(
     uniffiRustCallWithError(MoproException) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_keccack256_fn_func_verify_halo2_proof(
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_verify_halo2_proof(
         FfiConverterString.lower(`srsPath`),FfiConverterString.lower(`vkPath`),FfiConverterByteArray.lower(`proof`),FfiConverterByteArray.lower(`publicInput`),_status)
 }
     )
     }
     
 
+        /**
+         * Verifies a Noir proof with automatic hash function selection
+         *
+         * This function automatically uses the correct verification method based
+         * on how the proof was generated:
+         *
+         * - `on_chain = true`: Verifies Keccak-based proof (Solidity compatible)
+         * - `on_chain = false`: Verifies Poseidon-based proof (performance optimized)
+         */
     @Throws(MoproException::class) fun `verifyNoirProof`(`circuitPath`: kotlin.String, `proof`: kotlin.ByteArray, `onChain`: kotlin.Boolean, `vk`: kotlin.ByteArray, `lowMemoryMode`: kotlin.Boolean): kotlin.Boolean {
             return FfiConverterBoolean.lift(
     uniffiRustCallWithError(MoproException) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_keccack256_fn_func_verify_noir_proof(
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_verify_noir_proof(
         FfiConverterString.lower(`circuitPath`),FfiConverterByteArray.lower(`proof`),FfiConverterBoolean.lower(`onChain`),FfiConverterByteArray.lower(`vk`),FfiConverterBoolean.lower(`lowMemoryMode`),_status)
 }
     )

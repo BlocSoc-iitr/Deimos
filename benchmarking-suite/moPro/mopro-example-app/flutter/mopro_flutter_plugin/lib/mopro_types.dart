@@ -95,3 +95,43 @@ class Halo2ProofResult {
     return {"proof": proof, "inputs": inputs};
   }
 }
+
+class Risc0ProofOutput {
+  final Uint8List receipt;
+
+  Risc0ProofOutput(this.receipt);
+
+  factory Risc0ProofOutput.fromMap(Map<Object?, Object?> proofResult) {
+    return Risc0ProofOutput(proofResult["receipt"] as Uint8List);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {"receipt": receipt};
+  }
+
+  @override
+  String toString() {
+    return "Risc0ProofOutput(receipt: ${receipt.length} bytes)";
+  }
+}
+
+class Risc0VerifyOutput {
+  final bool isValid;
+  final int outputValue;
+
+  Risc0VerifyOutput(this.isValid, this.outputValue);
+
+  factory Risc0VerifyOutput.fromMap(Map<Object?, Object?> verifyResult) {
+    return Risc0VerifyOutput(
+        verifyResult["isValid"] as bool, verifyResult["outputValue"] as int);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {"isValid": isValid, "outputValue": outputValue};
+  }
+
+  @override
+  String toString() {
+    return "Risc0VerifyOutput(isValid: $isValid, outputValue: $outputValue)";
+  }
+}
