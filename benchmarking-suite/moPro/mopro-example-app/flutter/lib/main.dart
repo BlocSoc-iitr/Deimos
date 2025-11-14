@@ -1179,14 +1179,26 @@ class _ProofResultPageState extends State<ProofResultPage> {
       throw Exception('Input for zkVM risc0 Factor circuit must be a numeric value');
     }
     
+    // Capture memory and battery BEFORE proof generation
+    _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
+    final battery = Battery();
+    _batteryBeforeProof = await battery.batteryLevel;
+    
     // Start timing
     final stopwatch = Stopwatch()..start();
+    
+    // Start memory monitoring in background
+    _startMemoryMonitoring();
     
     // Generate proof using actual MoPro
     final proofResult = await plugin.generateRisc0Proof(numericInput);
     
     // Stop timing and store
     stopwatch.stop();
+    
+    // Capture memory and battery AFTER proof generation
+    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
+    _batteryAfterProof = await battery.batteryLevel;
     
     // Store the proof result for verification
     setState(() {
@@ -1608,7 +1620,7 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       
       // Send to backend API
       final response = await http.post(
-        Uri.parse('https://deimos-fork.onrender.com/api/benchmark-result'),
+        Uri.parse('http://10.0.2.2:5000/api/benchmark-result'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(benchmarkData),
       );
@@ -1767,6 +1779,8 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       return _halo2ProofResult!.proof.length;
     } else if (_noirProofResult != null) {
       return _noirProofResult!.length;
+    } else if (_risc0ProofResult != null) {
+      return _risc0ProofResult!.receipt.length;
     }
     return 0;
   }
