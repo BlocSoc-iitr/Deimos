@@ -1497,7 +1497,7 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
         isValid = await _verifyNoirProof(moproFlutterPlugin);
         break;
       case 'riscv':
-        isValid = return await _verifyRiscvProof(moproFlutterPlugin);
+        isValid = await _verifyRiscvProof(moproFlutterPlugin);
         break;
       default:
         throw Exception('Unknown framework: ${widget.framework}');
@@ -1577,7 +1577,6 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     return result;
   }
 
-<<<<<<< HEAD
   Future<bool> _verifyRiscvProof(MoproFlutter plugin) async {
     if (_risc0ProofResult == null) {
       throw Exception('No proof available for verification');
@@ -1596,7 +1595,8 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     });
     
     return verifyResult.isValid;
-=======
+  }
+
   // Collect device information and send to backend
   Future<void> _sendDataToBackend() async {
     try {
@@ -1769,7 +1769,6 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       return _noirProofResult!.length;
     }
     return 0;
->>>>>>> dce5e74 (merged backend integration commits)
   }
 
 }
