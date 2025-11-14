@@ -211,7 +211,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
                 child: _buildFrameworkButton(
                   'risc0',
                   Icons.developer_board,
-                  'riscv',
+                  'risc0',
                 ),
               ),
             ],
@@ -228,7 +228,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
         setState(() {
           _selectedFramework = value;
           _selectedAlgorithm = null; // Reset algorithm when framework changes
-          if (value == 'riscv') {
+          if (value == 'risc0') {
             _customInputController.text = '17'; // Default numeric input for risc-v
           } else {
             _customInputController.text = "Hello World! This is a test msg.";
@@ -325,14 +325,14 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
   }
 
   Widget _buildCustomInput() {
-    bool isRiscV = _selectedFramework == 'riscv';
+    bool isRisc0 = _selectedFramework == 'risc0';
     return _buildCard(
       title: 'Custom Input',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isRiscV ? 'Enter a number' : 'Enter text to hash',
+            isRisc0 ? 'Enter a number' : 'Enter text to hash',
             style: const TextStyle(
               fontSize: 14,
               color: AppTheme.textSecondary,
@@ -341,9 +341,9 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
           const SizedBox(height: 12),
           TextField(
             controller: _customInputController,
-            keyboardType: isRiscV ? TextInputType.number : TextInputType.text,
+            keyboardType: isRisc0 ? TextInputType.number : TextInputType.text,
             decoration: InputDecoration(
-              hintText: isRiscV ? 'Enter a number here...' : 'Enter your custom text here...',
+              hintText: isRisc0 ? 'Enter a number here...' : 'Enter your custom text here...',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: AppTheme.border),
@@ -354,7 +354,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
-            maxLines: isRiscV ? 1 : 3,
+            maxLines: isRisc0 ? 1 : 3,
           ),
         ],
       ),
@@ -446,7 +446,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
         return ['Fibonacci'];
       case 'noir':
         return ['SHA256', 'Keccak256', 'Poseidon', 'MiMC', 'Pedersen', 'blake2', 'blake3'];
-      case 'riscv':
+      case 'risc0':
         return ['Factor'];
       default:
         return [];
@@ -850,8 +850,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
         return _buildHalo2ProofDetails();
       case 'noir':
         return _buildNoirProofDetails();
-      case 'riscv':
-        return _buildRiscvProofDetails();
+      case 'risc0':
+        return _buildRisc0ProofDetails();
       default:
       return const SizedBox.shrink();
     }
@@ -936,7 +936,7 @@ class _ProofResultPageState extends State<ProofResultPage> {
     );
   }
 
-  Widget _buildRiscvProofDetails() {
+  Widget _buildRisc0ProofDetails() {
     if (_risc0ProofResult == null) return const SizedBox.shrink();
     
     return Column(
@@ -1025,8 +1025,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
         return await _generateHalo2Proof(moproFlutterPlugin);
       case 'noir':
         return await _generateNoirProof(moproFlutterPlugin);
-      case 'riscv':
-        return await _generateRiscvProof(moproFlutterPlugin);
+      case 'risc0':
+        return await _generateRisc0Proof(moproFlutterPlugin);
       default:
         throw Exception('Unknown framework: ${widget.framework}');
     }
@@ -1172,7 +1172,7 @@ class _ProofResultPageState extends State<ProofResultPage> {
     return _formatNoirProofOutput(proof);
   }
 
-  Future<String> _generateRiscvProof(MoproFlutter plugin) async {
+  Future<String> _generateRisc0Proof(MoproFlutter plugin) async {
     // Validate and convert user input
     int? numericInput = int.tryParse(widget.customInput);
     if (numericInput == null) {
@@ -1207,7 +1207,7 @@ class _ProofResultPageState extends State<ProofResultPage> {
     });
     
     // Format the actual proof data
-    return _formatRiscvProofOutput(proofResult);
+    return _formatRisc0ProofOutput(proofResult);
   }
 
   String _getZkeyPath() {
@@ -1434,7 +1434,7 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
 ''';
   }
 
-  String _formatRiscvProofOutput(Risc0ProofOutput proofResult) {
+  String _formatRisc0ProofOutput(Risc0ProofOutput proofResult) {
     return '''
 ${widget.algorithm} Proof: Risc0ProofOutput(
   receipt: ${proofResult.receipt.toString()}
@@ -1508,8 +1508,8 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       case 'noir':
         isValid = await _verifyNoirProof(moproFlutterPlugin);
         break;
-      case 'riscv':
-        isValid = await _verifyRiscvProof(moproFlutterPlugin);
+      case 'risc0':
+        isValid = await _verifyRisc0Proof(moproFlutterPlugin);
         break;
       default:
         throw Exception('Unknown framework: ${widget.framework}');
@@ -1589,7 +1589,7 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     return result;
   }
 
-  Future<bool> _verifyRiscvProof(MoproFlutter plugin) async {
+  Future<bool> _verifyRisc0Proof(MoproFlutter plugin) async {
     if (_risc0ProofResult == null) {
       throw Exception('No proof available for verification');
     }
@@ -1620,7 +1620,7 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       
       // Send to backend API
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:5000/api/benchmark-result'),
+        Uri.parse('https://deimos-fork.onrender.com/api/benchmark-result'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(benchmarkData),
       );
