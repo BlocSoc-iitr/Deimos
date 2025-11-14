@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:typed_data';
 import 'dart:convert';
+import 'dart:io';
+import 'dart:async';
 
 import 'package:mopro_flutter/mopro_flutter.dart';
 import 'package:mopro_flutter/mopro_types.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:http/http.dart' as http;
+import 'package:system_info2/system_info2.dart';
+import 'package:battery_plus/battery_plus.dart';
 
 // Design constants based on design.json
 class AppTheme {
@@ -521,6 +527,16 @@ class _ProofResultPageState extends State<ProofResultPage> {
   // Benchmarking timing
   Duration? _proofGenerationTime;
   Duration? _proofVerificationTime;
+  
+  // Memory tracking during proof generation
+  int _freeMemoryBeforeProof = 0;
+  int _minFreeMemoryDuringProof = 0;
+  int _freeMemoryAfterProof = 0;
+  int _peakMemoryUsage = 0;
+  
+  // Battery tracking
+  int _batteryBeforeProof = 0;
+  int _batteryAfterProof = 0;
 
   @override
   void initState() {
@@ -1023,18 +1039,30 @@ class _ProofResultPageState extends State<ProofResultPage> {
     // Get the appropriate zkey path based on algorithm
     final zkeyPath = _getZkeyPath();
     
+    // Capture memory and battery BEFORE proof generation
+    _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
+    final battery = Battery();
+    _batteryBeforeProof = await battery.batteryLevel;
+    
     // Start timing
     final stopwatch = Stopwatch()..start();
+    
+    // Start memory monitoring in background
+    _startMemoryMonitoring();
     
     // Generate proof using actual MoPro
     final proofResult = await plugin.generateCircomProof(
       zkeyPath, 
-      inputs, 
+            inputs, 
       ProofLib.arkworks
     );
     
     // Stop timing and store
     stopwatch.stop();
+    
+    // Capture memory and battery AFTER proof generation
+    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
+    _batteryAfterProof = await battery.batteryLevel;
     
     if (proofResult == null) {
       throw Exception('Failed to generate Circom proof');
@@ -1060,8 +1088,16 @@ class _ProofResultPageState extends State<ProofResultPage> {
       "out": [numericInput]
     };
     
+    // Capture memory and battery BEFORE proof generation
+    _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
+    final battery = Battery();
+    _batteryBeforeProof = await battery.batteryLevel;
+    
     // Start timing
     final stopwatch = Stopwatch()..start();
+    
+    // Start memory monitoring in background
+    _startMemoryMonitoring();
     
     // Generate proof using actual MoPro
     final proofResult = await plugin.generateHalo2Proof(
@@ -1072,6 +1108,10 @@ class _ProofResultPageState extends State<ProofResultPage> {
     
     // Stop timing and store
     stopwatch.stop();
+    
+    // Capture memory and battery AFTER proof generation
+    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
+    _batteryAfterProof = await battery.batteryLevel;
     
     if (proofResult == null) {
       throw Exception('Failed to generate Halo2 proof');
@@ -1094,8 +1134,16 @@ class _ProofResultPageState extends State<ProofResultPage> {
     // Get the appropriate circuit path and settings
     final (circuitPath, srsPath, onChain, vk) = await _getNoirSettings();
     
+    // Capture memory and battery BEFORE proof generation
+    _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
+    final battery = Battery();
+    _batteryBeforeProof = await battery.batteryLevel;
+    
     // Start timing
     final stopwatch = Stopwatch()..start();
+    
+    // Start memory monitoring in background
+    _startMemoryMonitoring();
     
     // Generate proof using actual MoPro with custom inputs
     final proof = await plugin.generateNoirProof(
@@ -1109,6 +1157,10 @@ class _ProofResultPageState extends State<ProofResultPage> {
     
     // Stop timing and store
     stopwatch.stop();
+    
+    // Capture memory and battery AFTER proof generation
+    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
+    _batteryAfterProof = await battery.batteryLevel;
     
     // Store the proof result for verification
     setState(() {
@@ -1433,18 +1485,30 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
   Future<bool> _performRealVerification() async {
     final moproFlutterPlugin = MoproFlutter();
     
+    bool isValid;
     switch (widget.framework.toLowerCase()) {
       case 'circom':
-        return await _verifyCircomProof(moproFlutterPlugin);
+        isValid = await _verifyCircomProof(moproFlutterPlugin);
+        break;
       case 'halo2':
-        return await _verifyHalo2Proof(moproFlutterPlugin);
+        isValid = await _verifyHalo2Proof(moproFlutterPlugin);
+        break;
       case 'noir':
-        return await _verifyNoirProof(moproFlutterPlugin);
+        isValid = await _verifyNoirProof(moproFlutterPlugin);
+        break;
       case 'riscv':
-        return await _verifyRiscvProof(moproFlutterPlugin);
-        default:
+        isValid = return await _verifyRiscvProof(moproFlutterPlugin);
+        break;
+      default:
         throw Exception('Unknown framework: ${widget.framework}');
     }
+    
+    // After verification, send data to backend
+    if (isValid) {
+      await _sendDataToBackend();
+    }
+    
+    return isValid;
   }
 
   Future<bool> _verifyCircomProof(MoproFlutter plugin) async {
@@ -1513,6 +1577,7 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     return result;
   }
 
+<<<<<<< HEAD
   Future<bool> _verifyRiscvProof(MoproFlutter plugin) async {
     if (_risc0ProofResult == null) {
       throw Exception('No proof available for verification');
@@ -1531,6 +1596,180 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     });
     
     return verifyResult.isValid;
+=======
+  // Collect device information and send to backend
+  Future<void> _sendDataToBackend() async {
+    try {
+      final deviceInfo = await _collectDeviceInfo();
+      final benchmarkData = _prepareBenchmarkData(deviceInfo);
+      
+      print('=== Sending Data to Backend ===');
+      print('Data: ${jsonEncode(benchmarkData)}');
+      
+      // Send to backend API
+      final response = await http.post(
+        Uri.parse('https://deimos-fork.onrender.com/api/benchmark-result'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(benchmarkData),
+      );
+
+      print('=== Backend Response ===');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('✓ Data successfully sent to backend');
+      } else {
+        print('✗ Failed to send data: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('✗ Error sending data to backend: $e');
+    }
+  }
+  
+  Future<Map<String, dynamic>> _collectDeviceInfo() async {
+    final deviceInfoPlugin = DeviceInfoPlugin();
+    Map<String, dynamic> deviceData = {};
+    
+    try {
+      // Collect system information (RAM, CPU)
+      final systemInfo = await _collectSystemInfo();
+      
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfoPlugin.androidInfo;
+        deviceData = {
+          'platform': 'Android',
+          'device': androidInfo.model,
+          'manufacturer': androidInfo.manufacturer,
+          'androidVersion': androidInfo.version.release,
+          'androidId': androidInfo.id,
+          // Add system info
+          ...systemInfo,
+        };
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfoPlugin.iosInfo;
+        deviceData = {
+          'platform': 'iOS',
+          'device': iosInfo.model,
+          'systemName': iosInfo.systemName,
+          'systemVersion': iosInfo.systemVersion,
+          'name': iosInfo.name,
+          'identifierForVendor': iosInfo.identifierForVendor,
+          'isPhysicalDevice': iosInfo.isPhysicalDevice,
+          'utsname': {
+            'machine': iosInfo.utsname.machine,
+            'sysname': iosInfo.utsname.sysname,
+          },
+          // Add system info
+          ...systemInfo,
+        };
+      }
+    } catch (e) {
+      print('Error collecting device info: $e');
+      deviceData = {'platform': 'Unknown', 'error': e.toString()};
+    }
+    
+    return deviceData;
+  }
+  
+  Future<Map<String, dynamic>> _collectSystemInfo() async {
+    try {
+      // Get memory information
+      final totalPhysicalMemory = SysInfo.getTotalPhysicalMemory(); // in bytes
+      
+      // Calculate memory used during proof generation
+      final memoryUsedBeforeProof = totalPhysicalMemory - _freeMemoryBeforeProof;
+      final memoryUsedAfterProof = totalPhysicalMemory - _freeMemoryAfterProof;
+      
+      // Calculate memory consumed by proof generation
+      final memoryConsumedByProof = _peakMemoryUsage - memoryUsedBeforeProof;
+      
+      return {
+        'memory': {
+          'totalPhysicalMemory': totalPhysicalMemory,
+          
+          // Memory BEFORE proof generation
+          'memoryUsedBeforeProof': memoryUsedBeforeProof,
+          
+          // Memory DURING proof generation (peak usage)
+          'peakMemoryUsage': _peakMemoryUsage,
+          
+          // Memory consumed specifically by proof generation
+          'memoryConsumedByProof': memoryConsumedByProof,
+
+          // Peak memory load during percentage
+          'peakMemoryLoadInPercentage': _peakMemoryUsage / totalPhysicalMemory * 100,
+
+          // Memory consumed percentage
+          'memoryConsumedInPercentage': memoryConsumedByProof / totalPhysicalMemory * 100,
+        },
+        'battery': {
+          'batteryBeforeProof': _batteryBeforeProof,
+          'batteryAfterProof': _batteryAfterProof,
+          'batteryConsumed': _batteryBeforeProof - _batteryAfterProof,
+        },
+      };
+    } catch (e) {
+      // Silently handle errors and return minimal info
+      return {
+        'memory': {'error': e.toString()},
+      };
+    }
+  }
+  
+  // Monitor memory usage during proof generation
+  void _startMemoryMonitoring() {
+    _peakMemoryUsage = 0;
+    _minFreeMemoryDuringProof = 0;
+    
+    // Sample memory every 100ms during proof generation
+    Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      if (_isGenerating) {
+        final currentFreeMemory = SysInfo.getFreePhysicalMemory();
+        final currentUsedMemory = SysInfo.getTotalPhysicalMemory() - currentFreeMemory;
+        
+        // Track peak memory usage
+        if (currentUsedMemory > _peakMemoryUsage) {
+          _peakMemoryUsage = currentUsedMemory;
+          _minFreeMemoryDuringProof = currentFreeMemory;
+        }
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+  
+  Map<String, dynamic> _prepareBenchmarkData(Map<String, dynamic> deviceInfo) {
+    return {
+      // Circuit and framework info
+      'circuit': widget.algorithm,
+      'framework': 'MoPro',
+      'language': widget.framework,
+      
+      // Timing data
+      'provingTimeMiliSeconds': (_proofGenerationTime?.inMilliseconds ?? 0),
+      'verificationTimeMiliSeconds': (_proofVerificationTime?.inMilliseconds ?? 0),
+      
+      // Device details
+      'deviceInfo': deviceInfo,
+      
+      // Additional metadata
+      'proofSize': _getProofSize(),
+
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+  }
+  
+  int _getProofSize() {
+    if (_circomProofResult != null) {
+      return _proofData?.length ?? 0;
+    } else if (_halo2ProofResult != null) {
+      return _halo2ProofResult!.proof.length;
+    } else if (_noirProofResult != null) {
+      return _noirProofResult!.length;
+    }
+    return 0;
+>>>>>>> dce5e74 (merged backend integration commits)
   }
 
 }
