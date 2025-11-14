@@ -1,4 +1,4 @@
-build_mode = "release"
+build_mode = "debug"
 target_adapters = [
     "noir",
     "halo2",
