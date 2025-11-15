@@ -1,9 +1,18 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Instrument_Serif } from 'next/font/google';
 import './globals.css';
-import Link from 'next/link';
+import { Navbar } from '@/components/navbar';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter',
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ['latin'],
+  variable: '--font-instrument-serif',
+  weight: ['400'],
+});
 
 export const metadata: Metadata = {
   title: 'Deimos - zkVM Mobile Benchmarking Suite',
@@ -16,27 +25,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full bg-white">
-      <body className={`${inter.className} min-h-screen flex flex-col`}>
-        <header className="border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex justify-between items-center">
-              <Link href="/" className="text-2xl font-bold text-blue-600">
-                Deimos
-              </Link>
-              <nav className="hidden md:flex space-x-6">
-                <Link href="/" className="text-gray-600 hover:text-gray-900 transition-colors">
-                  Home
-                </Link>
-                <Link href="/docs" className="text-gray-600 hover:text-gray-900 transition-colors">
-                  Docs
-                </Link>
-              </nav>
-            </div>
-          </div>
-        </header>
-        
-        <main className="flex-grow">
+    <html lang="en" className={`${inter.variable} ${instrumentSerif.variable}`}>
+      <body className="min-h-screen bg-[#F7F5F3] font-sans antialiased">
+        <Navbar />
+        <main className="pt-20 lg:pt-24">
           {children}
         </main>
       </body>

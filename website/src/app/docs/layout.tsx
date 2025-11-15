@@ -130,11 +130,11 @@ export default function DocsLayout({
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-[#F7F5F3]">
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="md:hidden fixed top-20 left-4 z-50 p-2 bg-blue-600 text-white rounded-lg shadow-lg"
+        className="md:hidden fixed top-24 left-4 z-50 p-2 bg-[#37322F] text-white rounded-full shadow-[0px_1px_2px_rgba(55,50,47,0.12)] hover:shadow-md transition-shadow"
       >
         <svg
           className="w-6 h-6"
@@ -155,9 +155,9 @@ export default function DocsLayout({
       <aside
         className={`${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 fixed md:sticky top-0 left-0 z-40 w-64 h-screen transition-transform bg-gray-50 border-r border-gray-200`}
+        } md:translate-x-0 fixed md:sticky top-0 left-0 z-40 w-64 md:w-64 flex-shrink-0 h-screen transition-transform bg-white border-r border-[#E0DEDB] overflow-y-auto`}
       >
-        <div className="h-full px-3 py-4 overflow-y-auto">
+        <div className="h-full px-3 py-4">
           <ul className="space-y-1">
             {sidebarItems.map((section) => {
               return (
@@ -165,9 +165,9 @@ export default function DocsLayout({
                   {/* Parent Section - Never highlighted */}
                   <button
                     onClick={() => toggleSection(section.title)}
-                    className="flex items-center justify-between w-full p-3 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-200"
+                    className="flex items-center justify-between w-full p-3 text-left rounded-lg transition-colors text-[#37322F] hover:bg-[#F7F5F3]"
                   >
-                    <span className="font-medium">{section.title}</span>
+                    <span className="font-semibold">{section.title}</span>
                     <svg
                       className={`w-4 h-4 transition-transform ${
                         expandedSections.includes(section.title) ? 'rotate-90' : ''
@@ -205,8 +205,8 @@ export default function DocsLayout({
                               href={child.href || '#'}
                               className={`flex items-center p-2 pl-4 rounded-lg transition-colors text-sm ${
                                 isActive
-                                  ? 'bg-blue-600 text-white'
-                                  : 'text-gray-600 hover:bg-gray-200'
+                                  ? 'bg-blue-600 text-white font-medium'
+                                  : 'text-[#605A57] hover:bg-[#F7F5F3]'
                               }`}
                               onClick={() => {
                                 setIsSidebarOpen(false);

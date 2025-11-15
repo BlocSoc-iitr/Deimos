@@ -17,3 +17,4 @@ benchmarking-suite/moPro/mopro-example-app/flutter/mopro_flutter_plugin/android/
 !benchmarking-suite/moPro/mopro-example-app/flutter/mopro_flutter_plugin/android/src/main/jniLibs/arm64-v8a/.gitkeep
 
 
+*/.DS_Store

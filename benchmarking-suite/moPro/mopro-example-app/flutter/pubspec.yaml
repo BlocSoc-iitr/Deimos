@@ -1,5 +1,5 @@
-name: mopro_flutter_example
-description: "Demonstrates how to use the mopro_flutter plugin."
+name: Deimos
+description: "zK Benchmarking on your mobile phones"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -87,6 +87,9 @@ flutter:
     - assets/blake2.srs
     - assets/blake3.json
     - assets/blake3.srs
+    - inputs/input_1.json
+    - inputs/input_2.json
+    - inputs/input_3.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
