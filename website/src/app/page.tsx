@@ -146,6 +146,19 @@ export default function Home() {
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   };
 
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const day = date.getDate();
+    const month = date.toLocaleString('en-US', { month: 'long' });
+    const year = date.getFullYear();
+    const time = date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+    return `${day} ${month} ${year}, ${time}`;
+  };
+
   return (
     <div className="min-h-screen bg-[#F7F5F3]">
       {/* Hero Section */}
@@ -400,7 +413,7 @@ export default function Home() {
                               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                               </svg>
-                              <span>Benchmark recorded on: <span className="font-medium text-[#37322F]">{new Date(item.timestamp).toLocaleString()}</span></span>
+                              <span>Benchmark recorded on: <span className="font-medium text-[#37322F]">{formatTimestamp(item.timestamp)}</span></span>
                             </div>
                           </div>
                         </div>

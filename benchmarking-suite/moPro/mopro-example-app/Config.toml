@@ -1,7 +1,7 @@
 build_mode = "debug"
 target_adapters = [
-    "circom",
     "halo2",
+    "circom",
     "noir",
 ]
 target_platforms = ["android"]

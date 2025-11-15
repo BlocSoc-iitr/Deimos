@@ -1698,10 +1698,18 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       // Perform actual verification using MoPro framework
       final isValid = await _performRealVerification();
       
+      // Update UI immediately after verification
       setState(() {
         _isVerifying = false;
         _isValid = isValid;
       });
+      
+      // Send data to backend asynchronously without blocking UI
+      if (isValid) {
+        _sendDataToBackend().catchError((error) {
+          debugPrint('Error sending data to backend: $error');
+        });
+      }
     } catch (e) {
       setState(() { 
         _isVerifying = false;
@@ -1730,11 +1738,6 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
         break;
       default:
         throw Exception('Unknown framework: ${widget.framework}');
-    }
-    
-    // After verification, send data to backend
-    if (isValid) {
-      await _sendDataToBackend();
     }
     
     return isValid;
