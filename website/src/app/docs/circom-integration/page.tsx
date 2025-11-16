@@ -310,9 +310,7 @@ final arrayFieldInput = {
         </p>
         <p className="mb-2"><strong>Fix:</strong></p>
         <EnhancedCodeBlock 
-          language="bash" 
-          title="Fix UniFFI Issues"
-          className="mb-4"
+          language="Bash" 
         >
 {`# Ensure UniFFI version is pinned
 cargo update uniffi --precise 0.29.0
@@ -328,9 +326,7 @@ mopro build`}
         </p>
         <p className="mb-2"><strong>Fix:</strong></p>
         <EnhancedCodeBlock 
-          language="bash" 
-          title="Verify Assets"
-          className="mb-4"
+          language="Bash" 
         >
 {`# Verify assets are in correct location
 ls test-vectors/
