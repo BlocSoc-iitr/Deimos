@@ -249,123 +249,195 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
   }
 
   Widget _buildFrameworkSelection() {
+    final frameworks = [
+      {'name': 'Circom', 'value': 'circom', 'icon': Icons.speed},
+      {'name': 'Halo2', 'value': 'halo2', 'icon': Icons.layers},
+      {'name': 'Noir', 'value': 'noir', 'icon': Icons.nightlight_round},
+      {'name': 'RISC Zero', 'value': 'risc0', 'icon': Icons.developer_board},
+    ];
+
     return _buildCard(
-      title: 'Select Framework',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-          const Text(
-            'Choose a ZK proof framework',
-              style: TextStyle(
-              fontSize: 14,
-              color: AppTheme.textSecondary,
-              ),
-            ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildFrameworkButton(
-                  'Circom',
-                  Icons.speed,
-                  'circom',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildFrameworkButton(
-                  'Halo2',
-                  Icons.layers,
-                  'halo2',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildFrameworkButton(
-                  'Noir',
-                  Icons.nightlight_round,
-                  'noir',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildFrameworkButton(
-                  'risc0',
-                  Icons.developer_board,
-                  'risc0',
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFrameworkButton(String label, IconData icon, String value) {
-    final isSelected = _selectedFramework == value;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedFramework = value;
-          _selectedAlgorithm = null;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected ? AppTheme.accent : AppTheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppTheme.accent : AppTheme.border,
-            width: 2,
-          ),
-        ),
-        child: Column(
-              children: [
-            Icon(
-              icon,
-              size: 32,
-              color: isSelected ? Colors.white : AppTheme.textSecondary,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : AppTheme.text,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAlgorithmSelection() {
-    if (_selectedFramework == null) {
-      return const SizedBox.shrink();
-    }
-
-    final algorithms = _getAlgorithmsForFramework(_selectedFramework!);
-    
-    return _buildCard(
-      title: 'Select Algorithm',
+      title: 'Step 1: Select Framework',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Choose a hashing algorithm',
+            'Choose a ZK proof framework',
             style: TextStyle(
               fontSize: 14,
               color: AppTheme.textSecondary,
             ),
           ),
           const SizedBox(height: 16),
-          _buildAlgorithmGrid(algorithms),
-              ],
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: _selectedFramework != null 
+                  ? AppTheme.primary.withOpacity(0.05)
+                  : AppTheme.surface,
+              border: Border.all(
+                color: _selectedFramework != null 
+                    ? AppTheme.primary 
+                    : AppTheme.border, 
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedFramework,
+                hint: Row(
+                  children: const [
+                    Icon(Icons.code, size: 20, color: AppTheme.textSecondary),
+                    SizedBox(width: 12),
+                    Text(
+                      'Select a framework',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                isExpanded: true,
+                icon: const Icon(Icons.arrow_drop_down, color: AppTheme.primary),
+                items: frameworks.map((framework) {
+                  return DropdownMenuItem<String>(
+                    value: framework['value'] as String,
+                    child: Row(
+                      children: [
+                        Icon(
+                          framework['icon'] as IconData,
+                          size: 20,
+                          color: AppTheme.primary,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          framework['name'] as String,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.text,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedFramework = newValue;
+                    _selectedAlgorithm = null; // Reset algorithm when framework changes
+                  });
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  Widget _buildAlgorithmSelection() {
+    final isEnabled = _selectedFramework != null;
+    final algorithms = isEnabled ? _getAlgorithmsForFramework(_selectedFramework!) : <String>[];
+    
+    return _buildCard(
+      title: 'Step 2: Select Circuit',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isEnabled 
+                ? 'Choose a circuit for benchmarking'
+                : 'Select a framework first to enable circuit selection',
+            style: TextStyle(
+              fontSize: 14,
+              color: isEnabled ? AppTheme.textSecondary : AppTheme.textSecondary.withOpacity(0.6),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Opacity(
+            opacity: isEnabled ? 1.0 : 0.5,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: _selectedAlgorithm != null 
+                    ? AppTheme.accent.withOpacity(0.05)
+                    : AppTheme.surface,
+                border: Border.all(
+                  color: _selectedAlgorithm != null 
+                      ? AppTheme.accent 
+                      : AppTheme.border, 
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedAlgorithm,
+                  hint: Row(
+                    children: [
+                      Icon(
+                        Icons.memory, 
+                        size: 20, 
+                        color: isEnabled ? AppTheme.textSecondary : AppTheme.textSecondary.withOpacity(0.4),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Select a circuit',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: isEnabled ? AppTheme.textSecondary : AppTheme.textSecondary.withOpacity(0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                  isExpanded: true,
+                  icon: Icon(
+                    Icons.arrow_drop_down, 
+                    color: isEnabled ? AppTheme.primary : AppTheme.primary.withOpacity(0.3),
+                  ),
+                  items: isEnabled ? algorithms.map((algorithm) {
+                    return DropdownMenuItem<String>(
+                      value: algorithm,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: AppTheme.accent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            algorithm,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.text,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList() : null,
+                  onChanged: isEnabled ? (String? newValue) {
+                    setState(() {
+                      _selectedAlgorithm = newValue;
+                    });
+                  } : null,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -384,7 +456,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
     }
 
     return _buildCard(
-      title: 'Select Input',
+      title: 'Step 3: Select Input',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -395,29 +467,53 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
               color: AppTheme.textSecondary,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
-              border: Border.all(color: AppTheme.border),
+              color: AppTheme.surface,
+              border: Border.all(color: AppTheme.border, width: 2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _selectedInput,
-                hint: const Text('Select an input'),
+                hint: Row(
+                  children: const [
+                    Icon(Icons.input, size: 20, color: AppTheme.textSecondary),
+                    SizedBox(width: 12),
+                    Text(
+                      'Select an input',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
                 isExpanded: true,
+                icon: const Icon(Icons.arrow_drop_down, color: AppTheme.primary),
                 items: _availableInputs.map((InputData input) {
                   return DropdownMenuItem<String>(
                     value: input.name,
-                    child: Text(
-                      input.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.text,
-                      ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.data_object,
+                          size: 18,
+                          color: AppTheme.accent,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          input.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.text,
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 }).toList(),
@@ -430,34 +526,37 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
             ),
           ),
           if (_selectedInput != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppTheme.background,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppTheme.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Selected: ${_selectedInput}',
-                    style: const TextStyle(
+                  const Text(
+                    'Input Data',
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.text,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 12),
                   Text(
-                    'Input bytes: ${_getSelectedInputPreview()}',
+                    _getSelectedInputPreview(),
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 13,
                       color: AppTheme.textSecondary,
                       fontFamily: 'monospace',
+                      height: 1.5,
                     ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -468,79 +567,6 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
     );
   }
 
-  Widget _buildAlgorithmGrid(List<String> algorithms) {
-    List<Widget> rows = [];
-    
-    for (int i = 0; i < algorithms.length; i += 3) {
-      List<Widget> rowChildren = [];
-      
-      for (int j = 0; j < 3 && (i + j) < algorithms.length; j++) {
-        final algorithm = algorithms[i + j];
-        rowChildren.add(
-          Expanded(
-            child: _buildAlgorithmButton(algorithm),
-          ),
-        );
-        if (j < 2 && (i + j + 1) < algorithms.length) {
-          rowChildren.add(const SizedBox(width: 12));
-        }
-      }
-      
-      while (rowChildren.length < 5) { 
-        rowChildren.add(const Expanded(child: SizedBox()));
-      }
-      
-      rows.add(
-        Row(children: rowChildren),
-      );
-      
-      // Add spacing between rows
-      if (i + 3 < algorithms.length) {
-        rows.add(const SizedBox(height: 12));
-      }
-    }
-    
-    return Column(children: rows);
-  }
-
-  Widget _buildAlgorithmButton(String algorithm) {
-    final isSelected = _selectedAlgorithm == algorithm;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedAlgorithm = algorithm;
-        });
-      },
-      child: SizedBox(
-        height: 56,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: isSelected ? AppTheme.primary : AppTheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected ? AppTheme.primary : AppTheme.border,
-              width: 2,
-            ),
-          ),
-          child: Center(
-            child: Text(
-              algorithm,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : AppTheme.text,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              softWrap: false,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   String _getSelectedInputPreview() {
     if (_selectedInput == null) return '';
@@ -549,52 +575,148 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
   }
 
   String _formatInputPreview(List<String> values, {int maxItems = 1000}) {
-
-    return values.join(', ');
+    return '[${values.join(', ')}]';
   }
 
   Widget _buildRunButton() {
     final canRun = _selectedFramework != null && _selectedAlgorithm != null && _selectedInput != null;
     
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: canRun ? _runBenchmark : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: canRun ? AppTheme.primary : AppTheme.border,
-          foregroundColor: canRun ? Colors.white : AppTheme.textSecondary,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: canRun ? 2 : 0,
-        ),
-        child: _isLoading
-            ? const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
+      children: [
+        if (canRun) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.border),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                Row(
+                  children: const [
+                    Text(
+                      'Summary',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.text,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 12),
-                  Text('Generating Proof...'),
-                ],
-              )
-            : Text(
-                canRun 
-                    ? 'Run ${_selectedFramework!.toUpperCase()} - $_selectedAlgorithm'
-                    : 'Select Framework, Algorithm & Input',
-                style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildSummaryRow('Framework', _getFrameworkDisplayName(_selectedFramework!)),
+                const SizedBox(height: 10),
+                _buildSummaryRow('Circuit', _selectedAlgorithm!),
+                const SizedBox(height: 10),
+                _buildSummaryRow('Input', _selectedInput!),
+              ],
             ),
           ),
+          const SizedBox(height: 16),
+        ],
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            onPressed: canRun ? _runBenchmark : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: canRun ? AppTheme.primary : AppTheme.border,
+              foregroundColor: canRun ? Colors.white : AppTheme.textSecondary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: canRun ? 4 : 0,
+            ),
+            child: _isLoading
+                ? const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Text(
+                        'Generating Proof...',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        canRun ? Icons.play_arrow : Icons.info_outline,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        canRun 
+                            ? 'Run Benchmark'
+                            : 'Select Framework, Circuit & Input',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value) {
+    return Row(
+      children: [
+        Container(
+          width: 100,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        const Text(
+          ': ',
+          style: TextStyle(
+            fontSize: 14,
+            color: AppTheme.textSecondary,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.text,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -630,6 +752,21 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
     );
   }
 
+  String _getFrameworkDisplayName(String framework) {
+    switch (framework) {
+      case 'circom':
+        return 'Circom';
+      case 'halo2':
+        return 'Halo2';
+      case 'noir':
+        return 'Noir';
+      case 'risc0':
+        return 'RISC Zero';
+      default:
+        return framework;
+    }
+  }
+
   List<String> _getAlgorithmsForFramework(String framework) {
     switch (framework) {
       case 'circom':
@@ -648,28 +785,116 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
   void _runBenchmark() async {
     if (_selectedFramework == null || _selectedAlgorithm == null || _selectedInput == null) return;
 
+    // Immediately show loading state
     setState(() {
       _isLoading = true;
     });
 
-    if (mounted) {
-      // Wait for the ProofResultPage to be popped before setting isLoading to false
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ProofResultPage(
-            framework: _selectedFramework!,
-            algorithm: _selectedAlgorithm!,
-            selectedInputName: _selectedInput!,
-            selectedInputData: _availableInputs.firstWhere((input) => input.name == _selectedInput!),
-          ),
-        ),
-      );
-    }
+    // Force UI to update by yielding to the event loop
+    await Future.delayed(Duration.zero);
 
-    setState(() {
-      _isLoading = false;
+    if (!mounted) return;
+
+    // Navigate immediately without waiting
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => ProofResultPage(
+          framework: _selectedFramework!,
+          algorithm: _selectedAlgorithm!,
+          selectedInputName: _selectedInput!,
+          selectedInputData: _availableInputs.firstWhere((input) => input.name == _selectedInput!),
+        ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeOut;
+          var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+          var offsetAnimation = animation.drive(tween);
+          return SlideTransition(position: offsetAnimation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 250),
+      ),
+    ).then((_) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     });
+  }
+}
+
+// Smooth Loading Widget with Pulsing Effect
+class SmoothLoadingIndicator extends StatefulWidget {
+  final double size;
+  final double strokeWidth;
+  final Color color;
+
+  const SmoothLoadingIndicator({
+    Key? key,
+    this.size = 60,
+    this.strokeWidth = 5,
+    this.color = AppTheme.primary,
+  }) : super(key: key);
+
+  @override
+  State<SmoothLoadingIndicator> createState() => _SmoothLoadingIndicatorState();
+}
+
+class _SmoothLoadingIndicatorState extends State<SmoothLoadingIndicator>
+    with TickerProviderStateMixin {
+  late AnimationController _rotationController;
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _rotationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+    
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    
+    _pulseAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _rotationController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _pulseAnimation.value,
+          child: RotationTransition(
+            turns: _rotationController,
+            child: SizedBox(
+              width: widget.size,
+              height: widget.size,
+              child: CircularProgressIndicator(
+                strokeWidth: widget.strokeWidth,
+                valueColor: AlwaysStoppedAnimation<Color>(widget.color),
+                backgroundColor: widget.color.withOpacity(0.1),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -730,11 +955,41 @@ class _ProofResultPageState extends State<ProofResultPage> {
   // Battery tracking
   int _batteryBeforeProof = 0;
   int _batteryAfterProof = 0;
+  
+  // Timer to keep UI responsive
+  Timer? _uiUpdateTimer;
+  
+  // Progress tracking
+  String _currentStage = 'Initializing...';
+  double _progress = 0.0;
 
   @override
   void initState() {
     super.initState();
-    _generateProof();
+    // Start a timer to periodically trigger UI updates for smooth animation
+    _uiUpdateTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
+      if (mounted && _isGenerating) {
+        setState(() {
+          // Force rebuild to keep animation smooth
+        });
+      }
+    });
+    
+    // Start proof generation after UI is fully built and rendered
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Minimal delay to ensure smooth animation starts
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          _generateProof();
+        }
+      });
+    });
+  }
+  
+  @override
+  void dispose() {
+    _uiUpdateTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -747,30 +1002,102 @@ class _ProofResultPageState extends State<ProofResultPage> {
         elevation: 0,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildInputDisplay(),
-              const SizedBox(height: 24),
-              _buildProofSection(),
-              const SizedBox(height: 24),
-              _buildVerificationSection(),
-              const SizedBox(height: 24),
-              _buildBenchmarkingSection(),
-              const SizedBox(height: 24),
-              _buildResultsSection(),
-            ],
-          ),
+        child: Stack(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildInputDisplay(),
+                    const SizedBox(height: 24),
+                    _buildProofSection(),
+                    const SizedBox(height: 24),
+                    _buildVerificationSection(),
+                    const SizedBox(height: 24),
+                    _buildBenchmarkingSection(),
+                    const SizedBox(height: 24),
+                    _buildResultsSection(),
+                  ],
+                ),
+              ),
+            ),
+            // Show a full-screen loading overlay when first entering the page
+            if (_isGenerating && _proofData == null)
+              Container(
+                color: Colors.black.withOpacity(0.3),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(32),
+                    constraints: const BoxConstraints(maxWidth: 320),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Generating Proof',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.text,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'This might take a while',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.textSecondary.withOpacity(0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        // Progress bar
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: _progress,
+                            minHeight: 8,
+                            backgroundColor: AppTheme.border,
+                            valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildInputDisplay() {
-    return _buildCard(
-      title: 'Input',
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -791,7 +1118,16 @@ class _ProofResultPageState extends State<ProofResultPage> {
               color: AppTheme.text,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
+          Text(
+            'Input: ${widget.selectedInputName}',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.text,
+            ),
+          ),
+          const SizedBox(height: 8),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(12),
@@ -800,27 +1136,13 @@ class _ProofResultPageState extends State<ProofResultPage> {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: AppTheme.border),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Input: ${widget.selectedInputName}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.text,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Bytes: ${widget.selectedInputData.values.join(', ')}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontFamily: 'monospace',
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-              ],
+            child: Text(
+              '[${widget.selectedInputData.values.join(', ')}]',
+              style: const TextStyle(
+                fontSize: 12,
+                fontFamily: 'monospace',
+                color: AppTheme.textSecondary,
+              ),
             ),
           ),
         ],
@@ -829,23 +1151,16 @@ class _ProofResultPageState extends State<ProofResultPage> {
   }
 
   Widget _buildProofSection() {
+    // Don't show this section while generating (overlay handles it)
+    if (_isGenerating && _proofData == null) {
+      return const SizedBox.shrink();
+    }
+    
     return _buildCard(
       title: 'Proof Generation',
       child: Column(
         children: [
-          if (_isGenerating)
-            const Row(
-              children: [
-                SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                SizedBox(width: 12),
-                Text('Generating proof...'),
-              ],
-            )
-          else if (_proofData != null)
+          if (_proofData != null)
             const Row(
               children: [
                 Icon(Icons.check_circle, color: AppTheme.success, size: 20),
@@ -871,52 +1186,62 @@ class _ProofResultPageState extends State<ProofResultPage> {
   Widget _buildVerificationSection() {
     return _buildCard(
       title: 'Proof Verification',
-            child: Column(
-              children: [
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           if (_proofData == null)
             const Text('Generate proof first')
           else if (_isVerifying)
-            const Row(
-              children: [
-                SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+            Row(
+              children: const [
+                SmoothLoadingIndicator(
+                  size: 24,
+                  strokeWidth: 2.5,
+                  color: AppTheme.primary,
                 ),
                 SizedBox(width: 12),
-                Text('Verifying proof...'),
+                Text(
+                  'Verifying proof...',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             )
           else if (_isValid != null)
-          Row(
+            Row(
               children: [
-              Icon(
+                Icon(
                   _isValid! ? Icons.check_circle : Icons.cancel,
                   color: _isValid! ? AppTheme.success : AppTheme.danger,
                   size: 20,
                 ),
                 const SizedBox(width: 12),
-              Text(
-                  _isValid! ? 'Proof is valid' : 'Proof is invalid',
-                  style: TextStyle(
-                    color: _isValid! ? AppTheme.success : AppTheme.danger,
-                    fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+                Text(_isValid! ? 'Proof verified successfully' : 'Proof verification failed'),
+              ],
             )
           else
-            ElevatedButton(
-              onPressed: _verifyProof,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _verifyProof,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
+                ),
+                child: const Text(
+                  'Verify Proof',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-              child: const Text('Verify Proof'),
             ),
         ],
       ),
@@ -1191,23 +1516,80 @@ class _ProofResultPageState extends State<ProofResultPage> {
   }
   
   void _generateProof() async {
-    setState(() {
-      _isGenerating = true;
-      _error = null;
-    });
+    // Set generating state
+    if (mounted) {
+      setState(() {
+        _isGenerating = true;
+        _error = null;
+        _currentStage = 'Generating Proof...';
+        _progress = 0.1;
+      });
+    }
+
+    // Give UI a moment to render the loading overlay
+    await Future.delayed(const Duration(milliseconds: 50));
+    if (!mounted) return;
 
     try {
+      // Update stage: Loading assets
+      if (mounted) {
+        setState(() {
+          _currentStage = 'Generating Proof...';
+          _progress = 0.2;
+        });
+      }
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (!mounted) return;
+      
+      // Update stage: Preparing inputs
+      if (mounted) {
+        setState(() {
+          _currentStage = 'Generating Proof...';
+          _progress = 0.3;
+        });
+      }
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (!mounted) return;
+      
+      // Update stage: Generating proof
+      if (mounted) {
+        setState(() {
+          _currentStage = 'Generating Proof...';
+          _progress = 0.4;
+        });
+      }
+      
       // Generate actual proof using MoPro framework 
       _proofData = await _generateRealProof();
       
-      setState(() {
-        _isGenerating = false;
-      });
-            } catch (e) {
-      setState(() {
-        _isGenerating = false;
-        _error = e.toString();
-      });
+      // Update stage: Finalizing
+      if (mounted) {
+        setState(() {
+          _currentStage = 'Generating Proof...';
+          _progress = 0.9;
+        });
+      }
+      await Future.delayed(const Duration(milliseconds: 200));
+      
+      if (mounted) {
+        // Stop the timer
+        _uiUpdateTimer?.cancel();
+        setState(() {
+          _isGenerating = false;
+          _currentStage = 'Complete!';
+          _progress = 1.0;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        // Stop the timer
+        _uiUpdateTimer?.cancel();
+        setState(() {
+          _isGenerating = false;
+          _error = e.toString();
+          _currentStage = 'Error occurred';
+        });
+      }
     }
   }
 
@@ -1694,15 +2076,20 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       _isVerifying = true;
     });
     
+    // Give the UI a chance to update and show the loading indicator
+    await Future.delayed(const Duration(milliseconds: 100));
+    
     try {
       // Perform actual verification using MoPro framework
       final isValid = await _performRealVerification();
       
       // Update UI immediately after verification
-      setState(() {
-        _isVerifying = false;
-        _isValid = isValid;
-      });
+      if (mounted) {
+        setState(() {
+          _isVerifying = false;
+          _isValid = isValid;
+        });
+      }
       
       // Send data to backend asynchronously without blocking UI
       if (isValid) {
@@ -1711,11 +2098,13 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
         });
       }
     } catch (e) {
-      setState(() { 
-        _isVerifying = false;
-        _isValid = false;
-        _error = e.toString();
-      });
+      if (mounted) {
+        setState(() { 
+          _isVerifying = false;
+          _isValid = false;
+          _error = e.toString();
+        });
+      }
     }
   }
 
