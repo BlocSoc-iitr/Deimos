@@ -9,13 +9,13 @@ export function Navbar() {
 
       <div className="w-full max-w-[calc(100%-32px)] sm:max-w-[calc(100%-48px)] md:max-w-[calc(100%-64px)] lg:max-w-[700px] lg:w-[700px] h-10 sm:h-11 md:h-12 py-1.5 sm:py-2 px-3 sm:px-4 md:px-4 pr-2 sm:pr-3 bg-[#F7F5F3]/95 backdrop-blur-md shadow-[0px_0px_0px_2px_white,0px_4px_16px_rgba(0,0,0,0.08)] overflow-hidden rounded-[50px] flex justify-between items-center relative z-30 border border-white/20">
         <div className="flex justify-center items-center">
-          <div className="flex justify-start items-center">
-            <div className="flex flex-col justify-center text-[#2F3037] text-sm sm:text-base md:text-lg lg:text-xl font-semibold leading-5 font-sans">
+          <Link href="/" className="flex justify-start items-center group">
+            <div className="flex flex-col justify-center text-[#2F3037] text-sm sm:text-base md:text-lg lg:text-xl font-semibold leading-5 font-sans hover:text-blue-600 transition-colors cursor-pointer">
               Deimos
             </div>
-          </div>
+          </Link>
           <div className="pl-3 sm:pl-4 md:pl-5 lg:pl-5 justify-start items-start hidden sm:flex flex-row gap-2 sm:gap-3 md:gap-4 lg:gap-4">
-            <Link href="/" className="flex justify-start items-center group">
+            <Link href="/benchmarks" className="flex justify-start items-center group">
               <div className="flex flex-col justify-center text-[rgba(49,45,43,0.80)] text-xs md:text-[13px] font-medium leading-[14px] font-sans hover:text-[#37322F] transition-all duration-200 group-hover:scale-105">
                 Benchmarks
               </div>
