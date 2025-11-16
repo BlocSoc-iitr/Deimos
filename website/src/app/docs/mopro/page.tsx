@@ -91,8 +91,7 @@ export default function MoPro() {
 
         <h3 className="text-xl font-bold mb-2">Install MoPro CLI</h3>
         <EnhancedCodeBlock 
-          language="bash" 
-          title="Install MoPro CLI"
+          language="Bash" 
           className="mb-4"
         >
 {`git clone https://github.com/zkmopro/mopro
@@ -101,46 +100,38 @@ cargo install --path .`}
         </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2">Initialize Project</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="Bash" >
 {`cd benchmarking-suite/moPro/mopro-sha256
 
 # Initialize MoPro configuration
 mopro init
 
 # This creates mopro-config.toml with project settings`}
-          </pre>
-        </div>
+        </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2">Build Native Bindings</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="Bash" >
 {`# Build bindings for all configured platforms
 mopro build
 
 # This compiles Rust code and generates FFI bindings`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2">Create Platform Templates</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="Bash" >
 {`# Generate platform-specific templates
 mopro create
 
 # This creates android/, ios/, or web/ directories with starter code`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2">Update Bindings</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="Bash">
 {`# After making changes to Rust code
 mopro update
 
 # This refreshes bindings in all platform directories`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
       </section>
 
       <section className="mb-12">
@@ -209,16 +200,14 @@ default = ["mopro-ffi/circom"]
         <h2 className="text-2xl font-bold mb-4">Android Integration</h2>
         
         <h3 className="text-xl font-bold mb-2">Opening the Project</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="Bash">
 {`# Open in Android Studio
 open android -a Android\\ Studio
 
 # Or build from command line
 cd android
 ./gradlew build`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2">Kotlin Usage Example</h3>
         <div className="bg-gray-50 p-4 rounded mb-4">
@@ -282,16 +271,14 @@ val benchmarkResult = BenchmarkResult(
         <h2 className="text-2xl font-bold mb-4">iOS Integration</h2>
         
         <h3 className="text-xl font-bold mb-2">Opening the Project</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="Bash">
 {`# Open in Xcode
 open ios/MoproApp.xcodeproj
 
 # Or build from command line
 cd ios
 xcodebuild -project MoproApp.xcodeproj -scheme MoproApp build`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2">Swift Usage Example</h3>
         <div className="bg-gray-50 p-4 rounded mb-4">
@@ -418,8 +405,7 @@ guard let zkeyPath = Bundle.main.path(
         <h2 className="text-2xl font-bold mb-4">Testing</h2>
         
         <h3 className="text-xl font-bold mb-2">Rust Tests</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="Bash">
 {`# Run all tests
 cargo test
 
@@ -431,12 +417,10 @@ cargo test -- --nocapture
 
 # Run tests with release optimizations
 cargo test --release`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2">Android Tests</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="Bash">
 {`cd android
 
 # Run unit tests
@@ -444,18 +428,15 @@ cargo test --release`}
 
 # Run instrumented tests on device
 ./gradlew connectedAndroidTest`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2">iOS Tests</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="Bash">
 {`cd ios
 
 # Run tests
 xcodebuild test -project MoproApp.xcodeproj -scheme MoproApp`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
       </section>
 
       <section className="mb-12">

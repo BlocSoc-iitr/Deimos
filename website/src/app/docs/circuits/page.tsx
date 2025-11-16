@@ -1,5 +1,7 @@
 'use client';
 
+import { EnhancedCodeBlock } from '@/components/ui/code-block';
+
 export default function Circuits() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
@@ -18,8 +20,11 @@ export default function Circuits() {
         <p className="mb-4">
           All hash circuits in Deimos follow this standard pattern:
         </p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+        <EnhancedCodeBlock 
+          language="circom" 
+          showLineNumbers={true}
+          className="mb-4"
+        >
 {`pragma circom 2.0.0;
 
 include "./hash_function.circom";
@@ -34,8 +39,7 @@ template HashBench(N) {
 }
 
 component main {public[in]} = HashBench(32);`}
-          </pre>
-        </div>
+        </EnhancedCodeBlock>
         <p className="mb-4">
           Key points:
         </p>
@@ -130,8 +134,7 @@ component main {public[in]} = HashBench(32);`}
         <h2 className="text-2xl font-bold mb-4">Adding New Hash Functions</h2>
         
         <h3 className="text-xl font-bold mb-2">Step 1: Create Directory Structure</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="Bash" >
 {`cd benchmarking-suite/frameworks/circom
 
 # Create directory for your circuit
@@ -140,15 +143,13 @@ mkdir -p circuits/your_hash
 # Create input for your circuit
 mkdir -p inputs/your_hash 
 touch inputs/your_hash/input_9.json`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2">Step 2: Create Test Input</h3>
         <p className="mb-4">
           Create <code>inputs/your_hash/input_9.json</code> with your test data:
         </p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="json" >
 {`{
   "in": [
     "72", "101", "108", "108", "111", "32", "87", "111",
@@ -157,8 +158,7 @@ touch inputs/your_hash/input_9.json`}
     "101", "115", "116", "32", "109", "115", "103", "46"
   ]
 }`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
         <p className="mb-4 text-sm text-gray-600">
           <em>This is &quot;Hello World! This is a test msg.&quot; in decimal bytes.</em>
         </p>
@@ -167,8 +167,7 @@ touch inputs/your_hash/input_9.json`}
         <p className="mb-4">
           Create <code>circuits/your_hash/circom.circom</code>:
         </p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="circom" >
 {`pragma circom 2.0.0;
 
 include "./your_hash.circom";
@@ -183,18 +182,15 @@ template YourHashBench(N) {
 }
 
 component main {public[in]} = YourHashBench(32);`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2">Step 4: Compile Circuit</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="Bash" >
 {`cd circuits/your_hash
 
 # Compile circuit
 circom circom.circom --r1cs --wasm --sym --c`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2">Step 5: Compute Witness</h3>
         <p className="mb-4">
@@ -206,23 +202,19 @@ circom circom.circom --r1cs --wasm --sym --c`}
         </ul>
 
         <p className="mb-2"><strong>Option 1: Computing Witness with WebAssembly</strong></p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="Bash" >
 {`cd circom_js
 
 node generate_witness.js circom.wasm input_9.json witness.wtns`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
 
         <p className="mb-2"><strong>Option 2: Computing Witness with C++</strong></p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="Bash" >
 {`cd circom_cpp
 
 make
 ./circom input_9.json witness.wtns`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2">Step 6: Generate Proving Keys</h3>
         <p className="mb-4">
@@ -234,8 +226,7 @@ make
           <li><strong>pot18</strong> = 262,144 constraints</li>
           <li><strong>pot20</strong> = 1,048,576 constraints</li>
         </ul>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="Bash" >
 {`# Start Powers of Tau ceremony (if not already done)
 snarkjs powersoftau new bn128 18 pot18_0000.ptau -v
 snarkjs powersoftau contribute pot18_0000.ptau pot18_0001.ptau --name="First contribution" -v
@@ -245,12 +236,10 @@ snarkjs powersoftau prepare phase2 pot18_0001.ptau pot18_final.ptau -v
 snarkjs groth16 setup circom.r1cs ../../phase1/pot18_final.ptau your_hash_0000.zkey
 snarkjs zkey contribute your_hash_0000.zkey your_hash_0001.zkey --name="1st Contributor" -v
 snarkjs zkey export verificationkey your_hash_0001.zkey verification_key.json`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2">Step 7: Generate and Verify Proof</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+          <EnhancedCodeBlock language="Bash" >
 {`# Generate proof
 snarkjs groth16 prove your_hash_0001.zkey circom_js/witness.wtns proof.json public.json
 
@@ -258,8 +247,7 @@ snarkjs groth16 prove your_hash_0001.zkey circom_js/witness.wtns proof.json publ
 snarkjs groth16 verify verification_key.json public.json proof.json
 
 # Expected output: [INFO] snarkJS: OK!`}
-          </pre>
-        </div>
+          </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2">Step 8: Document Your Circuit</h3>
         <p className="mb-4">
