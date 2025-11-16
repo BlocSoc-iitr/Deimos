@@ -55,7 +55,6 @@ export default function NoirIntegration() {
         </p>
         <EnhancedCodeBlock 
           language="bash" 
-          title="Verify Noir Version"
           className="mb-4"
         >
 {`noirc --version  # verify installed version is v1.0.0-beta.8`}
@@ -76,7 +75,6 @@ export default function NoirIntegration() {
         </p>
         <EnhancedCodeBlock 
           language="bash" 
-          title="Copy Noir Circuit Files"
           className="mb-4"
         >
 {`# From the repository root
@@ -143,7 +141,6 @@ cp path/to/my_circuit.vk benchmarking-suite/moPro/mopro-example-app/flutter/asse
         </p>
         <EnhancedCodeBlock 
           language="bash" 
-          title="Build and Run Flutter App"
           className="mb-4"
         >
 {`cd benchmarking-suite/moPro/mopro-example-app/flutter
