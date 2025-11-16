@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { Navbar } from '@/components/navbar';
 
 interface SidebarItem {
   title: string;
@@ -43,6 +44,16 @@ const sidebarItems: SidebarItem[] = [
     ],
   },
   {
+    title: 'MoPro',
+    children: [
+      { title: 'Overview', href: '/docs/mopro' },
+      { title: 'Architecture', href: '/docs/mopro#architecture' },
+      { title: 'Setup', href: '/docs/mopro#setting-up-mopro' },
+      { title: 'Android Integration', href: '/docs/mopro#android-integration' },
+      { title: 'iOS Integration', href: '/docs/mopro#ios-integration' },
+    ],
+  },
+  {
     title: 'Circom Integration',
     children: [
       { title: 'Prerequisites', href: '/docs/circom-integration#prerequisites' },
@@ -69,15 +80,9 @@ const sidebarItems: SidebarItem[] = [
   {
     title: 'Contributing',
     children: [
-      { title: 'Ways to Contribute', href: '/docs/contributing#ways-to-contribute' },
-      { title: 'Development Workflow', href: '/docs/contributing#development-workflow' },
-      { title: 'Adding New Applications', href: '/docs/contributing#adding-new-applications' },
-      { title: 'Code Style Guidelines', href: '/docs/contributing#code-style-guidelines' },
-      { title: 'Testing Requirements', href: '/docs/contributing#testing-requirements' },
-      { title: 'Documentation Requirements', href: '/docs/contributing#documentation-requirements' },
-      { title: 'Git Guidelines', href: '/docs/contributing#git-guidelines' },
-      { title: 'Getting Help', href: '/docs/contributing#getting-help' },
-      { title: 'Code of Conduct', href: '/docs/contributing#code-of-conduct' },
+      { title: 'Overview', href: '/docs/contributing' },
+      { title: 'Workflow', href: '/docs/contributing#development-workflow' },
+      { title: 'Code Style', href: '/docs/contributing#code-style-guidelines' },
     ],
   },
 ];
@@ -94,6 +99,7 @@ export default function DocsLayout({
     'Documentation',
     'Getting Started',
     'Circuits',
+    'MoPro',
     'Circom Integration',
     'Noir Integration',
     'Contributing',
@@ -130,11 +136,16 @@ export default function DocsLayout({
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F7F5F3]">
+    <div className="flex min-h-screen bg-[#F7F5F3] relative">
+      {/* Navigation */}
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <Navbar />
+      </div>
+      
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="md:hidden fixed top-24 left-4 z-50 p-2 bg-[#37322F] text-white rounded-full shadow-[0px_1px_2px_rgba(55,50,47,0.12)] hover:shadow-md transition-shadow"
+        className="md:hidden fixed top-24 left-4 z-40 p-2 bg-[#37322F] text-white rounded-lg shadow-lg hover:bg-[#2F2A28] transition-colors"
       >
         <svg
           className="w-6 h-6"
@@ -155,9 +166,9 @@ export default function DocsLayout({
       <aside
         className={`${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 fixed md:sticky top-0 left-0 z-40 w-64 md:w-64 flex-shrink-0 h-screen transition-transform bg-white border-r border-[#E0DEDB] overflow-y-auto`}
+        } md:translate-x-0 fixed md:sticky top-16 md:top-20 left-0 z-40 w-64 h-screen transition-transform bg-gray-50 border-r border-gray-200`}
       >
-        <div className="h-full px-3 py-4">
+        <div className="h-full px-3 py-4 overflow-y-auto">
           <ul className="space-y-1">
             {sidebarItems.map((section) => {
               return (
@@ -165,9 +176,9 @@ export default function DocsLayout({
                   {/* Parent Section - Never highlighted */}
                   <button
                     onClick={() => toggleSection(section.title)}
-                    className="flex items-center justify-between w-full p-3 text-left rounded-lg transition-colors text-[#37322F] hover:bg-[#F7F5F3]"
+                    className="flex items-center justify-between w-full p-3 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-200"
                   >
-                    <span className="font-semibold">{section.title}</span>
+                    <span className="font-medium">{section.title}</span>
                     <svg
                       className={`w-4 h-4 transition-transform ${
                         expandedSections.includes(section.title) ? 'rotate-90' : ''
@@ -205,8 +216,8 @@ export default function DocsLayout({
                               href={child.href || '#'}
                               className={`flex items-center p-2 pl-4 rounded-lg transition-colors text-sm ${
                                 isActive
-                                  ? 'bg-blue-600 text-white font-medium'
-                                  : 'text-[#605A57] hover:bg-[#F7F5F3]'
+                                  ? 'bg-[#37322F] text-white shadow-sm border-l-2 border-[#605A57]'
+                                  : 'text-gray-600 hover:bg-gray-200 hover:text-[#37322F]'
                               }`}
                               onClick={() => {
                                 setIsSidebarOpen(false);
@@ -242,7 +253,7 @@ export default function DocsLayout({
       )}
 
       {/* Main content */}
-      <div className="flex-1 md:ml-0">
+      <div className="flex-1 md:ml-0 pt-16 md:pt-20">
         {children}
       </div>
     </div>

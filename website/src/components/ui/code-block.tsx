@@ -64,14 +64,12 @@ export function CodeBlock({ children, language, className = '' }: CodeBlockProps
 
 // Enhanced version with syntax highlighting support
 interface EnhancedCodeBlockProps extends CodeBlockProps {
-  title?: string;
   showLineNumbers?: boolean;
 }
 
 export function EnhancedCodeBlock({ 
   children, 
   language, 
-  title, 
   showLineNumbers = false,
   className = '' 
 }: EnhancedCodeBlockProps) {
@@ -91,7 +89,7 @@ export function EnhancedCodeBlock({
 
   return (
     <div className={`relative group ${className}`}>
-      <div className="bg-[#0f1419] border border-gray-700 rounded-lg overflow-hidden shadow-lg">
+      <div className="bg-[#0f1419] border border-gray-700 rounded-lg overflow-hidden shadow-lg mb-4">
         <div className="flex items-center justify-between px-4 py-3 bg-[#1a1f2e] border-b border-gray-700">
           <div className="flex items-center gap-3">
             <div className="flex gap-1.5">
@@ -99,9 +97,9 @@ export function EnhancedCodeBlock({
               <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
               <div className="w-3 h-3 rounded-full bg-[#28ca42]"></div>
             </div>
-            {(title || language) && (
+            {(language) && (
               <span className="text-sm font-medium text-gray-300">
-                {title || language}
+                {language}
               </span>
             )}
           </div>
