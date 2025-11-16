@@ -57,14 +57,12 @@ npm run dev`}
         <h2 className="text-2xl font-bold mb-4">Working with Circom Circuits</h2>
         
         <h3 className="text-xl font-bold mb-2">Step 1: Compiling a Circuit</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
           <EnhancedCodeBlock language="Bash" >
 {`cd benchmarking-suite/frameworks/circom/circuits/sha256
 
 circom circom.circom --r1cs --wasm --sym --c
 `}
           </EnhancedCodeBlock>
-        </div>
 
         <h3 className="text-xl font-bold mb-2">Step 2: Computing the Witness</h3>
         <p className="mb-4">
@@ -76,23 +74,19 @@ circom circom.circom --r1cs --wasm --sym --c
         </ul>
 
         <p className="mb-2"><strong>Option 1: Computing Witness with WebAssembly</strong></p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
           <EnhancedCodeBlock language="Bash" >
 {`cd benchmarking-suite/frameworks/circom/circuits/sha256/circom_js/
 
 node generate_witness.js circom.wasm input.json witness.wtns`}
           </EnhancedCodeBlock>
-        </div>
 
         <p className="mb-2"><strong>Option 2: Computing Witness with C++</strong></p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
           <EnhancedCodeBlock language="Bash" >
 {`cd benchmarking-suite/frameworks/circom/circuits/sha256/circom_cpp/
 
 make
 ./circom input.json witness.wtns`}
           </EnhancedCodeBlock>
-        </div>
 
         <h3 className="text-xl font-bold mb-2">Step 3: Generating Proving Keys</h3>
         
@@ -100,7 +94,6 @@ make
         <p className="mb-4">
           The Powers of Tau ceremony is a one-time setup that doesn&apos;t depend on a specific circuit. 
         </p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
           <EnhancedCodeBlock language="Bash" >
 {`# Start new ceremony
 snarkjs powersoftau new bn128 12 pot12_0000.ptau -v
@@ -108,13 +101,11 @@ snarkjs powersoftau new bn128 12 pot12_0000.ptau -v
 # Contribute randomness
 snarkjs powersoftau contribute pot12_0000.ptau pot12_0001.ptau --name="First contribution" -v`}
           </EnhancedCodeBlock>
-        </div>
 
         <p className="mb-2"><strong>3b. Generating zkey and verification key (Circuit-Dependent)</strong></p>
         <p className="mb-4">
           These steps are specific to your circuit and must be done for each circuit you compile.
         </p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
           <EnhancedCodeBlock language="Bash" >
 {`# Prepare for phase 2
 snarkjs powersoftau prepare phase2 pot12_0001.ptau pot12_final.ptau -v
@@ -128,13 +119,11 @@ snarkjs zkey contribute circuit_0000.zkey circuit_0001.zkey --name="1st Contribu
 # Export verification key
 snarkjs zkey export verificationkey circuit_0001.zkey verification_key.json`}
           </EnhancedCodeBlock>
-        </div>
 
         <h3 className="text-xl font-bold mb-2">Step 4: Generating and Verifying Proofs</h3>
         <p className="mb-4">
           Once you have the proving key and witness, you can generate and verify proofs.
         </p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
           <EnhancedCodeBlock language="Bash" >
 {`# Generate proof
 snarkjs groth16 prove circuit_0001.zkey witness.wtns proof.json public.json
@@ -144,7 +133,6 @@ snarkjs groth16 verify verification_key.json public.json proof.json
 
 # Expected output: [INFO] snarkJS: OK!`}
           </EnhancedCodeBlock>
-        </div>
 
       </section>
 
