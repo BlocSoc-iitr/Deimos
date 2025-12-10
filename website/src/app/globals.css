@@ -1,1 +1,26 @@
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Deimos Design System Colors */
+    --background: #F7F5F3;
+    --foreground: #37322F;
+    --text-secondary: rgba(55, 50, 47, 0.80);
+    --text-muted: #605A57;
+    --text-light: rgba(55, 50, 47, 0.60);
+    --border: rgba(55, 50, 47, 0.12);
+    --border-accent: #E0DEDB;
+    
+    /* Font families */
+    --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+    --font-serif: var(--font-instrument-serif), Georgia, serif;
+  }
+  
+  body {
+    @apply bg-[#F7F5F3] text-[#37322F];
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans;
+  }
+}
