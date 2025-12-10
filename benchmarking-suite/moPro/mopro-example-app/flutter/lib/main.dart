@@ -5,6 +5,8 @@ import 'dart:convert';
 
 import 'package:mopro_flutter/mopro_flutter.dart';
 import 'package:mopro_flutter/mopro_types.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 // Design constants based on design.json
 class AppTheme {
@@ -1016,17 +1018,35 @@ class _ProofResultPageState extends State<ProofResultPage> {
     }
   }
 
+  Future<String> _extractAsset(String assetPath) async {
+    final docsDir = await getApplicationDocumentsDirectory();
+    final filename = assetPath.split('/').last;
+    final file = File('${docsDir.path}/$filename');
+
+    if (!await file.exists()) {
+      final data = await rootBundle.load(assetPath);
+      await file.writeAsBytes(data.buffer.asUint8List());
+    }
+    return file.path;
+  }
+
   Future<String> _generateCircomProof(MoproFlutter plugin) async {
     // Convert user input to proper format
     final inputs = _textToByteArrayJson(widget.customInput);
     
     // Get the appropriate zkey path based on algorithm
-    final zkeyPath = _getZkeyPath();
+    final zkeyAssetPath = _getZkeyPath();
+    print("DEBUG: Asset Path: $zkeyAssetPath");
     
+    final zkeyPath = await _extractAsset(zkeyAssetPath);
+    print("DEBUG: Extracted ZKey Path: $zkeyPath");
+    print("DEBUG: File exists? ${await File(zkeyPath).exists()}");
+
     // Start timing
     final stopwatch = Stopwatch()..start();
     
     // Generate proof using actual MoPro
+    print("DEBUG: Calling generateCircomProof with path: $zkeyPath");
     final proofResult = await plugin.generateCircomProof(
       zkeyPath, 
       inputs, 

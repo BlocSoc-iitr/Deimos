@@ -1,0 +1,4 @@
+module deimos_circomFFI {
+    header "deimos_circomFFI.h"
+    export *
+}

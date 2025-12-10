@@ -123,25 +123,31 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
         return
       }
 
-      do {
-        var moproProofLib: ProofLib
-        if proofLib == 0 {
-          moproProofLib = ProofLib.arkworks
-        } else {
-          moproProofLib = ProofLib.rapidsnark
-        }
-        // Call the function from mopro.swift
-        let proofResult = try generateCircomProof(
-          zkeyPath: zkeyPath, circuitInputs: inputs, proofLib: moproProofLib)
-        let resultMap = convertCircomProof(res: proofResult)
+      DispatchQueue.global(qos: .userInitiated).async {
+        do {
+          var moproProofLib: CircomProofLib
+          if proofLib == 0 {
+            moproProofLib = CircomProofLib.arkworks
+          } else {
+            moproProofLib = CircomProofLib.rapidsnark
+          }
+          // Call the function from mopro.swift
+          let proofResult = try generateCircomProof(
+            zkeyPath: zkeyPath, circuitInputs: inputs, proofLib: moproProofLib)
+          let resultMap = convertCircomProof(res: proofResult)
 
-        // Return the proof and inputs as a map supported by the StandardMethodCodec
-        result(resultMap)
-      } catch {
-        result(
-          FlutterError(
-            code: "PROOF_GENERATION_ERROR", message: "Failed to generate proof",
-            details: error.localizedDescription))
+          // Return the proof and inputs as a map supported by the StandardMethodCodec
+          DispatchQueue.main.async {
+            result(resultMap)
+          }
+        } catch {
+          DispatchQueue.main.async {
+            result(
+              FlutterError(
+                code: "PROOF_GENERATION_ERROR", message: "Failed to generate proof",
+                details: error.localizedDescription))
+          }
+        }
       }
 
     case "verifyCircomProof":
@@ -154,25 +160,31 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
         return
       }
 
-      do {
-        var moproProofLib: ProofLib
-        if proofLib == 0 {
-          moproProofLib = ProofLib.arkworks
-        } else {
-          moproProofLib = ProofLib.rapidsnark
-        }
-        let circomProofResult = convertCircomProofResult(proof: proof)
-        // Call the function from mopro.swift
-        let valid = try verifyCircomProof(
-          zkeyPath: zkeyPath, proofResult: circomProofResult, proofLib: moproProofLib)
+      DispatchQueue.global(qos: .userInitiated).async {
+        do {
+          var moproProofLib: CircomProofLib
+          if proofLib == 0 {
+            moproProofLib = CircomProofLib.arkworks
+          } else {
+            moproProofLib = CircomProofLib.rapidsnark
+          }
+          let circomProofResult = convertCircomProofResult(proof: proof)
+          // Call the function from mopro.swift
+          let valid = try verifyCircomProof(
+            zkeyPath: zkeyPath, proofResult: circomProofResult, proofLib: moproProofLib)
 
-        // Return the proof and inputs as a map supported by the StandardMethodCodec
-        result(valid)
-      } catch {
-        result(
-          FlutterError(
-            code: "PROOF_VERIFICATION_ERROR", message: "Failed to verify proof",
-            details: error.localizedDescription))
+          // Return the proof and inputs as a map supported by the StandardMethodCodec
+          DispatchQueue.main.async {
+            result(valid)
+          }
+        } catch {
+          DispatchQueue.main.async {
+            result(
+              FlutterError(
+                code: "PROOF_VERIFICATION_ERROR", message: "Failed to verify proof",
+                details: error.localizedDescription))
+          }
+        }
       }
 
     case "generateHalo2Proof":
@@ -186,7 +198,7 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
       }
 
       do {
-        let proofResult = try generateHalo2Proof(
+        let proofResult = try generateHalo2Proof_Circom(
           srsPath: srsPath, pkPath: pkPath, circuitInputs: inputs)
         let resultMap = [
           "proof": proofResult.proof,
@@ -234,7 +246,7 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
       }
 
       do {
-        let valid = try verifyHalo2Proof(
+        let valid = try verifyHalo2Proof_Circom(
           srsPath: srsPath, vkPath: vkPath, proof: proof.data, publicInput: inputs.data)
         result(valid)
       } catch {
