@@ -36,21 +36,6 @@ const EffortlessIntegration: React.FC<EffortlessIntegrationProps> = ({
           "--ei-center-text": "#ffffff",
         } as React.CSSProperties)
 
-  const imgFrame2147223198 = "/placeholder.svg?height=300&width=482"
-  const imgGroup12006 = "/placeholder.svg?height=358&width=500"
-  const imgGroup12007 = "/placeholder.svg?height=600&width=600"
-  const imgEllipse274 = "/placeholder.svg?height=714&width=677"
-  const imgGroup = "/placeholder.svg?height=28&width=28"
-  const imgFrame2147223251 = "/placeholder.svg?height=42&width=42"
-  const imgFrame = "/placeholder.svg?height=23&width=27"
-  const imgFrame1 = "/placeholder.svg?height=30&width=25"
-  const imgGroup12003 = "/placeholder.svg?height=18&width=18"
-  const imgGroup1 = "/placeholder.svg?height=30&width=20"
-  const imgGroup2 = "/placeholder.svg?height=30&width=20"
-  const imgFrame2 = "/placeholder.svg?height=31&width=29"
-  const imgFrame2147223245 = "/placeholder.svg?height=42&width=42"
-  const imgFrame3 = "/placeholder.svg?height=24&width=24"
-
   return (
     <div
       className={className}

@@ -16,11 +16,6 @@ interface EffortlessIntegrationProps {
 const EffortlessIntegration: React.FC<EffortlessIntegrationProps> = ({ width = 482, height = 300, className = "" }) => {
   const centerX = 250
   const centerY = 179
-  const rings = [
-    { radius: 80, logos: 2 }, // Inner ring - 2 logos
-    { radius: 120, logos: 3 }, // Middle ring - 3 logos
-    { radius: 160, logos: 2 }, // Outer ring - 2 logos
-  ]
 
   const getPositionOnRing = (ringRadius: number, angle: number) => ({
     x: centerX + ringRadius * Math.cos(angle),

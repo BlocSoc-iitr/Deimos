@@ -44,9 +44,6 @@ const NumbersThatSpeak: React.FC<NumbersThatSpeakProps> = ({
 
   // Figma-exported assets
   const imgSchedule = "/placeholder.svg?height=271&width=431"
-  const imgYAxisLine = "/placeholder.svg?height=17&width=295"
-  const imgYAxisLine1 = "/placeholder.svg?height=13&width=295"
-  const imgYAxisLine2 = "/placeholder.svg?height=13&width=295"
 
   return (
     <div
