@@ -1,11 +1,11 @@
-build_mode = "debug"
+build_mode = "release"
 target_adapters = [
-    "circom",
     "noir",
+    "circom",
     "halo2",
 ]
 target_platforms = ["android"]
-android = ["x86_64-linux-android"]
+android = ["aarch64-linux-android"]
 auto_update = false
 
 [update]
