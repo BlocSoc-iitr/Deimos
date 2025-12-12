@@ -20,7 +20,7 @@ export default function Documentation() {
         <p className="mb-4">
           The project aims to benchmark zkVM performance for mobile-specific environments, compare multiple frameworks  
           (initially MoPro, imp1, and ProveKit), measure performance of common cryptographic & proof-related 
-          hash functions  across different languages (Circom, Noir, Halo2) 
+          hash functions across different languages (Circom, Noir) 
           and make this information accessible to users via a public dashboard.
         </p>
       </section>
@@ -111,38 +111,45 @@ export default function Documentation() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <a
             href="/docs/getstarted"
-            className="block p-6 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+            className="block p-6 bg-white border border-[rgba(2,6,23,0.08)] rounded-lg hover:shadow-[0px_0px_0px_0.75px_#E0DEDB_inset] transition-all"
           >
-            <h3 className="text-xl font-bold text-blue-900 mb-2">Getting Started</h3>
-            <p className="text-blue-700">Learn how to set up and run Deimos</p>
+            <h3 className="text-xl font-bold text-[#49423D] mb-2">Getting Started</h3>
+            <p className="text-[#605A57]">Learn how to set up and run Deimos</p>
           </a>
           <a
             href="/docs/circuits"
-            className="block p-6 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+            className="block p-6 bg-white border border-[rgba(2,6,23,0.08)] rounded-lg hover:shadow-[0px_0px_0px_0.75px_#E0DEDB_inset] transition-all"
           >
-            <h3 className="text-xl font-bold text-green-900 mb-2">Circuits</h3>
-            <p className="text-green-700">Explore circuit implementations</p>
+            <h3 className="text-xl font-bold text-[#49423D] mb-2">Circuits</h3>
+            <p className="text-[#605A57]">Explore circuit implementations</p>
+          </a>
+          <a
+            href="/docs/mopro"
+            className="block p-6 bg-white border border-[rgba(2,6,23,0.08)] rounded-lg hover:shadow-[0px_0px_0px_0.75px_#E0DEDB_inset] transition-all"
+          >
+            <h3 className="text-xl font-bold text-[#49423D] mb-2">MoPro</h3>
+            <p className="text-[#605A57]">Mobile proving integration guide</p>
           </a>
           <a
             href="/docs/circom-integration"
-            className="block p-6 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+            className="block p-6 bg-white border border-[rgba(2,6,23,0.08)] rounded-lg hover:shadow-[0px_0px_0px_0.75px_#E0DEDB_inset] transition-all"
           >
-            <h3 className="text-xl font-bold text-purple-900 mb-2">Circom Integration</h3>
-            <p className="text-purple-700">Mobile Circom circuit integration guide</p>
+            <h3 className="text-xl font-bold text-[#49423D] mb-2">Circom Integration</h3>
+            <p className="text-[#605A57]">Mobile Circom circuit integration guide</p>
           </a>
           <a
             href="/docs/noir-integration"
-            className="block p-6 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+            className="block p-6 bg-white border border-[rgba(2,6,23,0.08)] rounded-lg hover:shadow-[0px_0px_0px_0.75px_#E0DEDB_inset] transition-all"
           >
-            <h3 className="text-xl font-bold text-indigo-900 mb-2">Noir Integration</h3>
-            <p className="text-indigo-700">Mobile Noir circuit integration guide</p>
+            <h3 className="text-xl font-bold text-[#49423D] mb-2">Noir Integration</h3>
+            <p className="text-[#605A57]">Mobile Noir circuit integration guide</p>
           </a>
           <a
             href="/docs/contributing"
-            className="block p-6 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
+            className="block p-6 bg-white border border-[rgba(2,6,23,0.08)] rounded-lg hover:shadow-[0px_0px_0px_0.75px_#E0DEDB_inset] transition-all"
           >
-            <h3 className="text-xl font-bold text-orange-900 mb-2">Contributing</h3>
-            <p className="text-orange-700">Help improve Deimos</p>
+            <h3 className="text-xl font-bold text-[#49423D] mb-2">Contributing</h3>
+            <p className="text-[#605A57]">Help improve Deimos</p>
           </a>
         </div>
       </section>

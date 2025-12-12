@@ -1,7 +1,11 @@
 build_mode = "release"
-target_adapters = ["noir"]
-target_platforms = ["ios"]
+target_adapters = [
+    "noir",
+] # Keep single adapter to avoid iOS build issues. Toggle in lib.rs/Cargo.toml as needed.
+# target_adapters = ["circom", "noir", "halo2"] # Upstream config (fails on iOS unified build)
+target_platforms = ["ios", "android"]
 ios = ["aarch64-apple-ios"]
+android = ["x86_64-linux-android"]
 auto_update = false
 
 [update]

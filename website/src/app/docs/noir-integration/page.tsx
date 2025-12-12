@@ -1,5 +1,7 @@
 'use client';
 
+import { EnhancedCodeBlock } from '@/components/ui/code-block';
+
 export default function NoirIntegration() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
@@ -51,11 +53,12 @@ export default function NoirIntegration() {
           If you have <code>rustup</code> and <code>cargo</code> installed, install or pin the <code>noirc</code> toolchain 
           as documented in the Noir docs. Verify your installation:
         </p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+        <EnhancedCodeBlock 
+          language="bash" 
+          className="mb-4"
+        >
 {`noirc --version  # verify installed version is v1.0.0-beta.8`}
-          </pre>
-        </div>
+        </EnhancedCodeBlock>
         <p className="mb-4">
           Build the circuit to get the <code>.json</code> and <code>.srs</code> (and optionally <code>.vk</code>) files. Typical outputs are:
         </p>
@@ -70,16 +73,17 @@ export default function NoirIntegration() {
           From your Noir build output folder, copy the <code>.json</code> and <code>.srs</code> files into the MoPro Flutter assets directory. 
           Optionally copy a <code>.vk</code> if you plan to use a local verification key.
         </p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+        <EnhancedCodeBlock 
+          language="bash" 
+          className="mb-4"
+        >
 {`# From the repository root
 cp path/to/my_circuit.json benchmarking-suite/moPro/mopro-example-app/flutter/assets/my_circuit.json
 cp path/to/my_circuit.srs benchmarking-suite/moPro/mopro-example-app/flutter/assets/my_circuit.srs
 
 # Optional local verification key
 cp path/to/my_circuit.vk benchmarking-suite/moPro/mopro-example-app/flutter/assets/my_circuit.vk`}
-          </pre>
-        </div>
+        </EnhancedCodeBlock>
         <p className="mb-4 text-sm text-gray-600">
           <em>If you want the asset to use a standardized name (so the UI mapping picks it up), prefer names like <code>sha256.json</code>, 
           <code>sha256.srs</code>, <code>keccak256.json</code>, etc. — matching the algorithm labels used in the app.</em>
@@ -135,13 +139,14 @@ cp path/to/my_circuit.vk benchmarking-suite/moPro/mopro-example-app/flutter/asse
         <p className="mb-4">
           From the <code>mopro-example-app</code> directory:
         </p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+        <EnhancedCodeBlock 
+          language="bash" 
+          className="mb-4"
+        >
 {`cd benchmarking-suite/moPro/mopro-example-app/flutter
 flutter pub get
 flutter run`}
-          </pre>
-        </div>
+        </EnhancedCodeBlock>
         <p className="mb-4">
           On first runs, the app will attempt to load <code>.vk</code> files from assets. If they aren&apos;t present, 
           the app will call the MoPro plugin to fetch the verification key (this behavior is implemented in <code>_getNoirSettings()</code> in <code>main.dart</code>).
@@ -203,3 +208,4 @@ flutter run`}
     </div>
   );
 }
+

@@ -1,5 +1,7 @@
 'use client';
 
+import { EnhancedCodeBlock } from '@/components/ui/code-block';
+
 export default function CircomIntegration() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
@@ -71,16 +73,16 @@ rust_witness::witness!(blake2s256);  // <- Add your new circuit`}
         </div>
 
         <h3 className="text-xl font-bold mb-2 mt-6">Step 2: Build and Update MoPro Bindings</h3>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+        <EnhancedCodeBlock 
+          language="Bash" 
+        >
 {`# Navigate to the mopro-example-app directory
 cd mopro-example-app
 
 # Build the Rust library and update bindings
 mopro build
 mopro update`}
-          </pre>
-        </div>
+        </EnhancedCodeBlock>
         <p className="mb-4">
           This regenerates the Flutter/Android bindings with your new circuit support.
         </p>
@@ -89,12 +91,12 @@ mopro update`}
         <p className="mb-4">
           Copy your circuit&apos;s proving key to the Flutter assets directory:
         </p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+        <EnhancedCodeBlock 
+          language="Bash" 
+        >
 {`# Copy your .zkey file from the Circom build
 cp ../frameworks/circom/circuits/blake2s256/blake2s256_0000.zkey flutter/assets/blake2s256.zkey`}
-          </pre>
-        </div>
+        </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2 mt-6">Step 4: Update pubspec.yaml</h3>
         <p className="mb-4">
@@ -307,40 +309,39 @@ final arrayFieldInput = {
           <strong>Cause:</strong> Version mismatch or missing dependencies.
         </p>
         <p className="mb-2"><strong>Fix:</strong></p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+        <EnhancedCodeBlock 
+          language="Bash" 
+        >
 {`# Ensure UniFFI version is pinned
 cargo update uniffi --precise 0.29.0
 
 # Clean and rebuild
 cargo clean
 mopro build`}
-          </pre>
-        </div>
+        </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2 mt-6">Issue 2: Asset Loading Fails on Mobile</h3>
         <p className="mb-4">
           <strong>Cause:</strong> Incorrect asset paths or missing files.
         </p>
         <p className="mb-2"><strong>Fix:</strong></p>
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm overflow-x-auto">
+        <EnhancedCodeBlock 
+          language="Bash" 
+        >
 {`# Verify assets are in correct location
 ls test-vectors/
 # Should show: circuit.zkey, circuit.wasm
 
 # Check Flutter asset configuration
 grep -A 10 "assets:" pubspec.yaml`}
-          </pre>
-        </div>
+        </EnhancedCodeBlock>
 
         <h3 className="text-xl font-bold mb-2 mt-6">Issue 3: Proof Generation Fails</h3>
         <p className="mb-4">
           <strong>Cause:</strong> Input format mismatch or circuit constraints.
         </p>
-        <p className="mb-2"><strong>Fix:</strong></p>
         <p className="mb-4">
-          Add detailed error logging to debug the issue. Verify input format matches circuit expectations.
+          <strong>Fix:</strong> Add detailed error logging to debug the issue. Verify input format matches circuit expectations.
         </p>
 
         <h3 className="text-xl font-bold mb-2 mt-6">Issue 4: Memory Issues on Mobile</h3>
@@ -410,3 +411,4 @@ grep -A 10 "assets:" pubspec.yaml`}
     </div>
   );
 }
+
