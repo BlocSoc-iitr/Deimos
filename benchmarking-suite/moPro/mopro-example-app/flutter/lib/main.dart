@@ -770,7 +770,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
   List<String> _getAlgorithmsForFramework(String framework) {
     switch (framework) {
       case 'circom':
-        return ['SHA256', 'Keccak256', 'Blake2s256', 'MiMC256', 'Pedersen', 'Poseidon'];
+        return ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'RescuePrime'];
       case 'halo2':
         return ['Fibonacci'];
       case 'noir':
@@ -1797,6 +1797,10 @@ class _ProofResultPageState extends State<ProofResultPage> {
         return "assets/pedersen.zkey";
       case 'poseidon':
         return "assets/poseidon.zkey";
+      case 'blake3':
+        return "assets/blake3.zkey";
+      case 'rescueprime':
+        return "assets/rescueprime.zkey";
       default:
         return "assets/sha256.zkey";
     }
@@ -2028,8 +2032,8 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     // Get the selected input data from JSON file
     List<String> inputData = widget.selectedInputData.values;
     
-    // Special case for Poseidon: use exactly 8 bytes (as per the circuit requirement)
-    if (widget.algorithm.toLowerCase() == 'poseidon') {
+    // Special case for Poseidon and Rescue Prime: use exactly 8 bytes (as per the circuit requirement)
+    if (widget.algorithm.toLowerCase() == 'poseidon' || widget.algorithm.toLowerCase() == 'rescueprime') {
       // Take first 8 bytes, pad with zeros if needed
       List<String> poseidonInput = inputData.take(8).toList();
       while (poseidonInput.length < 8) {
