@@ -30,7 +30,8 @@ rust_witness::witness!(mimc256);
 rust_witness::witness!(pedersen);
 rust_witness::witness!(poseidon);
 rust_witness::witness!(sha256);
-
+rust_witness::witness!(blake3);
+rust_witness::witness!(rescueprime);
 
 set_circom_circuits! {
     ("blake2s256.zkey", circom_prover::witness::WitnessFn::RustWitness(blake2s256_witness)),
@@ -39,6 +40,8 @@ set_circom_circuits! {
     ("pedersen.zkey", circom_prover::witness::WitnessFn::RustWitness(pedersen_witness)),
     ("poseidon.zkey", circom_prover::witness::WitnessFn::RustWitness(poseidon_witness)),
     ("sha256.zkey", circom_prover::witness::WitnessFn::RustWitness(sha256_witness)),
+    ("blake3.zkey", circom_prover::witness::WitnessFn::RustWitness(blake3_witness)),
+    ("rescueprime.zkey", circom_prover::witness::WitnessFn::RustWitness(rescueprime_witness)),
 }
 
 #[cfg(test)]
