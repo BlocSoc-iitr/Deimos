@@ -1631,18 +1631,14 @@ class _ProofResultPageState extends State<ProofResultPage> {
     final zkeyAssetPath = _getZkeyPath();
     print("DEBUG: Asset Path: $zkeyAssetPath");
     
-<<<<<<< HEAD
     final zkeyPath = await _extractAsset(zkeyAssetPath);
     print("DEBUG: Extracted ZKey Path: $zkeyPath");
     print("DEBUG: File exists? ${await File(zkeyPath).exists()}");
 
-=======
     // Capture memory and battery BEFORE proof generation
     _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
     final battery = Battery();
     _batteryBeforeProof = await battery.batteryLevel;
-    
->>>>>>> upstream/dev
     // Start timing
     final stopwatch = Stopwatch()..start();
     
