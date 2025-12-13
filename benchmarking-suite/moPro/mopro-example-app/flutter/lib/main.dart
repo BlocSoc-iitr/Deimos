@@ -2032,8 +2032,8 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     // Get the selected input data from JSON file
     List<String> inputData = widget.selectedInputData.values;
     
-    // Special case for Poseidon and Rescue Prime: use exactly 8 bytes (as per the circuit requirement)
-    if (widget.algorithm.toLowerCase() == 'poseidon' || widget.algorithm.toLowerCase() == 'rescueprime') {
+    // Special case for Poseidon: use exactly 8 bytes (as per the circuit requirement)
+    if (widget.algorithm.toLowerCase() == 'poseidon') {
       // Take first 8 bytes, pad with zeros if needed
       List<String> poseidonInput = inputData.take(8).toList();
       while (poseidonInput.length < 8) {
@@ -2044,7 +2044,7 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     
     // Blake2 and Blake3 require exactly 32 bytes input
     final algorithmLower = widget.algorithm.toLowerCase();
-    if (algorithmLower == 'blake2' || algorithmLower == 'blake3') {
+    if (algorithmLower == 'blake2' || algorithmLower == 'blake3' || algorithmLower == 'rescueprime') {
       List<String> blakeInput = List<String>.from(inputData);
       // Take first 32 bytes, pad with zeros if needed
       if (blakeInput.length > 32) {
