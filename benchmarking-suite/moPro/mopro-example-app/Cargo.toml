@@ -9,7 +9,7 @@ crate-type = ["lib", "cdylib", "staticlib"]
 
 # Adapters for different proof systems
 [features]
-default = ["cairo"]
+default = ["cairo", "noir"]
 cairo = ["dep:cairo-m-prover"]
 noir = ["dep:noir_rs"]
 

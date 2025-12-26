@@ -731,6 +731,10 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is 
 // rather `InterfaceTooLargeException`, caused by too many methods 
@@ -746,7 +750,11 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 // when the library is loaded.
 internal interface IntegrityCheckingUniffiLib : Library {
     // Integrity check functions only
-    fun uniffi_mopro_example_app_checksum_func_generate_circom_proof(
+    fun uniffi_mopro_example_app_checksum_func_cairo_prove(
+): Short
+fun uniffi_mopro_example_app_checksum_func_cairo_verify(
+): Short
+fun uniffi_mopro_example_app_checksum_func_generate_circom_proof(
 ): Short
 fun uniffi_mopro_example_app_checksum_func_generate_halo2_proof(
 ): Short
@@ -811,7 +819,11 @@ internal interface UniffiLib : Library {
     }
 
     // FFI functions
-    fun uniffi_mopro_example_app_fn_func_generate_circom_proof(`zkeyPath`: RustBuffer.ByValue,`circuitInputs`: RustBuffer.ByValue,`proofLib`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_mopro_example_app_fn_func_cairo_prove(`programJson`: RustBuffer.ByValue,`inputsJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_mopro_example_app_fn_func_cairo_verify(`proof`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_mopro_example_app_fn_func_generate_circom_proof(`zkeyPath`: RustBuffer.ByValue,`circuitInputs`: RustBuffer.ByValue,`proofLib`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 fun uniffi_mopro_example_app_fn_func_generate_halo2_proof(`srsPath`: RustBuffer.ByValue,`pkPath`: RustBuffer.ByValue,`circuitInputs`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
@@ -957,6 +969,12 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
 }
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
+    if (lib.uniffi_mopro_example_app_checksum_func_cairo_prove() != 48657.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_mopro_example_app_checksum_func_cairo_verify() != 7631.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_mopro_example_app_checksum_func_generate_circom_proof() != 27552.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1160,6 +1178,62 @@ public object FfiConverterByteArray: FfiConverterRustBuffer<ByteArray> {
     override fun write(value: ByteArray, buf: ByteBuffer) {
         buf.putInt(value.size)
         buf.put(value)
+    }
+}
+
+
+
+data class CairoProofOutput (
+    var `proof`: kotlin.ByteArray
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeCairoProofOutput: FfiConverterRustBuffer<CairoProofOutput> {
+    override fun read(buf: ByteBuffer): CairoProofOutput {
+        return CairoProofOutput(
+            FfiConverterByteArray.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: CairoProofOutput) = (
+            FfiConverterByteArray.allocationSize(value.`proof`)
+    )
+
+    override fun write(value: CairoProofOutput, buf: ByteBuffer) {
+            FfiConverterByteArray.write(value.`proof`, buf)
+    }
+}
+
+
+
+data class CairoVerifyOutput (
+    var `isValid`: kotlin.Boolean
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeCairoVerifyOutput: FfiConverterRustBuffer<CairoVerifyOutput> {
+    override fun read(buf: ByteBuffer): CairoVerifyOutput {
+        return CairoVerifyOutput(
+            FfiConverterBoolean.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: CairoVerifyOutput) = (
+            FfiConverterBoolean.allocationSize(value.`isValid`)
+    )
+
+    override fun write(value: CairoVerifyOutput, buf: ByteBuffer) {
+            FfiConverterBoolean.write(value.`isValid`, buf)
     }
 }
 
@@ -1401,6 +1475,107 @@ public object FfiConverterTypeRisc0VerifyOutput: FfiConverterRustBuffer<Risc0Ver
             FfiConverterBoolean.write(value.`isValid`, buf)
             FfiConverterUInt.write(value.`outputValue`, buf)
     }
+}
+
+
+
+
+
+sealed class CairoException: kotlin.Exception() {
+    
+    class ProveException(
+        
+        val v1: kotlin.String
+        ) : CairoException() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+    class VerifyException(
+        
+        val v1: kotlin.String
+        ) : CairoException() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+    class SerializeException(
+        
+        val v1: kotlin.String
+        ) : CairoException() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+
+    companion object ErrorHandler : UniffiRustCallStatusErrorHandler<CairoException> {
+        override fun lift(error_buf: RustBuffer.ByValue): CairoException = FfiConverterTypeCairoError.lift(error_buf)
+    }
+
+    
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeCairoError : FfiConverterRustBuffer<CairoException> {
+    override fun read(buf: ByteBuffer): CairoException {
+        
+
+        return when(buf.getInt()) {
+            1 -> CairoException.ProveException(
+                FfiConverterString.read(buf),
+                )
+            2 -> CairoException.VerifyException(
+                FfiConverterString.read(buf),
+                )
+            3 -> CairoException.SerializeException(
+                FfiConverterString.read(buf),
+                )
+            else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: CairoException): ULong {
+        return when(value) {
+            is CairoException.ProveException -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+            is CairoException.VerifyException -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+            is CairoException.SerializeException -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+        }
+    }
+
+    override fun write(value: CairoException, buf: ByteBuffer) {
+        when(value) {
+            is CairoException.ProveException -> {
+                buf.putInt(1)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+            is CairoException.VerifyException -> {
+                buf.putInt(2)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+            is CairoException.SerializeException -> {
+                buf.putInt(3)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+
 }
 
 
@@ -1754,6 +1929,26 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
         }
     }
 }
+    @Throws(CairoException::class) fun `cairoProve`(`programJson`: kotlin.String, `inputsJson`: kotlin.String): CairoProofOutput {
+            return FfiConverterTypeCairoProofOutput.lift(
+    uniffiRustCallWithError(CairoException) { _status ->
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_cairo_prove(
+        FfiConverterString.lower(`programJson`),FfiConverterString.lower(`inputsJson`),_status)
+}
+    )
+    }
+    
+
+    @Throws(CairoException::class) fun `cairoVerify`(`proof`: kotlin.ByteArray): CairoVerifyOutput {
+            return FfiConverterTypeCairoVerifyOutput.lift(
+    uniffiRustCallWithError(CairoException) { _status ->
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_cairo_verify(
+        FfiConverterByteArray.lower(`proof`),_status)
+}
+    )
+    }
+    
+
     @Throws(MoproException::class) fun `generateCircomProof`(`zkeyPath`: kotlin.String, `circuitInputs`: kotlin.String, `proofLib`: ProofLib): CircomProofResult {
             return FfiConverterTypeCircomProofResult.lift(
     uniffiRustCallWithError(MoproException) { _status ->
