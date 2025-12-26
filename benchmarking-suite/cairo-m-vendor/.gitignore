@@ -1,0 +1,10 @@
+/target
+**/test_data/*.json
+.DS_Store
+.kiro
+tmp
+tmp.out
+.worktrees
+.repo_ignore
+**/proptest_regressions
+docs/.texcache

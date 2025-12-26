@@ -1,0 +1,90 @@
+---
+source: crates/compiler/parser/tests/common.rs
+expression: snapshot
+---
+--- Code ---
+fn test(x: (felt, felt*, (felt, felt))) { }
+--- AST ---
+[
+    Function(
+        Spanned(
+            FunctionDef {
+                name: Spanned(
+                    "test",
+                    3..7,
+                ),
+                params: [
+                    Parameter {
+                        name: Spanned(
+                            "x",
+                            8..9,
+                        ),
+                        type_expr: Spanned(
+                            Tuple(
+                                [
+                                    Spanned(
+                                        Named(
+                                            Spanned(
+                                                Felt,
+                                                12..16,
+                                            ),
+                                        ),
+                                        12..16,
+                                    ),
+                                    Spanned(
+                                        Pointer(
+                                            Spanned(
+                                                Named(
+                                                    Spanned(
+                                                        Felt,
+                                                        18..22,
+                                                    ),
+                                                ),
+                                                18..22,
+                                            ),
+                                        ),
+                                        18..23,
+                                    ),
+                                    Spanned(
+                                        Tuple(
+                                            [
+                                                Spanned(
+                                                    Named(
+                                                        Spanned(
+                                                            Felt,
+                                                            26..30,
+                                                        ),
+                                                    ),
+                                                    26..30,
+                                                ),
+                                                Spanned(
+                                                    Named(
+                                                        Spanned(
+                                                            Felt,
+                                                            32..36,
+                                                        ),
+                                                    ),
+                                                    32..36,
+                                                ),
+                                            ],
+                                        ),
+                                        25..37,
+                                    ),
+                                ],
+                            ),
+                            11..38,
+                        ),
+                    },
+                ],
+                return_type: Spanned(
+                    Tuple(
+                        [],
+                    ),
+                    0..0,
+                ),
+                body: [],
+            },
+            0..43,
+        ),
+    ),
+]

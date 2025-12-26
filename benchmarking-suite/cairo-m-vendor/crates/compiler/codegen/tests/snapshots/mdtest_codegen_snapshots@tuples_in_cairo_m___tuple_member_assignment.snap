@@ -1,0 +1,23 @@
+---
+source: crates/compiler/codegen/tests/mdtest_snapshots.rs
+description: "Codegen snapshot for mdtest: Tuples in Cairo-M - Tuple Member Assignment"
+input_file: mdtest/03-types/01-tuples.md
+---
+Source:
+fn assign_tuple_member() -> felt {
+    let my_tuple = (1, 2, 3);
+    my_tuple.0 = 4;
+    return my_tuple.0 + my_tuple.1 + my_tuple.2;
+}
+============================================================
+Generated CASM:
+assign_tuple_member:
+assign_tuple_member:
+assign_tuple_member_0:
+   0: 9 1 0 _              // [fp + 0] = 1
+   1: 9 2 1 _              // [fp + 1] = 2
+   2: 9 3 2 _              // [fp + 2] = 3
+   3: 9 4 0 _              // [fp + 0] = 4
+   4: 0 0 1 9              // [fp + 9] = [fp + 0] op [fp + 1]
+   5: 0 9 2 2147483644     // [fp + -3] = [fp + 9] op [fp + 2]
+   6: 11 _ _ _             // return

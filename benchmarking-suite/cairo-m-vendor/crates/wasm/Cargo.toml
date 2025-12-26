@@ -1,0 +1,24 @@
+[package]
+name = "cairo-m-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+womir = { git = "https://github.com/powdr-labs/womir", rev = "3d36244" }
+thiserror.workspace = true
+cairo-m-compiler-mir.workspace = true
+cairo-m-compiler-codegen.workspace = true
+cairo-m-common.workspace = true
+cairo-m-runner.workspace = true
+wasmparser = "0.235.0"
+clap = { version = "4.0", features = ["derive"] }
+sonic-rs = "0.3"
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[dev-dependencies]
+insta = "1.43.1"
+proptest = "1.7.0"
+wat = "1.239.0"
+wasmtime = "37.0.1"

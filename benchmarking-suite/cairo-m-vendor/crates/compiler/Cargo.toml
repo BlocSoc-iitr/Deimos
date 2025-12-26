@@ -1,0 +1,33 @@
+[package]
+name = "cairo-m-compiler"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "cairo-m-compiler"
+path = "src/main.rs"
+
+[dependencies]
+cairo-m-compiler-parser.workspace = true
+cairo-m-compiler-semantic.workspace = true
+cairo-m-compiler-mir.workspace = true
+cairo-m-compiler-diagnostics.workspace = true
+cairo-m-compiler-codegen.workspace = true
+cairo-m-common.workspace = true
+cairo-m-project.workspace = true
+cairo-m-test-utils.workspace = true
+clap.workspace = true
+ariadne = "0.5.1"
+anyhow = "1.0"
+logos = "0.15"
+chumsky.workspace = true
+salsa = "0.22"
+sonic-rs.workspace = true
+num-traits.workspace = true
+thiserror.workspace = true
+walkdir = "2.4"
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

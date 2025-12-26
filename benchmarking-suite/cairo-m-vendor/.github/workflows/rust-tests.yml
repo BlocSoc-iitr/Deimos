@@ -1,0 +1,58 @@
+name: Rust Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions: read-all
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  test:
+    name: ${{ matrix.crate }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate:
+          [
+            cairo-m-compiler,
+            cairo-m-compiler-parser,
+            cairo-m-compiler-semantic,
+            cairo-m-compiler-diagnostics,
+            cairo-m-compiler-mir,
+            cairo-m-compiler-codegen,
+            cairo-m-formatter,
+            cairo-m-ls,
+            cairo-m-common,
+            cairo-m-runner,
+            cairo-m-prover,
+            cairo-m-wasm,
+          ]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Rust toolchain
+        run: rustup show
+
+      - name: Add WASM target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: "true"
+
+      - name: Build ${{ matrix.crate }}
+        run: cargo build -p ${{ matrix.crate }} --release
+
+      - name: Run tests for ${{ matrix.crate }}
+        run: cargo test -p ${{ matrix.crate }} --release

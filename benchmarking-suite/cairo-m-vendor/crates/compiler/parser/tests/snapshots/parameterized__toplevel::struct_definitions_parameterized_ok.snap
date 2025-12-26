@@ -1,0 +1,261 @@
+---
+source: crates/compiler/parser/tests/common.rs
+expression: snapshot
+---
+--- Input 1 ---
+struct Point { x: felt, y: felt }
+--- AST ---
+[
+    Struct(
+        Spanned(
+            StructDef {
+                name: Spanned(
+                    "Point",
+                    7..12,
+                ),
+                fields: [
+                    (
+                        Spanned(
+                            "x",
+                            15..16,
+                        ),
+                        Spanned(
+                            Named(
+                                Spanned(
+                                    Felt,
+                                    18..22,
+                                ),
+                            ),
+                            18..22,
+                        ),
+                    ),
+                    (
+                        Spanned(
+                            "y",
+                            24..25,
+                        ),
+                        Spanned(
+                            Named(
+                                Spanned(
+                                    Felt,
+                                    27..31,
+                                ),
+                            ),
+                            27..31,
+                        ),
+                    ),
+                ],
+            },
+            0..33,
+        ),
+    ),
+]
+============================================================
+
+--- Input 2 ---
+struct Unit { }
+--- AST ---
+[
+    Struct(
+        Spanned(
+            StructDef {
+                name: Spanned(
+                    "Unit",
+                    7..11,
+                ),
+                fields: [],
+            },
+            0..15,
+        ),
+    ),
+]
+============================================================
+
+--- Input 3 ---
+struct Node { data: felt, next: Node* }
+--- AST ---
+[
+    Struct(
+        Spanned(
+            StructDef {
+                name: Spanned(
+                    "Node",
+                    7..11,
+                ),
+                fields: [
+                    (
+                        Spanned(
+                            "data",
+                            14..18,
+                        ),
+                        Spanned(
+                            Named(
+                                Spanned(
+                                    Felt,
+                                    20..24,
+                                ),
+                            ),
+                            20..24,
+                        ),
+                    ),
+                    (
+                        Spanned(
+                            "next",
+                            26..30,
+                        ),
+                        Spanned(
+                            Pointer(
+                                Spanned(
+                                    Named(
+                                        Spanned(
+                                            Custom(
+                                                "Node",
+                                            ),
+                                            32..36,
+                                        ),
+                                    ),
+                                    32..36,
+                                ),
+                            ),
+                            32..37,
+                        ),
+                    ),
+                ],
+            },
+            0..39,
+        ),
+    ),
+]
+============================================================
+
+--- Input 4 ---
+
+        struct ComplexStruct {
+            field1: felt,
+            field2: felt*,
+            field3: (felt, felt),
+            field4: AnotherStruct,
+            field5: AnotherStruct*
+        }
+    
+--- AST ---
+[
+    Struct(
+        Spanned(
+            StructDef {
+                name: Spanned(
+                    "ComplexStruct",
+                    16..29,
+                ),
+                fields: [
+                    (
+                        Spanned(
+                            "field1",
+                            44..50,
+                        ),
+                        Spanned(
+                            Named(
+                                Spanned(
+                                    Felt,
+                                    52..56,
+                                ),
+                            ),
+                            52..56,
+                        ),
+                    ),
+                    (
+                        Spanned(
+                            "field2",
+                            70..76,
+                        ),
+                        Spanned(
+                            Pointer(
+                                Spanned(
+                                    Named(
+                                        Spanned(
+                                            Felt,
+                                            78..82,
+                                        ),
+                                    ),
+                                    78..82,
+                                ),
+                            ),
+                            78..83,
+                        ),
+                    ),
+                    (
+                        Spanned(
+                            "field3",
+                            97..103,
+                        ),
+                        Spanned(
+                            Tuple(
+                                [
+                                    Spanned(
+                                        Named(
+                                            Spanned(
+                                                Felt,
+                                                106..110,
+                                            ),
+                                        ),
+                                        106..110,
+                                    ),
+                                    Spanned(
+                                        Named(
+                                            Spanned(
+                                                Felt,
+                                                112..116,
+                                            ),
+                                        ),
+                                        112..116,
+                                    ),
+                                ],
+                            ),
+                            105..117,
+                        ),
+                    ),
+                    (
+                        Spanned(
+                            "field4",
+                            131..137,
+                        ),
+                        Spanned(
+                            Named(
+                                Spanned(
+                                    Custom(
+                                        "AnotherStruct",
+                                    ),
+                                    139..152,
+                                ),
+                            ),
+                            139..152,
+                        ),
+                    ),
+                    (
+                        Spanned(
+                            "field5",
+                            166..172,
+                        ),
+                        Spanned(
+                            Pointer(
+                                Spanned(
+                                    Named(
+                                        Spanned(
+                                            Custom(
+                                                "AnotherStruct",
+                                            ),
+                                            174..187,
+                                        ),
+                                    ),
+                                    174..187,
+                                ),
+                            ),
+                            174..188,
+                        ),
+                    ),
+                ],
+            },
+            9..198,
+        ),
+    ),
+]

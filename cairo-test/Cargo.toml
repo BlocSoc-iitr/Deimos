@@ -1,0 +1,18 @@
+[package]
+name = "cairo-test"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cairo-m-runner = { git = "https://github.com/kkrt-labs/cairo-m", package = "cairo-m-runner" }
+cairo-m-prover = { git = "https://github.com/kkrt-labs/cairo-m", package = "cairo-m-prover" }
+cairo-m-common = { git = "https://github.com/kkrt-labs/cairo-m", package = "cairo-m-common" }
+stwo-prover = { git = "https://github.com/starkware-libs/stwo", rev = "ab57a1c", features = [
+    "parallel",
+] }
+serde_json = "1.0"
+anyhow = "1.0"
+
+# Patch zkhash to use the fork with M31 field support (same as cairo-m)
+[patch."https://github.com/HorizenLabs/poseidon2.git"]
+zkhash = { git = "https://github.com/AntoineFONDEUR/poseidon2.git", branch = "poseidon2-M31" }

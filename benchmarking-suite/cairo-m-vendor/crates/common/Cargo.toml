@@ -1,0 +1,20 @@
+[package]
+name = "cairo-m-common"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+num-traits.workspace = true
+paste = "1.0"
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+smallvec.workspace = true
+anyhow.workspace = true
+
+# Using workspace dependency for stwo
+stwo-prover.workspace = true
+
+[dev-dependencies]
+proptest = "1.6.0"
+bincode = { version = "2.0.1", features = ["serde"] }

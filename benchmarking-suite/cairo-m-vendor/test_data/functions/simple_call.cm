@@ -1,0 +1,7 @@
+fn helper() -> felt {
+    return 42;
+}
+
+fn main() -> felt {
+    return helper();
+}

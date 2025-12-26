@@ -1,0 +1,43 @@
+---
+source: crates/compiler/codegen/tests/mdtest_snapshots.rs
+description: "Codegen snapshot for mdtest: Loops in Cairo-M - While Loop"
+input_file: mdtest/02-control-flow/02-loops.md
+---
+Source:
+fn count_down() -> felt {
+    let x = 10;
+    let count = 0;
+    while x != 0 {
+        x = x - 1;
+        count = count + 1;
+    }
+    return count;
+}
+============================================================
+Generated CASM:
+count_down:
+count_down:
+count_down_0:
+   0: 9 10 0 _             // [fp + 0] = 10
+   1: 9 0 1 _              // [fp + 1] = 0
+   2: 4 1 0 2              // [fp + 2] = [fp + 1] + 0
+   3: 4 0 0 3              // [fp + 3] = [fp + 0] + 0
+count_down_1:
+   4: 4 3 0 4              // [fp + 4] = [fp + 3] + (-0) (-0 as M31 -> 0)
+   5: 14 4 3 _             // if [fp + 4] != 0 jmp rel neq_non_zero_0
+   6: 9 0 4 _              // [fp + 4] = 0
+   7: 13 2 _ _             // jump rel neq_end_1
+neq_non_zero_0:
+   8: 9 1 4 _              // [fp + 4] = 1
+neq_end_1:
+   9: 14 4 2 _             // if [fp + 4] != 0 jmp rel count_down_2
+  10: 13 6 _ _             // jump rel count_down_3
+count_down_2:
+  11: 4 3 2147483646 5     // [fp + 5] = [fp + 3] + (-1) (-1 as M31 -> 2147483646 (=-1 mod M31))
+  12: 4 2 1 6              // [fp + 6] = [fp + 2] + 1
+  13: 4 6 0 2              // [fp + 2] = [fp + 6] + 0
+  14: 4 5 0 3              // [fp + 3] = [fp + 5] + 0
+  15: 13 2147483636 _ _    // jump rel count_down_1
+count_down_3:
+  16: 4 2 0 2147483644     // Return value 0: [fp -3] = [fp + 2] + 0
+  17: 11 _ _ _             // return

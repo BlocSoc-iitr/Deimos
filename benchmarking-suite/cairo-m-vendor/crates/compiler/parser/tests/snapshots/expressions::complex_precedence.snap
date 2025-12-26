@@ -1,0 +1,118 @@
+---
+source: crates/compiler/parser/tests/common.rs
+expression: snapshot
+---
+--- Code ---
+fn test() { a + b * c == d && e || f; }
+--- AST ---
+[
+    Function(
+        Spanned(
+            FunctionDef {
+                name: Spanned(
+                    "test",
+                    3..7,
+                ),
+                params: [],
+                return_type: Spanned(
+                    Tuple(
+                        [],
+                    ),
+                    0..0,
+                ),
+                body: [
+                    Spanned(
+                        Expression(
+                            Spanned(
+                                BinaryOp {
+                                    op: Or,
+                                    left: Spanned(
+                                        BinaryOp {
+                                            op: And,
+                                            left: Spanned(
+                                                BinaryOp {
+                                                    op: Eq,
+                                                    left: Spanned(
+                                                        BinaryOp {
+                                                            op: Add,
+                                                            left: Spanned(
+                                                                Identifier(
+                                                                    Spanned(
+                                                                        "a",
+                                                                        12..13,
+                                                                    ),
+                                                                ),
+                                                                12..13,
+                                                            ),
+                                                            right: Spanned(
+                                                                BinaryOp {
+                                                                    op: Mul,
+                                                                    left: Spanned(
+                                                                        Identifier(
+                                                                            Spanned(
+                                                                                "b",
+                                                                                16..17,
+                                                                            ),
+                                                                        ),
+                                                                        16..17,
+                                                                    ),
+                                                                    right: Spanned(
+                                                                        Identifier(
+                                                                            Spanned(
+                                                                                "c",
+                                                                                20..21,
+                                                                            ),
+                                                                        ),
+                                                                        20..21,
+                                                                    ),
+                                                                },
+                                                                16..21,
+                                                            ),
+                                                        },
+                                                        12..21,
+                                                    ),
+                                                    right: Spanned(
+                                                        Identifier(
+                                                            Spanned(
+                                                                "d",
+                                                                25..26,
+                                                            ),
+                                                        ),
+                                                        25..26,
+                                                    ),
+                                                },
+                                                12..26,
+                                            ),
+                                            right: Spanned(
+                                                Identifier(
+                                                    Spanned(
+                                                        "e",
+                                                        30..31,
+                                                    ),
+                                                ),
+                                                30..31,
+                                            ),
+                                        },
+                                        12..31,
+                                    ),
+                                    right: Spanned(
+                                        Identifier(
+                                            Spanned(
+                                                "f",
+                                                35..36,
+                                            ),
+                                        ),
+                                        35..36,
+                                    ),
+                                },
+                                12..36,
+                            ),
+                        ),
+                        12..37,
+                    ),
+                ],
+            },
+            0..39,
+        ),
+    ),
+]

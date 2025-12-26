@@ -1,0 +1,57 @@
+//! MIR snapshot tests for mdtest cases.
+//! This file automatically generates MIR snapshots for all Cairo-M code in the mdtest directory,
+//! providing comprehensive coverage of real-world examples through the MIR generation pipeline.
+
+mod common;
+
+use cairo_m_compiler_mir::{PipelineConfig, PrettyPrint, generate_mir_with_config};
+use cairo_m_compiler_semantic::db::project_validate_semantics;
+use cairo_m_test_utils::mdtest::MdTestRunner;
+use cairo_m_test_utils::mdtest_path;
+use common::{TestDatabase, create_test_crate};
+
+#[test]
+fn test_mdtest_mir_snapshots() {
+    use insta::{assert_snapshot, glob, with_settings};
+
+    // Use glob! to discover all markdown files in mdtest directory
+    glob!(mdtest_path().to_str().unwrap(), "**/*.md", |path| {
+        let db = TestDatabase::default();
+
+        let runner = MdTestRunner::new("MIR", |source, name| {
+            let crate_id = create_test_crate(&db, source, name, "mdtest");
+
+            // validate semantics
+            let diagnostics = project_validate_semantics(&db, crate_id);
+            if diagnostics.has_errors() {
+                return Err(format!(
+                    "Semantic validation failed with diagnostics:\n{:#?}",
+                    diagnostics
+                ));
+            }
+
+            // Generate MIR with no optimizations to make snapshots stable and
+            // focused on lowering semantics rather than optimization outcomes.
+            match generate_mir_with_config(&db, crate_id, PipelineConfig::no_opt()) {
+                Ok(module) => Ok(module.pretty_print(0)),
+                Err(diagnostics) => Err(format!(
+                    "MIR generation failed with diagnostics:\n{:#?}",
+                    diagnostics
+                )),
+            }
+        });
+
+        let snapshots = runner.run_file(path);
+
+        for snapshot in snapshots {
+            with_settings!({
+                description => format!("MIR snapshot for mdtest: {}", snapshot.name).as_str(),
+                omit_expression => true,
+                snapshot_suffix => snapshot.suffix,
+                prepend_module_to_snapshot => false,
+            }, {
+                assert_snapshot!(snapshot.content);
+            });
+        }
+    });
+}

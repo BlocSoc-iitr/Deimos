@@ -1,0 +1,19 @@
+---
+source: crates/compiler/codegen/tests/mdtest_snapshots.rs
+description: "Codegen snapshot for mdtest: Variables in Cairo-M - Variable Mutation"
+input_file: mdtest/01-basics/02-variables.md
+---
+Source:
+fn test_mutation() -> felt {
+    let x = 5;
+    x = x + 1;
+    return x;
+}
+============================================================
+Generated CASM:
+test_mutation:
+test_mutation:
+test_mutation_0:
+   0: 9 5 0 _              // [fp + 0] = 5
+   1: 4 0 1 2147483644     // [fp + -3] = [fp + 0] + 1
+   2: 11 _ _ _             // return

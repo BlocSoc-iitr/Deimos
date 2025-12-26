@@ -1,0 +1,594 @@
+//! # Diagnostic System for Semantic Analysis
+//!
+//! This module provides the diagnostic infrastructure for reporting semantic errors,
+//! warnings, and hints during semantic analysis.
+
+use std::fmt;
+
+use ariadne::ReportKind;
+use chumsky::span::SimpleSpan;
+
+use crate::build_diagnostic_message;
+
+/// A diagnostic message from semantic analysis
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Diagnostic {
+    pub severity: DiagnosticSeverity,
+    pub code: DiagnosticCode,
+    pub message: String,
+    pub file_path: String,
+    /// Source span where this diagnostic applies
+    pub span: SimpleSpan<usize>,
+
+    /// Optional related spans for additional context
+    pub related_spans: Vec<(SimpleSpan<usize>, String)>,
+}
+
+impl fmt::Display for Diagnostic {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}: {}", self.severity, self.message)?;
+        write!(f, " (at {}:{})", self.span.start, self.span.end)?;
+        for (span, message) in &self.related_spans {
+            write!(f, "\n  note: {} (at {}:{})", message, span.start, span.end)?;
+        }
+        Ok(())
+    }
+}
+
+impl Diagnostic {
+    pub fn display_with_source(&self, source: &str) -> String {
+        build_diagnostic_message(source, self, true)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum DiagnosticSeverity {
+    Error,
+    Warning,
+    Info,
+    Hint,
+}
+
+impl From<ReportKind<'static>> for DiagnosticSeverity {
+    fn from(kind: ReportKind<'static>) -> Self {
+        match kind {
+            ReportKind::Error => Self::Error,
+            ReportKind::Warning => Self::Warning,
+            ReportKind::Advice => Self::Info,
+            ReportKind::Custom(_, _) => Self::Info,
+        }
+    }
+}
+
+impl From<DiagnosticSeverity> for ReportKind<'static> {
+    fn from(severity: DiagnosticSeverity) -> Self {
+        match severity {
+            DiagnosticSeverity::Error => ReportKind::Error,
+            DiagnosticSeverity::Warning => ReportKind::Warning,
+            DiagnosticSeverity::Info => ReportKind::Advice,
+            DiagnosticSeverity::Hint => ReportKind::Advice,
+        }
+    }
+}
+
+impl fmt::Display for DiagnosticSeverity {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Error => write!(f, "error"),
+            Self::Warning => write!(f, "warning"),
+            Self::Info => write!(f, "info"),
+            Self::Hint => write!(f, "hint"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum DiagnosticCode {
+    // Parse-related errors (0-999)
+    LexicalError,
+    SyntaxError,
+    UnexpectedToken,
+    UnexpectedEndOfFile,
+    InvalidCharacter,
+
+    // Scope-related errors (1000-1999)
+    UndeclaredVariable,
+    UnusedVariable,
+    DuplicateDefinition,
+    UseBeforeDefinition,
+    UnresolvedImport,
+    DuplicateParameter,
+    DuplicateStructField,
+    DuplicatePatternIdentifier,
+    UndeclaredType,
+    UnresolvedModule,
+
+    // Type-related errors (2000-2999)
+    TypeMismatch,
+    InvalidFieldAccess,
+    InvalidIndexAccess,
+    InvalidIndexType,
+    InvalidStructLiteral,
+    InvalidFunctionCall,
+    InvalidAssignment,
+    InvalidReturnType,
+    InvalidTypeDefinition,
+    InvalidAssignmentTarget,
+    MissingReturnValue,
+    TupleIndexOutOfBounds,
+    InvalidTupleIndexAccess,
+    AssignmentToConst,
+    IndexOutOfBounds,
+    TypeInferenceError,
+    /// Passing or embedding a const array by pointer (disallowed); user must copy first
+    ConstArrayByPointer,
+    // TODO: Add more type-related diagnostic codes:
+    // - InvalidTypeAnnotation
+    // - TypeArgumentMismatch
+    // - IncompatibleTypes
+    // - MissingTypeAnnotation
+    // - CyclicTypeDefinition
+
+    // Flow-related errors (3000-3999) - placeholder for future
+    UnreachableCode,
+    MissingReturn,
+    BreakOutsideLoop,
+    ContinueOutsideLoop,
+    // TODO: Add more control flow diagnostic codes:
+    // - DeadCode
+
+    // Internal errors (9000-9999)
+    InternalError,
+    // - UnreachablePattern
+
+    // TODO: Add more diagnostic categories:
+    // - Import/module errors (4000-4999)
+    // - Syntax/style warnings (5000-5999)
+    // - Performance hints (6000-6999)
+    // - Security warnings (7000-7999)
+}
+
+impl From<DiagnosticCode> for u32 {
+    fn from(code: DiagnosticCode) -> Self {
+        match code {
+            DiagnosticCode::LexicalError => 1,
+            DiagnosticCode::SyntaxError => 2,
+            DiagnosticCode::UnexpectedToken => 3,
+            DiagnosticCode::UnexpectedEndOfFile => 4,
+            DiagnosticCode::InvalidCharacter => 5,
+            DiagnosticCode::UndeclaredVariable => 1001,
+            DiagnosticCode::UnusedVariable => 1002,
+            DiagnosticCode::DuplicateDefinition => 1003,
+            DiagnosticCode::UseBeforeDefinition => 1004,
+            DiagnosticCode::UnresolvedImport => 1005,
+            DiagnosticCode::DuplicateParameter => 1006,
+            DiagnosticCode::DuplicateStructField => 1007,
+            DiagnosticCode::DuplicatePatternIdentifier => 1008,
+            DiagnosticCode::UndeclaredType => 1009,
+            DiagnosticCode::UnresolvedModule => 1010,
+            DiagnosticCode::TypeMismatch => 2001,
+            DiagnosticCode::InvalidFieldAccess => 2002,
+            DiagnosticCode::InvalidIndexAccess => 2003,
+            DiagnosticCode::InvalidStructLiteral => 2004,
+            DiagnosticCode::InvalidFunctionCall => 2005,
+            DiagnosticCode::InvalidAssignment => 2006,
+            DiagnosticCode::InvalidReturnType => 2007,
+            DiagnosticCode::InvalidTypeDefinition => 2008,
+            DiagnosticCode::InvalidIndexType => 2009,
+            DiagnosticCode::UnreachableCode => 3001,
+            DiagnosticCode::MissingReturn => 3002,
+            DiagnosticCode::BreakOutsideLoop => 3003,
+            DiagnosticCode::ContinueOutsideLoop => 3004,
+            DiagnosticCode::InvalidAssignmentTarget => 2010,
+            DiagnosticCode::MissingReturnValue => 2011,
+            DiagnosticCode::TupleIndexOutOfBounds => 2012,
+            DiagnosticCode::InvalidTupleIndexAccess => 2013,
+            DiagnosticCode::AssignmentToConst => 2014,
+            DiagnosticCode::IndexOutOfBounds => 2015,
+            DiagnosticCode::TypeInferenceError => 2016,
+            DiagnosticCode::ConstArrayByPointer => 2017,
+            DiagnosticCode::InternalError => 9001,
+        }
+    }
+}
+
+impl Diagnostic {
+    /// Create an error diagnostic
+    /// Make const once spanned is given as input
+    pub fn error(code: DiagnosticCode, message: String) -> Self {
+        Self {
+            severity: DiagnosticSeverity::Error,
+            code,
+            message,
+            file_path: "".to_string(),
+            span: SimpleSpan::from(0..0),
+            related_spans: Vec::new(),
+        }
+    }
+
+    /// Create a warning diagnostic
+    pub fn warning(code: DiagnosticCode, message: String) -> Self {
+        Self {
+            severity: DiagnosticSeverity::Warning,
+            code,
+            message,
+            file_path: "".to_string(),
+            span: SimpleSpan::from(0..0),
+            related_spans: Vec::new(),
+        }
+    }
+
+    /// Create an info diagnostic
+    pub fn info(code: DiagnosticCode, message: String) -> Self {
+        Self {
+            severity: DiagnosticSeverity::Info,
+            code,
+            message,
+            file_path: "".to_string(),
+            span: SimpleSpan::from(0..0),
+            related_spans: Vec::new(),
+        }
+    }
+
+    /// Add location information to this diagnostic
+    pub fn with_location(mut self, file_path: String, span: SimpleSpan<usize>) -> Self {
+        self.span = span;
+        self.file_path = file_path;
+        self
+    }
+
+    /// Add a related span with context message
+    pub fn with_related_span(
+        mut self,
+        file_path: String,
+        span: SimpleSpan<usize>,
+        message: String,
+    ) -> Self {
+        self.related_spans.push((span, message));
+        self.file_path = file_path;
+        self
+    }
+
+    /// Convenience method for undeclared variable error
+    pub fn undeclared_variable(file_path: String, name: &str, span: SimpleSpan<usize>) -> Self {
+        Self::error(
+            DiagnosticCode::UndeclaredVariable,
+            format!("Undeclared variable '{name}'"),
+        )
+        .with_location(file_path, span)
+    }
+
+    pub fn undeclared_type(file_path: String, name: &str, span: SimpleSpan<usize>) -> Self {
+        Self::error(
+            DiagnosticCode::UndeclaredType,
+            format!("Cannot find type '{name}' in this scope"),
+        )
+        .with_location(file_path, span)
+    }
+
+    /// Convenience method for unused variable warning
+    pub fn unused_variable(file_path: String, name: &str, span: SimpleSpan<usize>) -> Self {
+        Self::warning(
+            DiagnosticCode::UnusedVariable,
+            format!("Unused variable '{name}'"),
+        )
+        .with_location(file_path, span)
+    }
+
+    /// Convenience method for duplicate definition error
+    pub fn duplicate_definition(file_path: String, name: &str, span: SimpleSpan<usize>) -> Self {
+        Self::error(
+            DiagnosticCode::DuplicateDefinition,
+            format!("Duplicate definition of '{name}'"),
+        )
+        .with_location(file_path, span)
+    }
+
+    /// Convenience method for use before definition error
+    pub fn use_before_definition(file_path: String, name: &str, span: SimpleSpan<usize>) -> Self {
+        Self::error(
+            DiagnosticCode::UseBeforeDefinition,
+            format!("Variable '{name}' used before definition"),
+        )
+        .with_location(file_path, span)
+    }
+
+    /// Convenience method for unreachable code warning
+    pub fn unreachable_code(
+        file_path: String,
+        statement_type: &str,
+        span: SimpleSpan<usize>,
+    ) -> Self {
+        Self::warning(
+            DiagnosticCode::UnreachableCode,
+            format!("Unreachable {statement_type}"),
+        )
+        .with_location(file_path, span)
+    }
+
+    /// Convenience method for missing return warning
+    pub fn missing_return(file_path: String, function_name: &str, span: SimpleSpan<usize>) -> Self {
+        Self::error(
+            DiagnosticCode::MissingReturn,
+            format!("Function '{function_name}' doesn't return on all paths"),
+        )
+        .with_location(file_path, span)
+    }
+
+    /// Convenience method for break outside loop error
+    pub fn break_outside_loop(file_path: String, span: SimpleSpan<usize>) -> Self {
+        Self::error(
+            DiagnosticCode::BreakOutsideLoop,
+            "`break` outside of loop".to_string(),
+        )
+        .with_location(file_path, span)
+    }
+
+    /// Convenience method for continue outside loop error
+    pub fn continue_outside_loop(file_path: String, span: SimpleSpan<usize>) -> Self {
+        Self::error(
+            DiagnosticCode::ContinueOutsideLoop,
+            "`continue` outside of loop".to_string(),
+        )
+        .with_location(file_path, span)
+    }
+
+    /// Convenience method for lexical errors
+    pub fn lexical_error(file_path: String, message: String, span: SimpleSpan<usize>) -> Self {
+        Self::error(DiagnosticCode::LexicalError, message).with_location(file_path, span)
+    }
+
+    /// Convenience method for syntax errors
+    pub fn syntax_error(file_path: String, message: String, span: SimpleSpan<usize>) -> Self {
+        Self::error(DiagnosticCode::SyntaxError, message).with_location(file_path, span)
+    }
+
+    /// Convenience method for unexpected token errors
+    pub fn unexpected_token(
+        file_path: String,
+        expected: &str,
+        found: &str,
+        span: SimpleSpan<usize>,
+    ) -> Self {
+        Self::error(
+            DiagnosticCode::UnexpectedToken,
+            format!("Expected {expected}, found {found}"),
+        )
+        .with_location(file_path, span)
+    }
+
+    /// Convenience method for unresolved import error
+    pub fn unresolved_import(
+        file_path: String,
+        module_name: &str,
+        span: SimpleSpan<usize>,
+    ) -> Self {
+        Self::error(
+            DiagnosticCode::UnresolvedImport,
+            format!("Module '{}' not found", module_name),
+        )
+        .with_location(file_path, span)
+    }
+}
+/// Collection of diagnostics from semantic analysis
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct DiagnosticCollection {
+    diagnostics: Vec<Diagnostic>,
+}
+
+impl fmt::Display for DiagnosticCollection {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for diagnostic in &self.diagnostics {
+            write!(f, "{}", diagnostic)?;
+        }
+        Ok(())
+    }
+}
+
+impl DiagnosticCollection {
+    pub const fn new(diagnostics: Vec<Diagnostic>) -> Self {
+        Self { diagnostics }
+    }
+
+    /// Add a diagnostic to the collection
+    pub fn add(&mut self, diagnostic: Diagnostic) {
+        self.diagnostics.push(diagnostic);
+    }
+
+    /// Add multiple diagnostics
+    pub fn extend(&mut self, diagnostics: impl IntoIterator<Item = Diagnostic>) {
+        self.diagnostics.extend(diagnostics);
+    }
+
+    /// Get all diagnostics, sorted by severity and message
+    pub fn all(&self) -> &[Diagnostic] {
+        &self.diagnostics
+    }
+
+    /// Get only error diagnostics
+    pub fn errors(&self) -> Vec<&Diagnostic> {
+        self.diagnostics
+            .iter()
+            .filter(|d| d.severity == DiagnosticSeverity::Error)
+            .collect()
+    }
+
+    /// Get only warning diagnostics
+    pub fn warnings(&self) -> Vec<&Diagnostic> {
+        self.diagnostics
+            .iter()
+            .filter(|d| d.severity == DiagnosticSeverity::Warning)
+            .collect()
+    }
+
+    /// Check if there are any errors
+    pub fn has_errors(&self) -> bool {
+        self.diagnostics
+            .iter()
+            .any(|d| d.severity == DiagnosticSeverity::Error)
+    }
+
+    /// Get the total number of diagnostics
+    pub const fn len(&self) -> usize {
+        self.diagnostics.len()
+    }
+
+    /// Check if the collection is empty
+    pub const fn is_empty(&self) -> bool {
+        self.diagnostics.is_empty()
+    }
+
+    /// Sort diagnostics by severity (errors first) and then by message
+    pub fn sort(&mut self) {
+        self.diagnostics
+            .sort_by(|a, b| a.severity.cmp(&b.severity).then(a.message.cmp(&b.message)));
+    }
+
+    /// Print all diagnostics to stdout
+    pub fn print(&self) {
+        for diagnostic in &self.diagnostics {
+            println!("{diagnostic}");
+        }
+    }
+
+    /// Get summary statistics
+    pub fn summary(&self) -> String {
+        let errors = self.errors().len();
+        let warnings = self.warnings().len();
+        let total = self.diagnostics.len();
+
+        if total == 0 {
+            "No issues found".to_string()
+        } else {
+            format!("{errors} errors, {warnings} warnings")
+        }
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<'_, Diagnostic> {
+        self.diagnostics.iter()
+    }
+
+    pub fn display_with_source(&self, source: &str) -> String {
+        let mut result = String::new();
+        for diagnostic in &self.diagnostics {
+            result.push_str(&diagnostic.display_with_source(source));
+        }
+        result
+    }
+
+    pub fn display_without_color(&self, source: &str) -> String {
+        let mut result = String::new();
+        for diagnostic in &self.diagnostics {
+            result.push_str(&build_diagnostic_message(source, diagnostic, false));
+        }
+        result
+    }
+}
+
+impl From<Vec<Diagnostic>> for DiagnosticCollection {
+    fn from(diagnostics: Vec<Diagnostic>) -> Self {
+        Self { diagnostics }
+    }
+}
+
+impl IntoIterator for DiagnosticCollection {
+    type Item = Diagnostic;
+    type IntoIter = std::vec::IntoIter<Diagnostic>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.diagnostics.into_iter()
+    }
+}
+
+/// Thread-safe trait for collecting diagnostics
+///
+/// This trait allows different parts of the compiler to push diagnostics
+/// into a shared collection without needing to know the underlying implementation.
+/// It enables decoupling of diagnostic emission from collection management.
+pub trait DiagnosticSink: Send + Sync {
+    /// Push a diagnostic into the sink
+    fn push(&self, diagnostic: Diagnostic);
+}
+
+/// Thread-safe implementation of DiagnosticSink backed by a Vec
+///
+/// This is the primary implementation used for collecting diagnostics
+/// from multiple compiler passes running potentially in parallel.
+pub struct VecSink(std::sync::Mutex<Vec<Diagnostic>>);
+
+impl VecSink {
+    /// Create a new empty sink
+    pub const fn new() -> Self {
+        Self(std::sync::Mutex::new(Vec::new()))
+    }
+
+    /// Extract all collected diagnostics, consuming the sink
+    pub fn into_diagnostics(self) -> Vec<Diagnostic> {
+        self.0.into_inner().unwrap()
+    }
+
+    /// Get a copy of all collected diagnostics without consuming the sink
+    pub fn diagnostics(&self) -> Vec<Diagnostic> {
+        self.0.lock().unwrap().clone()
+    }
+}
+
+impl Default for VecSink {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl DiagnosticSink for VecSink {
+    fn push(&self, diagnostic: Diagnostic) {
+        self.0.lock().unwrap().push(diagnostic);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_diagnostic_creation() {
+        let span = SimpleSpan::from(10..20);
+        let diag = Diagnostic::undeclared_variable("test.cm".to_string(), "test_var", span);
+        assert_eq!(diag.severity, DiagnosticSeverity::Error);
+        assert_eq!(diag.code, DiagnosticCode::UndeclaredVariable);
+        assert!(diag.message.contains("test_var"));
+        assert_eq!(diag.span, span);
+    }
+
+    #[test]
+    fn test_diagnostic_collection() {
+        let mut collection: DiagnosticCollection = Default::default();
+
+        let span1 = SimpleSpan::from(0..5);
+        let span2 = SimpleSpan::from(10..15);
+        collection.add(Diagnostic::undeclared_variable(
+            "test.cm".to_string(),
+            "var1",
+            span1,
+        ));
+        collection.add(Diagnostic::unused_variable(
+            "test.cm".to_string(),
+            "var2",
+            span2,
+        ));
+
+        assert_eq!(collection.len(), 2);
+        assert_eq!(collection.errors().len(), 1);
+        assert_eq!(collection.warnings().len(), 1);
+        assert!(collection.has_errors());
+    }
+
+    #[test]
+    fn test_diagnostic_display() {
+        let span = SimpleSpan::from(5..10);
+        let diag = Diagnostic::undeclared_variable("test.cm".to_string(), "test", span);
+        let display = format!("{diag}");
+        assert!(display.contains("Undeclared variable"));
+        assert!(display.contains("test"));
+        assert!(display.contains("5:10"));
+    }
+}

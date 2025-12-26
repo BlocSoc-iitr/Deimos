@@ -1,0 +1,31 @@
+---
+source: crates/compiler/semantic/tests/common/mod.rs
+expression: snapshot
+---
+--- Input 1 (ERROR) ---
+fn test(x: felt, x: felt) -> felt { return x; }
+--- Diagnostics ---
+[1006] Error: 'x' used as parameter more than once
+   ╭─[ semantic_tests::functions::parameter_validation::test_function_parameters:1:18 ]
+   │
+ 1 │ fn test(x: felt, x: felt) -> felt { return x; }
+   │                  ┬  
+   │                  ╰── 'x' used as parameter more than once
+───╯
+
+============================================================
+
+--- Input 2 (ERROR) ---
+fn foo(x: felt){return;} 
+ fn test(){foo(true); return;}
+--- Diagnostics ---
+[2001] Error: argument type mismatch for parameter `x`: expected `felt`, got `bool`
+   ╭─[ semantic_tests::functions::parameter_validation::test_function_parameters:2:16 ]
+   │
+ 1 │ fn foo(x: felt){return;}
+   │           ──┬─  
+   │             ╰─── parameter `x` declared here with type `felt`
+ 2 │  fn test(){foo(true); return;}
+   │                ──┬─  
+   │                  ╰─── argument type mismatch for parameter `x`: expected `felt`, got `bool`
+───╯

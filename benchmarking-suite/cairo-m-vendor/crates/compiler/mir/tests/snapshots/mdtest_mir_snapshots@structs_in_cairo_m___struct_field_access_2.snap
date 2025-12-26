@@ -1,0 +1,63 @@
+---
+source: crates/compiler/mir/tests/mdtest_snapshots.rs
+description: "MIR snapshot for mdtest: Structs in Cairo-M - Struct Field Access 2"
+input_file: mdtest/03-types/02-structs.md
+---
+Source:
+struct RectangleU32 {
+    width: u32,
+    height: u32,
+}
+
+fn calculate_area_u32() -> u32 {
+    let rect = RectangleU32 { width: 5, height: 10 };
+    rect.width = 7;
+    if rect.width == 5 {
+        rect.width = rect.width * 3;
+    } else {
+        rect.width = rect.height;
+    }
+    return rect.width * rect.height;
+}
+============================================================
+Generated MIR:
+module {
+  // Function 0
+  fn calculate_area_u32 {
+    entry: 0
+
+    0:
+      %0 = makestruct { width: 5, height: 10 }
+      %1 = extractfield %0, "width"
+      %2 = insertfield %0, "width", 7
+      %3 = extractfield %2, "width"
+      %4 = %3 U32Eq 5
+      if %4 then jump 1 else jump 2
+
+    1 (block_1):
+      ; block_1
+      %5 = extractfield %2, "width"
+      %6 = %5 U32Mul 3
+      %7 = extractfield %2, "width"
+      %8 = insertfield %2, "width", %6
+      %12 = %8 (RectangleU32)
+      jump 3
+
+    2 (block_2):
+      ; block_2
+      %9 = extractfield %2, "height"
+      %10 = extractfield %2, "width"
+      %11 = insertfield %2, "width", %9
+      %12 = %11 (RectangleU32)
+      jump 3
+
+    3 (block_3):
+      ; block_3
+      %13 = extractfield %12, "width"
+      %14 = extractfield %12, "height"
+      %15 = %13 U32Mul %14
+      return %15
+
+  }
+
+}
