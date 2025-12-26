@@ -90,6 +90,9 @@ flutter:
     - inputs/input_1.json
     - inputs/input_2.json
     - inputs/input_3.json
+    - inputs/cairo_input.json
+    - assets/cairo_sha256.json
+    - assets/cairo_input.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

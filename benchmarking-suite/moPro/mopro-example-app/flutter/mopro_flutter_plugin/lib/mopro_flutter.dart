@@ -95,4 +95,28 @@ class MoproFlutter {
   Future<Risc0VerifyOutput> verifyRisc0Proof(Uint8List receiptBytes) async {
     return await MoproFlutterPlatform.instance.verifyRisc0Proof(receiptBytes);
   }
+
+  Future<CairoProofOutput> generateCairoProof(String programJson, String inputsJson) async {
+    return await copyAssetToFileSystem(programJson).then((path) async {
+      final programJsonStr = await File(path).readAsString();
+      
+      // For inputs, we might receive a file path (asset) or a raw JSON string
+      String inputsJsonStr = inputsJson;
+      // Simple heuristic: if it doesn't start with [ or {, it might be a path
+      if (!inputsJson.trim().startsWith('[') && !inputsJson.trim().startsWith('{')) {
+         try {
+          final inputPath = await copyAssetToFileSystem(inputsJson);
+          inputsJsonStr = await File(inputPath).readAsString();
+        } catch (e) {
+             print("Assuming input is raw string: $e");
+        }
+      }
+      
+      return await MoproFlutterPlatform.instance.generateCairoProof(programJsonStr, inputsJsonStr);
+    });
+  }
+
+  Future<CairoVerifyOutput> verifyCairoProof(Uint8List proof) async {
+    return await MoproFlutterPlatform.instance.verifyCairoProof(proof);
+  }
 }

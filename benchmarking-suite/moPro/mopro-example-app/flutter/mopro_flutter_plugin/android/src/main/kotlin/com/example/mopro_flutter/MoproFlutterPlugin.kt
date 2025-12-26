@@ -348,6 +348,46 @@ class MoproFlutterPlugin : FlutterPlugin, MethodCallHandler {
                 result.error("PROOF_VERIFICATION_ERROR", "Failed to verify RISC0 proof", e.message)
             }
             
+            
+        } else if (call.method == "generateCairoProof") {
+            val programJson = call.argument<String>("programJson") ?: return result.error(
+                "ARGUMENT_ERROR",
+                "Missing programJson",
+                null
+            )
+            val inputsJson = call.argument<String>("inputsJson") ?: return result.error(
+                "ARGUMENT_ERROR",
+                "Missing inputsJson",
+                null
+            )
+
+            try {
+                val res = cairoProve(programJson, inputsJson)
+                val resultMap = mapOf(
+                    "proof" to res.proof
+                )
+                result.success(resultMap)
+            } catch (e: Exception) {
+                result.error("CAIRO_PROOF_ERROR", "Failed to generate Cairo proof: ${e.message}", null)
+            }
+
+        } else if (call.method == "verifyCairoProof") {
+            val proof = call.argument<ByteArray>("proof") ?: return result.error(
+                "ARGUMENT_ERROR",
+                "Missing proof",
+                null
+            )
+
+            try {
+                val res = cairoVerify(proof)
+                val resultMap = mapOf(
+                    "is_valid" to res.isValid
+                )
+                result.success(resultMap)
+            } catch (e: Exception) {
+                result.error("CAIRO_VERIFY_ERROR", "Failed to verify Cairo proof: ${e.message}", null)
+            }
+
         } else {
             result.notImplemented()
         }

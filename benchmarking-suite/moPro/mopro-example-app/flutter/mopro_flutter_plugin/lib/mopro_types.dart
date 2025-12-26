@@ -135,3 +135,41 @@ class Risc0VerifyOutput {
     return "Risc0VerifyOutput(isValid: $isValid, outputValue: $outputValue)";
   }
 }
+
+class CairoProofOutput {
+  final Uint8List proof;
+
+  CairoProofOutput(this.proof);
+
+  factory CairoProofOutput.fromMap(Map<Object?, Object?> proofResult) {
+    return CairoProofOutput(proofResult["proof"] as Uint8List);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {"proof": proof};
+  }
+
+  @override
+  String toString() {
+    return "CairoProofOutput(proof: ${proof.length} bytes)";
+  }
+}
+
+class CairoVerifyOutput {
+  final bool isValid;
+
+  CairoVerifyOutput(this.isValid);
+
+  factory CairoVerifyOutput.fromMap(Map<Object?, Object?> verifyResult) {
+    return CairoVerifyOutput(verifyResult["is_valid"] as bool);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {"is_valid": isValid};
+  }
+
+  @override
+  String toString() {
+    return "CairoVerifyOutput(isValid: $isValid)";
+  }
+}

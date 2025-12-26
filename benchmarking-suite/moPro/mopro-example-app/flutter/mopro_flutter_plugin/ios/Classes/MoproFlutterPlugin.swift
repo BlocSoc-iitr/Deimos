@@ -310,6 +310,50 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
             code: "VK_GENERATION_ERROR", message: "Failed to generate verification key",
             details: error.localizedDescription))
       }
+    case "generateCairoProof":
+      guard let args = call.arguments as? [String: Any],
+        let programJson = args["programJson"] as? String,
+        let inputsJson = args["inputsJson"] as? String
+      else {
+        result(FlutterError(code: "ARGUMENT_ERROR", message: "Missing arguments", details: nil))
+        return
+      }
+
+      do {
+        let proofOutput = try cairoProve(programJson: programJson, inputsJson: inputsJson)
+        // Convert to map for Flutter
+        let resultMap: [String: Any] = [
+            "proof": proofOutput.proof
+        ]
+        result(resultMap)
+      } catch {
+        result(
+          FlutterError(
+            code: "CAIRO_PROOF_ERROR", message: "Failed to generate Cairo proof",
+            details: error.localizedDescription))
+      }
+
+    case "verifyCairoProof":
+      guard let args = call.arguments as? [String: Any],
+        let proof = args["proof"] as? FlutterStandardTypedData
+      else {
+        result(FlutterError(code: "ARGUMENT_ERROR", message: "Missing arguments", details: nil))
+        return
+      }
+
+      do {
+        let verifyOutput = try cairoVerify(proofBytes: proof.data)
+        let resultMap: [String: Any] = [
+            "is_valid": verifyOutput.isValid
+        ]
+        result(resultMap)
+      } catch {
+        result(
+          FlutterError(
+            code: "CAIRO_VERIFY_ERROR", message: "Failed to verify Cairo proof",
+            details: error.localizedDescription))
+      }
+
     default:
       result(FlutterMethodNotImplemented)
     }

@@ -1,0 +1,9 @@
+build_mode = "release"
+target_adapters = []
+target_platforms = []
+ios = []
+android = []
+react_native = []
+auto_update = false
+
+[update]

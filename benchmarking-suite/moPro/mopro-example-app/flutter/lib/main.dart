@@ -254,6 +254,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
       {'name': 'Halo2', 'value': 'halo2', 'icon': Icons.layers},
       {'name': 'Noir', 'value': 'noir', 'icon': Icons.nightlight_round},
       {'name': 'RISC Zero', 'value': 'risc0', 'icon': Icons.developer_board},
+      {'name': 'Cairo', 'value': 'cairo', 'icon': Icons.architecture},
     ];
 
     return _buildCard(
@@ -762,6 +763,8 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
         return 'Noir';
       case 'risc0':
         return 'RISC Zero';
+      case 'cairo':
+        return 'Cairo-M';
       default:
         return framework;
     }
@@ -777,6 +780,8 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
         return ['SHA256', 'Keccak256', 'Poseidon', 'MiMC', 'Pedersen', 'Blake2', 'Blake3'];
       case 'risc0':
         return ['Factor'];
+      case 'cairo':
+        return ['SHA256'];
       default:
         return [];
     }
@@ -932,6 +937,10 @@ class _ProofResultPageState extends State<ProofResultPage> {
   // RISC-V results
   Risc0ProofOutput? _risc0ProofResult;
   Risc0VerifyOutput? _risc0VerifyResult;
+
+  // Cairo results
+  CairoProofOutput? _cairoProofResult;
+  CairoVerifyOutput? _cairoVerifyResult;
   
   // Store Noir verification keys (like in old implementation)
   Uint8List? _noirMimcVerificationKey;
@@ -1373,8 +1382,10 @@ class _ProofResultPageState extends State<ProofResultPage> {
         return _buildNoirProofDetails();
       case 'risc0':
         return _buildRisc0ProofDetails();
+      case 'cairo':
+        return _buildCairoProofDetails();
       default:
-      return const SizedBox.shrink();
+        return const SizedBox.shrink();
     }
   }
 
@@ -1605,6 +1616,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
         return await _generateNoirProof(moproFlutterPlugin);
       case 'risc0':
         return await _generateRisc0Proof(moproFlutterPlugin);
+      case 'cairo':
+        return await _generateCairoProof(moproFlutterPlugin);
       default:
         throw Exception('Unknown framework: ${widget.framework}');
     }
@@ -2125,6 +2138,9 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       case 'risc0':
         isValid = await _verifyRisc0Proof(moproFlutterPlugin);
         break;
+      case 'cairo':
+        isValid = await _verifyCairoProof(moproFlutterPlugin);
+        break;
       default:
         throw Exception('Unknown framework: ${widget.framework}');
     }
@@ -2390,9 +2406,101 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       return _noirProofResult!.length;
     } else if (_risc0ProofResult != null) {
       return _risc0ProofResult!.receipt.length;
+    } else if (_cairoProofResult != null) {
+      return _cairoProofResult!.proof.length;
     }
     return 0;
   }
 
-}
+  Future<String> _generateCairoProof(MoproFlutter plugin) async {
+    // Load the dedicated input file for Cairo
+    // This ensures we match the exact format expected by the cairo-m prover (Vec<u32> + len)
+    final inputsJson = await rootBundle.loadString('assets/cairo_input.json');
+    
+    // Capture memory and battery BEFORE proof generation
+    _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
+    final battery = Battery();
+    _batteryBeforeProof = await battery.batteryLevel;
 
+    // Start timing
+    final stopwatch = Stopwatch()..start();
+    
+    // Start memory monitoring in background
+    _startMemoryMonitoring();
+
+    final proofResult = await plugin.generateCairoProof(
+      "assets/cairo_sha256.json",
+      inputsJson
+    );
+
+    stopwatch.stop();
+
+    // Capture memory and battery AFTER proof generation
+    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
+    _batteryAfterProof = await battery.batteryLevel;
+
+    setState(() {
+      _cairoProofResult = proofResult;
+      _proofGenerationTime = stopwatch.elapsed;
+    });
+
+    return _formatCairoProofOutput(proofResult);
+  }
+
+  Future<bool> _verifyCairoProof(MoproFlutter plugin) async {
+    if (_cairoProofResult == null) {
+      throw Exception('No proof available for verification');
+    }
+
+    // Start timing
+    final stopwatch = Stopwatch()..start();
+
+    final verifyResult = await plugin.verifyCairoProof(_cairoProofResult!.proof);
+
+    // Stop timing and store
+    stopwatch.stop();
+    setState(() {
+      _proofVerificationTime = stopwatch.elapsed;
+      _cairoVerifyResult = verifyResult;
+    });
+
+    return verifyResult.isValid;
+  }
+
+  String _formatCairoProofOutput(CairoProofOutput proofResult) {
+    return '''
+${widget.algorithm} Proof: CairoProofOutput(
+  proof_size: ${proofResult.proof.length} bytes
+)
+
+Framework: ${widget.framework}
+Algorithm: ${widget.algorithm}
+Input: ${widget.selectedInputName}
+Timestamp: ${DateTime.now().millisecondsSinceEpoch}
+''';
+  }
+
+  Widget _buildCairoProofDetails() {
+    if (_cairoProofResult == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Proof Details:',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.secondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text('Proof Size: ${_cairoProofResult!.proof.length} bytes'),
+        if (_cairoVerifyResult != null) ...[
+          const SizedBox(height: 16),
+          Text('Verification: ${_cairoVerifyResult!.isValid ? "PASSED" : "FAILED"}'),
+        ],
+      ],
+    );
+  }
+}
