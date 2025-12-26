@@ -1,5 +1,8 @@
 use methods::{RISC0_CIRCUIT_ELF, RISC0_CIRCUIT_ID};
+#[cfg(feature = "cairo")]
+use cairo_m_prover::{prove, verify};
 use risc0_zkvm::{default_prover, ExecutorEnv, Receipt};
+
 
 // Initializes the shared UniFFI scaffolding and defines the `MoproError` enum.
 mopro_ffi::app!();
@@ -179,9 +182,10 @@ mod halo2_tests {
 // --- Noir Example of using Ultra Honk proving and verifying circuits ---
 
 // Module containing the Noir circuit logic (Multiplier2)
+#[cfg(feature = "noir")]
 mod noir;
 
-#[cfg(test)]
+#[cfg(all(test, feature = "noir"))]
 mod noir_tests {
     use super::noir::{generate_noir_proof, get_noir_verification_key, verify_noir_proof};
     use serial_test::serial;
@@ -421,6 +425,87 @@ mod tests {
                 "Output should match input: {}",
                 input
             );
+    }
+}
+
+}
+
+// CAIRO_TEMPLATE
+// --- Cairo Example of using Cairo-M proving and verifying ---
+
+#[cfg(feature = "cairo")]
+#[derive(uniffi::Error, thiserror::Error, Debug)]
+pub enum CairoError {
+    #[error("Failed to prove: {0}")]
+    ProveError(String),
+    #[error("Failed to verify: {0}")]
+    VerifyError(String),
+    #[error("Serialization error: {0}")]
+    SerializeError(String),
+}
+
+#[cfg(feature = "cairo")]
+#[derive(uniffi::Record, Clone)]
+pub struct CairoProofOutput {
+    pub proof: Vec<u8>,
+}
+
+#[cfg(feature = "cairo")]
+#[derive(uniffi::Record, Clone)]
+pub struct CairoVerifyOutput {
+    pub is_valid: bool,
+}
+
+#[cfg(feature = "cairo")]
+#[uniffi::export]
+pub fn cairo_prove(program_json: String, inputs_json: String) -> Result<CairoProofOutput, CairoError> {
+    let proof = prove(&program_json, &inputs_json)
+        .map_err(|e| CairoError::ProveError(e.to_string()))?;
+
+    Ok(CairoProofOutput { proof })
+}
+
+#[cfg(feature = "cairo")]
+#[uniffi::export]
+pub fn cairo_verify(proof: Vec<u8>) -> Result<CairoVerifyOutput, CairoError> {
+    let is_valid = verify(&proof)
+        .map_err(|e| CairoError::VerifyError(e.to_string()))?;
+
+    Ok(CairoVerifyOutput { is_valid })
+}
+
+#[cfg(all(test, feature = "cairo"))]
+mod cairo_tests {
+    use super::*;
+    use std::fs;
+
+
+    #[test]
+    fn test_cairo_prove_verify_sha256() {
+        // Prepare inputs (abc encoded)
+        let inputs_json = r#"[
+            [1633837952, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24],
+            1
+        ]"#.to_string();
+
+        let program_json = fs::read_to_string("test-vectors/cairo-m/sha256.json")
+            .expect("Failed to read sha256.json");
+
+        println!("Generating proof...");
+        let prove_result = cairo_prove(program_json, inputs_json);
+        if let Err(e) = &prove_result {
+            println!("Proving failed: {:?}", e);
         }
+        assert!(prove_result.is_ok(), "Proving should succeed");
+
+        let proof_output = prove_result.unwrap();
+        println!("Proof generated. Size: {} bytes", proof_output.proof.len());
+
+        println!("Verifying proof...");
+        let verify_result = cairo_verify(proof_output.proof);
+        assert!(verify_result.is_ok(), "Verification should succeed: {:?}", verify_result.err());
+
+        let verify_output = verify_result.unwrap();
+        assert!(verify_output.is_valid, "Proof should be valid");
     }
 }

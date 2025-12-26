@@ -11,6 +11,7 @@ edition = "2021"
 risc0-circuit = { path = "./risc0-circuit" }
 risc0-build = { version = "3.0.3" }
 risc0-zkvm = { version = "3.0.3", default-features = false }
+cairo-m-prover = { path = "./cairo-m-prover" }
 
 [profile.dev]
 opt-level = 3
@@ -18,3 +19,7 @@ opt-level = 3
 [profile.release]
 debug = 1
 lto = true
+
+# Patch zkhash to use the fork with M31 field support (same as cairo-m)
+[patch."https://github.com/HorizenLabs/poseidon2.git"]
+zkhash = { git = "https://github.com/AntoineFONDEUR/poseidon2.git", branch = "poseidon2-M31" }

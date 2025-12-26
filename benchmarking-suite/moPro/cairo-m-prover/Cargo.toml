@@ -1,0 +1,17 @@
+[package]
+name = "cairo-m-prover"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cairo-m-runner = { path = "../../cairo-m-vendor/crates/runner", default-features = false }
+# Aliased to avoid conflict with this crate's name
+cairo-m-prover-core = { path = "../../cairo-m-vendor/crates/prover", package = "cairo-m-prover" }
+cairo-m-common = { path = "../../cairo-m-vendor/crates/common" }
+stwo-prover = { git = "https://github.com/starkware-libs/stwo", rev = "ab57a1c", features = [
+    "parallel",
+] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+bincode = "1.3"
