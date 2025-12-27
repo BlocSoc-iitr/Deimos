@@ -488,8 +488,8 @@ mod cairo_tests {
             1
         ]"#.to_string();
 
-        let program_json = fs::read_to_string("test-vectors/cairo-m/sha256.json")
-            .expect("Failed to read sha256.json");
+        let program_json = fs::read_to_string("test-vectors/cairo-m/cairo_sha256.json")
+            .expect("Failed to read cairo_sha256.json");
 
         println!("Generating proof...");
         let prove_result = cairo_prove(program_json, inputs_json);

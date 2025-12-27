@@ -47,14 +47,3 @@ pub fn verify(proof_bytes: &[u8]) -> Result<bool> {
     Ok(true)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::fs;
-
-    #[test]
-    fn test_prove_verify_sha256() {
-        // This test requires the test vector internal 
-        // We'll skip for now if files aren't physically here in crate yet.
-    }
-}
