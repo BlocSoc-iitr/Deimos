@@ -1,6 +1,0 @@
-node_modules/
-out/
-dist/
-.vscode-test/
-*.vsix
-package-lock.json
