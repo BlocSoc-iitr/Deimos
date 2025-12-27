@@ -588,6 +588,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cairo-m-common",
+ "cairo-m-compiler",
  "cairo-m-prover",
  "cairo-m-runner",
  "serde_json",

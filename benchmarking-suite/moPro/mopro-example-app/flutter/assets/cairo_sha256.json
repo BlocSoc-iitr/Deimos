@@ -5047,6 +5047,29 @@
         }
       ]
     },
+    "ch": {
+      "pc": 78,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": "U32"
+        },
+        {
+          "name": "arg1",
+          "ty": "U32"
+        },
+        {
+          "name": "arg2",
+          "ty": "U32"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": "U32"
+        }
+      ]
+    },
     "process_chunk": {
       "pc": 90,
       "params": [
@@ -5067,6 +5090,55 @@
               "size": 8
             }
           }
+        }
+      ]
+    },
+    "big_sigma0": {
+      "pc": 22,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": "U32"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": "U32"
+        }
+      ]
+    },
+    "big_sigma1": {
+      "pc": 37,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": "U32"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": "U32"
+        }
+      ]
+    },
+    "rotr": {
+      "pc": 0,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": "U32"
+        },
+        {
+          "name": "arg1",
+          "ty": "Felt"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": "U32"
         }
       ]
     },
@@ -5114,78 +5186,6 @@
         }
       ]
     },
-    "big_sigma0": {
-      "pc": 22,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": "U32"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": "U32"
-        }
-      ]
-    },
-    "rotr": {
-      "pc": 0,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": "U32"
-        },
-        {
-          "name": "arg1",
-          "ty": "Felt"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": "U32"
-        }
-      ]
-    },
-    "ch": {
-      "pc": 78,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": "U32"
-        },
-        {
-          "name": "arg1",
-          "ty": "U32"
-        },
-        {
-          "name": "arg2",
-          "ty": "U32"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": "U32"
-        }
-      ]
-    },
-    "big_sigma1": {
-      "pc": 37,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": "U32"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": "U32"
-        }
-      ]
-    },
     "small_sigma0": {
       "pc": 52,
       "params": [
@@ -5203,7 +5203,7 @@
     }
   },
   "metadata": {
-    "compiled_at": "2025-12-25T11:27:54.957283786+00:00",
+    "compiled_at": "2025-12-27T13:52:55.203588170+00:00",
     "compiler_version": "0.1.0-alpha.1"
   }
 }
