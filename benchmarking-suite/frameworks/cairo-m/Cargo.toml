@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 cairo-m-runner = { git = "https://github.com/kkrt-labs/cairo-m", package = "cairo-m-runner" }
+cairo-m-compiler = { git = "https://github.com/kkrt-labs/cairo-m", package = "cairo-m-compiler" }
 cairo-m-prover = { git = "https://github.com/kkrt-labs/cairo-m", package = "cairo-m-prover" }
 cairo-m-common = { git = "https://github.com/kkrt-labs/cairo-m", package = "cairo-m-common" }
 stwo-prover = { git = "https://github.com/starkware-libs/stwo", rev = "ab57a1c", features = [
