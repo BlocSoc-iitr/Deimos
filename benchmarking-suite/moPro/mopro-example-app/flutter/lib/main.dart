@@ -1610,17 +1610,7 @@ class _ProofResultPageState extends State<ProofResultPage> {
     }
   }
 
-  Future<String> _extractAsset(String assetPath) async {
-    final docsDir = await getApplicationDocumentsDirectory();
-    final filename = assetPath.split('/').last;
-    final file = File('${docsDir.path}/$filename');
 
-    if (!await file.exists()) {
-      final data = await rootBundle.load(assetPath);
-      await file.writeAsBytes(data.buffer.asUint8List());
-    }
-    return file.path;
-  }
 
   Future<String> _generateCircomProof(MoproFlutter plugin) async {
     // Get input data based on algorithm (special case for Poseidon)
@@ -1630,10 +1620,6 @@ class _ProofResultPageState extends State<ProofResultPage> {
     // Get the appropriate zkey path based on algorithm
     final zkeyAssetPath = _getZkeyPath();
     print("DEBUG: Asset Path: $zkeyAssetPath");
-    
-    final zkeyPath = await _extractAsset(zkeyAssetPath);
-    print("DEBUG: Extracted ZKey Path: $zkeyPath");
-    print("DEBUG: File exists? ${await File(zkeyPath).exists()}");
 
     // Capture memory and battery BEFORE proof generation
     final memSnapshotBefore = await _getMemorySnapshot();
@@ -1646,10 +1632,10 @@ class _ProofResultPageState extends State<ProofResultPage> {
     // Start memory monitoring in background
     _startMemoryMonitoring();
     
-    // Generate proof using actual MoPro
-    print("DEBUG: Calling generateCircomProof with path: $zkeyPath");
+    // Generate proof using actual MoPro - use asset path directly like Halo2/Noir
+    print("DEBUG: Calling generateCircomProof with asset path: $zkeyAssetPath");
     final proofResult = await plugin.generateCircomProof(
-      zkeyPath, 
+      zkeyAssetPath, 
             inputs, 
       ProofLib.arkworks
     );
@@ -2162,12 +2148,12 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       throw Exception('No proof available for verification');
     }
     
-    final zkeyPath = _getZkeyPath();
+    final zkeyAssetPath = _getZkeyPath();
     
     // Start timing
     final stopwatch = Stopwatch()..start();
     
-    final result = await plugin.verifyCircomProof(zkeyPath, _circomProofResult!, ProofLib.arkworks);
+    final result = await plugin.verifyCircomProof(zkeyAssetPath, _circomProofResult!, ProofLib.arkworks);
     
     // Stop timing and store
     stopwatch.stop();
