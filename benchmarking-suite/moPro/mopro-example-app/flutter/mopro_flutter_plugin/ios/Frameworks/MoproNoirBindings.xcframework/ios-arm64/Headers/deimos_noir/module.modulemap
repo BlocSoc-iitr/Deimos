@@ -1,0 +1,4 @@
+module deimos_noirFFI {
+    header "deimos_noirFFI.h"
+    export *
+}
