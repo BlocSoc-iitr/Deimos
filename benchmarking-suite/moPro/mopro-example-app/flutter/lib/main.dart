@@ -774,7 +774,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
       case 'halo2':
         return ['Fibonacci'];
       case 'noir':
-        return ['SHA256', 'Keccak256', 'Poseidon', 'MiMC', 'Pedersen', 'Blake2', 'Blake3'];
+        return ['SHA256', 'Keccak256', 'Poseidon', 'MiMC', 'Pedersen', 'Blake2', 'Blake3', 'RescuePrime'];
       case 'risc0':
         return ['Factor'];
       default:
@@ -941,6 +941,7 @@ class _ProofResultPageState extends State<ProofResultPage> {
   Uint8List? _noirSha256VerificationKey;
   Uint8List? _noirBlake2VerificationKey;
   Uint8List? _noirBlake3VerificationKey;
+  Uint8List? _noirRescuePrimeVerificationKey;
   
   // Benchmarking timing
   Duration? _proofGenerationTime;
@@ -1834,6 +1835,22 @@ class _ProofResultPageState extends State<ProofResultPage> {
         if (_noirSha256VerificationKey == null) {
             try {
             final vkAsset = await rootBundle.load('assets/sha256.vk');
+            _noirSha256VerificationKey = vkAsset.buffer.asUint8List();
+            } catch (e) {
+            _noirSha256VerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
+                assetPath, srsPath, onChain, lowMemoryMode,
+              );
+            }
+          }
+        verificationKey = _noirSha256VerificationKey;
+          break;
+      case 'RescuePrime':
+        assetPath = "assets/rescue_prime.json";
+        srsPath = "assets/rescue_prime.srs";
+          onChain = true;
+        if (_noirSha256VerificationKey == null) {
+            try {
+            final vkAsset = await rootBundle.load('assets/rescue_prime.vk');
             _noirSha256VerificationKey = vkAsset.buffer.asUint8List();
             } catch (e) {
             _noirSha256VerificationKey = await moproFlutterPlugin.getNoirVerificationKey(

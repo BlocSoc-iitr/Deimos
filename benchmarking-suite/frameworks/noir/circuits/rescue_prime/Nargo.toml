@@ -1,0 +1,6 @@
+[package]
+name = "rescue_prime"
+type = "bin"
+authors = [""]
+
+[dependencies]
