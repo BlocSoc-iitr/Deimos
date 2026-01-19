@@ -26,58 +26,69 @@ MoPro enables mobile zero-knowledge proof generation through:
 
 ## 🚀 **Step-by-Step Integration**
 
-The integration process for adding new Circom circuits to MoPro is much simpler than creating new projects. You work within the existing `mopro-example-app` structure:
+The integration process for adding new Circom circuits to MoPro is straightforward. The Flutter app uses a dynamic selection-based UI, so you only need to register your circuit in a few places:
 
 ### Step 1: Setup Rust Witness and Circuits (`mopro-example-app/src/lib.rs`)
 
-#### Step 1 a): Setup Rust Witness
+#### Step 1a: Add Rust Witness Macro
 
-Add your circuit's witness generation to the existing `lib.rs`:
+Add your circuit's witness generation to the existing `lib.rs` file:
 
 ```rust
-// Add your circuit witness (example: Blake2s256)
-rust_witness::witness!(multiplier2);
+// In mopro-example-app/src/lib.rs
+rust_witness::witness!(blake2s256);
 rust_witness::witness!(keccak);
+rust_witness::witness!(mimc256);
+rust_witness::witness!(pedersen);
+rust_witness::witness!(poseidon);
 rust_witness::witness!(sha256);
-rust_witness::witness!(blake2s256);  // <- Add your new circuit
+rust_witness::witness!(your_circuit_name);  // <- Add your new circuit here
 ```
 
-#### Step 1 b): Setup Rust Circuits
+#### Step 1b: Register Circuit in `set_circom_circuits!` Macro
 
 Register your circuit in the `set_circom_circuits!` macro:
 
 ```rust
 set_circom_circuits! {
-    ("multiplier2_final.zkey", circom_prover::witness::WitnessFn::RustWitness(multiplier2_witness)),
+    ("blake2s256.zkey", circom_prover::witness::WitnessFn::RustWitness(blake2s256_witness)),
     ("keccak.zkey", circom_prover::witness::WitnessFn::RustWitness(keccak_witness)),
+    ("mimc256.zkey", circom_prover::witness::WitnessFn::RustWitness(mimc256_witness)),
+    ("pedersen.zkey", circom_prover::witness::WitnessFn::RustWitness(pedersen_witness)),
+    ("poseidon.zkey", circom_prover::witness::WitnessFn::RustWitness(poseidon_witness)),
     ("sha256.zkey", circom_prover::witness::WitnessFn::RustWitness(sha256_witness)),
-    ("blake2s256.zkey", circom_prover::witness::WitnessFn::RustWitness(blake2s256_witness)),  // <- Add your circuit
+    ("your_circuit.zkey", circom_prover::witness::WitnessFn::RustWitness(your_circuit_name_witness)),  // <- Add your circuit
 }
 ```
+
+**Important:** The `.zkey` filename in the macro must match the filename you'll use in the Flutter assets directory.
 
 ### Step 2: Build and Update MoPro Bindings
 
 ```bash
 # Navigate to the mopro-example-app directory
-cd mopro-example-app
+cd benchmarking-suite/moPro/mopro-example-app
 
 # Build the Rust library and update bindings
 mopro build
 mopro update
 ```
 
-This regenerates the Flutter/Android bindings with your new circuit support.
+This regenerates the Flutter/Android/iOS bindings with your new circuit support.
 
-### Step 3: Add .zkey File to Flutter Assets
+### Step 3: Copy .zkey File to Flutter Assets
 
 Copy your circuit's proving key to the Flutter assets directory:
 
 ```bash
-# Copy your .zkey file from the Circom build
-cp ../frameworks/circom/circuits/blake2s256/blake2s256_0000.zkey flutter/assets/blake2s256.zkey
+# From the mopro-example-app directory
+# Copy your .zkey file from the Circom build output
+cp ../../frameworks/circom/circuits/your-circuit/your-circuit_0000.zkey flutter/assets/your-circuit.zkey
 ```
 
-### Step 4: Update pubspec.yaml
+**Note:** The filename should match what you used in Step 1b (e.g., `your-circuit.zkey`).
+
+### Step 4: Update `pubspec.yaml`
 
 Add your new asset to the Flutter configuration:
 
@@ -86,268 +97,122 @@ Add your new asset to the Flutter configuration:
 flutter:
   assets:
     # Existing assets
-    - assets/multiplier2_final.zkey
-    - assets/circom.zkey
+    - assets/blake2s256.zkey
+    - assets/keccak.zkey
     - assets/mimc256.zkey
     - assets/pedersen.zkey
     - assets/poseidon.zkey
+    - assets/sha256.zkey
     
     # Add your new circuit asset
-    - assets/blake2s256.zkey
+    - assets/your-circuit.zkey
 ```
 
-### Step 5: Use MoPro Plugin in Flutter
+### Step 5: Add Algorithm to Flutter UI (`flutter/lib/main.dart`)
 
-Use the existing MoPro plugin instance to generate and verify proofs with your circuit:
+The Flutter app uses a dynamic selection system. You need to add your circuit in two places:
+
+#### Step 5a: Add to Algorithm List
+
+In the `_getAlgorithmsForFramework()` method, add your circuit name to the Circom list:
 
 ```dart
-// In your Flutter app (flutter/lib/main.dart)
-Future<void> _proveBlake2s() async {
-  try {
-    setState(() => _blake2sProofResult = 'Generating proof...');
-    
-
-    final input = {
-      'in': [72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 32, 84, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 32, 109, 115, 103, 46]
-    };
-    
-    // Use the correct .zkey path and input format
-    final result = await generateCircomProof(
-      'blake2s256.zkey',  // <- Your asset path
-      input,
-      ProofLib.arkworks,
-    );
-    
-    setState(() => _blake2sProofResult = result.toString());
-  } catch (e) {
-    setState(() => _blake2sProofResult = 'Error: $e');
-  }
-}
-
-Future<void> _verifyBlake2s() async {
-  if (_blake2sProofResult.isEmpty || _blake2sProofResult.startsWith('Error')) {
-    setState(() => _blake2sValid = false);
-    return;
-  }
-  
-  try {
-    final isValid = await verifyCircomProof(
-      'blake2s256.zkey',  // <- Same asset path
-      _blake2sProofResult,
-      ProofLib.arkworks,
-    );
-    
-    setState(() => _blake2sValid = isValid);
-  } catch (e) {
-    setState(() => _blake2sValid = false);
+List<String> _getAlgorithmsForFramework(String framework) {
+  switch (framework) {
+    case 'circom':
+      return [
+        'SHA256', 
+        'Keccak256', 
+        'Blake2s256', 
+        'MiMC256', 
+        'Pedersen', 
+        'Poseidon',
+        'YourCircuitName'  // <- Add your circuit name here
+      ];
+    // ... other frameworks
   }
 }
 ```
+
+#### Step 5b: Add Zkey Path Mapping
+
+In the `_getZkeyPath()` method, add a case for your circuit:
+
+```dart
+String _getZkeyPath() {
+  switch (widget.algorithm.toLowerCase()) {
+    case 'sha256':
+      return "assets/sha256.zkey";
+    case 'keccak256':
+      return "assets/keccak.zkey";
+    case 'blake2s256':
+      return "assets/blake2s256.zkey";
+    case 'mimc256':
+      return "assets/mimc256.zkey";
+    case 'pedersen':
+      return "assets/pedersen.zkey";
+    case 'poseidon':
+      return "assets/poseidon.zkey";
+    case 'yourcircuitname':  // <- Add your circuit (lowercase)
+      return "assets/your-circuit.zkey";
+    default:
+      return "assets/sha256.zkey";
+  }
+}
+```
+
+**That's it!** The Flutter app will automatically:
+- Show your circuit in the algorithm dropdown when "Circom" is selected
+- Generate proofs using the MoPro plugin
+- Verify proofs automatically
+- Display benchmarking results
 
 ---
 
 ## 📱 **Flutter UI Integration**
 
-### Complete Flutter Integration Example
+### How the Flutter App Works
 
-Based on our successful multi-circuit integration, here's how to add your new circuit to the existing Flutter UI:
+The Flutter app uses a **dynamic selection-based UI** that automatically handles all circuits. Users:
+
+1. **Select Framework**: Choose "Circom" from the framework dropdown
+2. **Select Circuit**: Choose your circuit from the algorithm dropdown (automatically populated from `_getAlgorithmsForFramework()`)
+3. **Select Input**: Choose a predefined input from the input dropdown
+4. **Run Benchmark**: Click "Run Benchmark" to generate and verify proofs
+
+The app automatically:
+- Generates proofs using `MoproFlutter().generateCircomProof()`
+- Verifies proofs using `MoproFlutter().verifyCircomProof()`
+- Displays proof details, timing, and benchmarking results
+- Sends results to the backend API
+
+### No Additional UI Code Required!
+
+Unlike older integration patterns, **you don't need to write any UI code**. The app's `ProofResultPage` automatically handles:
+- Proof generation with progress indicators
+- Proof verification
+- Benchmarking metrics (timing, memory, battery)
+- Result display and backend submission
+
+### Input Format
+
+The app automatically converts selected inputs to the correct format for Circom circuits. Most hash circuits expect byte arrays:
 
 ```dart
-// lib/main.dart - Add to existing _MyAppState class
-class _MyAppState extends State<MyApp> {
-  // Add state variables for your new circuit
-  String _blake2sProofResult = '';
-  String _keccakProofResult = '';
-  String _sha256ProofResult = '';
-  
-  bool _blake2sValid = false;
-  bool _keccakValid = false;
-  bool _sha256Valid = false;
-
-  Widget _buildCircomTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Blake2s256 Section
-          _buildCircuitSection(
-            title: "Blake2s256",
-            color: Colors.purple,
-            proofResult: _blake2sProofResult,
-            isValid: _blake2sValid,
-            onProve: _proveBlake2s,
-            onVerify: _verifyBlake2s,
-          ),
-          
-          const Divider(height: 40, thickness: 2),
-          
-          // Keccak256 Section  
-          _buildCircuitSection(
-            title: "Keccak256",
-            color: Colors.blue,
-            proofResult: _keccakProofResult,
-            isValid: _keccakValid,
-            onProve: _proveKeccak,
-            onVerify: _verifyKeccak,
-          ),
-          
-          const Divider(height: 40, thickness: 2),
-          
-          // SHA256 Section
-          _buildCircuitSection(
-            title: "SHA256", 
-            color: Colors.green,
-            proofResult: _sha256ProofResult,
-            isValid: _sha256Valid,
-            onProve: _proveSha256,
-            onVerify: _verifySha256,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCircuitSection({
-    required String title,
-    required Color color,
-    required String proofResult,
-    required bool isValid,
-    required VoidCallback onProve,
-    required VoidCallback onVerify,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        border: Border.all(color: color, width: 2),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: onProve,
-                  style: ElevatedButton.styleFrom(backgroundColor: color),
-                  child: Text('Prove $title'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: onVerify,
-                  style: ElevatedButton.styleFrom(backgroundColor: color),
-                  child: Text('Verify $title'),
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 16),
-          
-          if (proofResult.isNotEmpty) ...[
-            Text(
-              'Proof Result:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                proofResult,
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Verification: ${isValid ? "✅ Valid" : "❌ Invalid"}',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isValid ? Colors.green : Colors.red,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  // Circuit-specific proof generation methods
-  Future<void> _proveBlake2s() async {
-    try {
-      setState(() => _blake2sProofResult = 'Generating proof...');
-      
-      // Hardcoded test input: "Hello World! This is a test msg."
-      final input = [72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 32, 84, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 32, 109, 115, 103, 46];
-      
-      final result = await mopro_blake2s256.generateCircomProof(
-        'blake2s256.zkey',
-        {'in': input},
-        mopro_blake2s256.ProofLib.arkworks,
-      );
-      
-      setState(() => _blake2sProofResult = result.toString());
-    } catch (e) {
-      setState(() => _blake2sProofResult = 'Error: $e');
-    }
-  }
-
-  Future<void> _verifyBlake2s() async {
-    if (_blake2sProofResult.isEmpty || _blake2sProofResult.startsWith('Error')) {
-      setState(() => _blake2sValid = false);
-      return;
-    }
-    
-    try {
-      final isValid = await mopro_blake2s256.verifyCircomProof(
-        'blake2s256.zkey',
-        _blake2sProofResult,
-        mopro_blake2s256.ProofLib.arkworks,
-      );
-      
-      setState(() => _blake2sValid = isValid);
-    } catch (e) {
-      setState(() => _blake2sValid = false);
-    }
-  }
-  
-  // Similar methods for other circuits...
+// The app automatically formats inputs as:
+{
+  'in': ['72', '101', '108', ...]  // String array of byte values
 }
 ```
 
-### Key Points for Flutter Integration
+For special cases (like Poseidon requiring exactly 8 bytes), the app handles padding/truncation automatically in `_getInputDataForAlgorithm()`.
 
-**No separate plugin dependencies needed!** The existing MoPro plugin in `mopro-example-app` handles all circuits through a single interface:
+### Key Points
 
-```dart
-// Use the existing MoPro functions directly
-import 'package:mopro_example_app/mopro_example_app.dart';
-
-// These functions work with any circuit registered in lib.rs:
-await generateCircomProof(zkeyPath, input, ProofLib.arkworks);
-await verifyCircomProof(zkeyPath, proof, ProofLib.arkworks);
-```
-
-**Asset paths are relative to the Flutter assets directory:**
-- `'blake2s256.zkey'` (not full paths)
-- `'keccak.zkey'`
-- `'multiplier2_final.zkey'`
+- **Single MoPro Instance**: All circuits use the same `MoproFlutter()` instance
+- **Dynamic Circuit Selection**: Circuit selection happens via the `.zkey` filename
+- **Automatic Proof Handling**: The app handles proof generation, verification, and display automatically
+- **Asset Paths**: Use relative paths like `"assets/your-circuit.zkey"` (not full file paths)
 
 ---
 
@@ -355,106 +220,64 @@ await verifyCircomProof(zkeyPath, proof, ProofLib.arkworks);
 
 ### Multi-Circuit Architecture
 
+The current architecture supports multiple circuits through a unified interface:
 
 ```rust
-// All circuit witnesses
-rust_witness::witness!(multiplier2);
-rust_witness::witness!(keccak);
-rust_witness::witness!(sha256);
+// All circuit witnesses registered in lib.rs
 rust_witness::witness!(blake2s256);
+rust_witness::witness!(keccak);
 rust_witness::witness!(mimc256);
 rust_witness::witness!(pedersen);
 rust_witness::witness!(poseidon);
+rust_witness::witness!(sha256);
+// Add more circuits as needed...
 
-// Register all circuits with their .zkey files
+// All circuits registered with their .zkey files
 set_circom_circuits! {
-    ("multiplier2_final.zkey", circom_prover::witness::WitnessFn::RustWitness(multiplier2_witness)),
-    ("keccak.zkey", circom_prover::witness::WitnessFn::RustWitness(keccak_witness)),
-    ("sha256.zkey", circom_prover::witness::WitnessFn::RustWitness(sha256_witness)),
     ("blake2s256.zkey", circom_prover::witness::WitnessFn::RustWitness(blake2s256_witness)),
+    ("keccak.zkey", circom_prover::witness::WitnessFn::RustWitness(keccak_witness)),
     ("mimc256.zkey", circom_prover::witness::WitnessFn::RustWitness(mimc256_witness)),
     ("pedersen.zkey", circom_prover::witness::WitnessFn::RustWitness(pedersen_witness)),
     ("poseidon.zkey", circom_prover::witness::WitnessFn::RustWitness(poseidon_witness)),
+    ("sha256.zkey", circom_prover::witness::WitnessFn::RustWitness(sha256_witness)),
 }
 ```
 
 **Key Points:**
-- **Single MoPro instance** handles all circuits
+- **Single MoPro instance** handles all circuits through UniFFI bindings
 - **Circuit selection** happens via the `.zkey` filename parameter
 - **No separate projects** needed for each circuit
+- **Flutter UI** automatically discovers circuits from the algorithm list
 
 ### Input Format Handling
 
-Different circuits require different input formats:
+The Flutter app automatically handles input formatting based on the circuit type. Most hash circuits expect byte arrays:
 
 ```dart
-// Byte-based circuits (Keccak, SHA256, Blake2s)
-final byteInput = {
-  'in': [72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 32, 84, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 32, 109, 115, 103, 46]
-};
-
-// Field-based circuits (MiMC)
-final fieldInput = {
-  'in': '123456789'
-};
-
-// Array field-based circuits (Pedersen, Poseidon)
-final arrayFieldInput = {
-  'inputs': ['123456789', '987654321']
-};
-```
-
-### Benchmarking Integration
-
-Add performance benchmarking capabilities:
-
-```dart
-class BenchmarkResult {
-  final Duration provingTime;
-  final Duration verificationTime;
-  final int proofSize;
-  final bool success;
-  
-  BenchmarkResult({
-    required this.provingTime,
-    required this.verificationTime,
-    required this.proofSize,
-    required this.success,
-  });
-}
-
-Future<BenchmarkResult> benchmarkCircuit(String circuitName, Map<String, dynamic> input) async {
-  final stopwatch = Stopwatch();
-  
-  // Measure proving time
-  stopwatch.start();
-  final proofResult = await generateCircomProof(
-    '$circuitName.zkey',
-    input,
-    ProofLib.arkworks,
-  );
-  stopwatch.stop();
-  final provingTime = stopwatch.elapsed;
-  
-  // Measure verification time
-  stopwatch.reset();
-  stopwatch.start();
-  final isValid = await verifyCircomProof(
-    '$circuitName.zkey',
-    proofResult,
-    ProofLib.arkworks,
-  );
-  stopwatch.stop();
-  final verificationTime = stopwatch.elapsed;
-  
-  return BenchmarkResult(
-    provingTime: provingTime,
-    verificationTime: verificationTime,
-    proofSize: proofResult.toString().length,
-    success: isValid,
-  );
+// Byte-based circuits (Keccak, SHA256, Blake2s, etc.)
+// Input is automatically formatted as:
+{
+  'in': ['72', '101', '108', ...]  // String array of byte values
 }
 ```
+
+For special cases, the app handles formatting in `_getInputDataForAlgorithm()`:
+- **Poseidon**: Automatically pads/truncates to exactly 8 bytes
+- **Blake2/Blake3**: Automatically pads/truncates to exactly 32 bytes
+- **Other circuits**: Uses full input array
+
+### Automatic Benchmarking
+
+The Flutter app automatically performs comprehensive benchmarking:
+
+- **Proof Generation Time**: Measured during `generateCircomProof()`
+- **Verification Time**: Measured during `verifyCircomProof()`
+- **Memory Usage**: Tracks peak memory consumption during proof generation
+- **Battery Consumption**: Monitors battery level before/after operations
+- **Proof Size**: Calculates proof data size
+- **Backend Submission**: Automatically sends results to the backend API
+
+All metrics are displayed in the `ProofResultPage` and sent to the backend for analysis.
 
 ---
 
@@ -533,36 +356,3 @@ After successful integration:
 6. **Deployment**: Prepare for production deployment
 
 ---
-
-## 📚 **Related Resources**
-
-- **Previous Guide**: [Adding Hash Functions to Circom](../frameworks/circom/ADDING_HASH_FUNCTIONS.md)
-- **MoPro Documentation**: https://zkmopro.org
-- **UniFFI Guide**: https://mozilla.github.io/uniffi-rs
-- **Flutter Plugin Development**: https://docs.flutter.dev/packages-and-plugins
-
----
-
-## 💡 **Key Learnings from Our Integrations**
-
-Based on our successful integration of Keccak256, SHA256, Blake2s256, MiMC256, Pedersen, and Poseidon circuits:
-
-### **Architecture Patterns**
-- **Separate State Management**: Each circuit needs independent state variables
-- **Color-Coded UI**: Visual distinction helps with multi-circuit interfaces  
-- **Consistent Input Formats**: Standardize on byte arrays vs field elements
-- **Asset Naming**: Use descriptive names for .zkey files (e.g., `mimc256.zkey`)
-
-### **Technical Insights**
-- **Batch Size**: Refers to benchmark iterations, not input processing
-- **Memory Management**: Large .zkey files require careful mobile optimization
-- **Error Handling**: Robust error handling prevents app crashes
-- **Performance**: Proof generation times vary significantly between circuits
-
-### **Integration Success Factors**
-- **Incremental Development**: Start with one circuit, then add others
-- **Comprehensive Testing**: Test both proof generation and verification
-- **Visual Feedback**: Clear UI indicators for success/failure states
-- **Documentation**: Maintain detailed integration notes for future reference
-
-This guide represents the culmination of our successful multi-circuit MoPro integration experience and provides a roadmap for future circuit integrations.

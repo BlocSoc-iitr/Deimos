@@ -770,7 +770,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
   List<String> _getAlgorithmsForFramework(String framework) {
     switch (framework) {
       case 'circom':
-        return ['SHA256', 'Keccak256', 'Blake2s256', 'MiMC256', 'Pedersen', 'Poseidon'];
+        return ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'RescuePrime'];
       case 'halo2':
         return ['Fibonacci'];
       case 'noir':
@@ -1808,6 +1808,10 @@ class _ProofResultPageState extends State<ProofResultPage> {
         return "assets/pedersen.zkey";
       case 'poseidon':
         return "assets/poseidon.zkey";
+      case 'blake3':
+        return "assets/blake3.zkey";
+      case 'rescueprime':
+        return "assets/rescueprime.zkey";
       default:
         return "assets/sha256.zkey";
     }
@@ -2051,7 +2055,7 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     
     // Blake2 and Blake3 require exactly 32 bytes input
     final algorithmLower = widget.algorithm.toLowerCase();
-    if (algorithmLower == 'blake2' || algorithmLower == 'blake3') {
+    if (algorithmLower == 'blake2' || algorithmLower == 'blake3' || algorithmLower == 'rescueprime') {
       List<String> blakeInput = List<String>.from(inputData);
       // Take first 32 bytes, pad with zeros if needed
       if (blakeInput.length > 32) {
