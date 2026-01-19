@@ -73,5 +73,7 @@ abstract class MoproFlutterPlatform extends PlatformInterface {
 
   Future<CairoVerifyOutput> verifyCairoProof(Uint8List proof) {
     throw UnimplementedError('verifyCairoProof() has not been implemented.');
+  Future<Map<String, int>> getIOSMemoryUsage() {
+    throw UnimplementedError('getIOSMemoryUsage() has not been implemented.');
   }
 }

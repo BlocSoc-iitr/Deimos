@@ -123,25 +123,31 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
         return
       }
 
-      do {
-        var moproProofLib: ProofLib
-        if proofLib == 0 {
-          moproProofLib = ProofLib.arkworks
-        } else {
-          moproProofLib = ProofLib.rapidsnark
-        }
-        // Call the function from mopro.swift
-        let proofResult = try generateCircomProof(
-          zkeyPath: zkeyPath, circuitInputs: inputs, proofLib: moproProofLib)
-        let resultMap = convertCircomProof(res: proofResult)
+      DispatchQueue.global(qos: .userInitiated).async {
+        do {
+          var moproProofLib: CircomProofLib
+          if proofLib == 0 {
+            moproProofLib = CircomProofLib.arkworks
+          } else {
+            moproProofLib = CircomProofLib.rapidsnark
+          }
+          // Call the function from mopro.swift
+          let proofResult = try generateCircomProof(
+            zkeyPath: zkeyPath, circuitInputs: inputs, proofLib: moproProofLib)
+          let resultMap = convertCircomProof(res: proofResult)
 
-        // Return the proof and inputs as a map supported by the StandardMethodCodec
-        result(resultMap)
-      } catch {
-        result(
-          FlutterError(
-            code: "PROOF_GENERATION_ERROR", message: "Failed to generate proof",
-            details: error.localizedDescription))
+          // Return the proof and inputs as a map supported by the StandardMethodCodec
+          DispatchQueue.main.async {
+            result(resultMap)
+          }
+        } catch {
+          DispatchQueue.main.async {
+            result(
+              FlutterError(
+                code: "PROOF_GENERATION_ERROR", message: "Failed to generate proof",
+                details: error.localizedDescription))
+          }
+        }
       }
 
     case "verifyCircomProof":
@@ -154,95 +160,34 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
         return
       }
 
-      do {
-        var moproProofLib: ProofLib
-        if proofLib == 0 {
-          moproProofLib = ProofLib.arkworks
-        } else {
-          moproProofLib = ProofLib.rapidsnark
+      DispatchQueue.global(qos: .userInitiated).async {
+        do {
+          var moproProofLib: CircomProofLib
+          if proofLib == 0 {
+            moproProofLib = CircomProofLib.arkworks
+          } else {
+            moproProofLib = CircomProofLib.rapidsnark
+          }
+          let circomProofResult = convertCircomProofResult(proof: proof)
+          // Call the function from mopro.swift
+          let valid = try verifyCircomProof(
+            zkeyPath: zkeyPath, proofResult: circomProofResult, proofLib: moproProofLib)
+
+          // Return the proof and inputs as a map supported by the StandardMethodCodec
+          DispatchQueue.main.async {
+            result(valid)
+          }
+        } catch {
+          DispatchQueue.main.async {
+            result(
+              FlutterError(
+                code: "PROOF_VERIFICATION_ERROR", message: "Failed to verify proof",
+                details: error.localizedDescription))
+          }
         }
-        let circomProofResult = convertCircomProofResult(proof: proof)
-        // Call the function from mopro.swift
-        let valid = try verifyCircomProof(
-          zkeyPath: zkeyPath, proofResult: circomProofResult, proofLib: moproProofLib)
-
-        // Return the proof and inputs as a map supported by the StandardMethodCodec
-        result(valid)
-      } catch {
-        result(
-          FlutterError(
-            code: "PROOF_VERIFICATION_ERROR", message: "Failed to verify proof",
-            details: error.localizedDescription))
       }
 
-    case "generateHalo2Proof":
-      guard let args = call.arguments as? [String: Any],
-        let srsPath = args["srsPath"] as? String,
-        let pkPath = args["pkPath"] as? String,
-        let inputs = args["inputs"] as? [String: [String]]
-      else {
-        result(FlutterError(code: "ARGUMENT_ERROR", message: "Missing arguments", details: nil))
-        return
-      }
 
-      do {
-        let proofResult = try generateHalo2Proof(
-          srsPath: srsPath, pkPath: pkPath, circuitInputs: inputs)
-        let resultMap = [
-          "proof": proofResult.proof,
-          "inputs": proofResult.inputs,
-        ]
-        result(resultMap)
-      } catch {
-        result(
-          FlutterError(
-            code: "PROOF_GENERATION_ERROR", message: "Failed to generate proof",
-            details: error.localizedDescription))
-      }
-
-    case "verifyHalo2Proof":
-      guard let args = call.arguments as? [String: Any],
-        let srsPath = args["srsPath"] as? String
-      else {
-        result(
-          FlutterError(code: "ARGUMENT_ERROR", message: "Missing arguments srsPath", details: nil))
-        return
-      }
-
-      guard let args = call.arguments as? [String: Any],
-        let vkPath = args["vkPath"] as? String
-      else {
-        result(
-          FlutterError(code: "ARGUMENT_ERROR", message: "Missing arguments vkPath", details: nil))
-        return
-      }
-
-      guard let args = call.arguments as? [String: Any],
-        let proof = args["proof"] as? FlutterStandardTypedData
-      else {
-        result(
-          FlutterError(code: "ARGUMENT_ERROR", message: "Missing arguments proof", details: nil))
-        return
-      }
-
-      guard let args = call.arguments as? [String: Any],
-        let inputs = args["inputs"] as? FlutterStandardTypedData
-      else {
-        result(
-          FlutterError(code: "ARGUMENT_ERROR", message: "Missing arguments inputs", details: nil))
-        return
-      }
-
-      do {
-        let valid = try verifyHalo2Proof(
-          srsPath: srsPath, vkPath: vkPath, proof: proof.data, publicInput: inputs.data)
-        result(valid)
-      } catch {
-        result(
-          FlutterError(
-            code: "PROOF_VERIFICATION_ERROR", message: "Failed to verify proof",
-            details: error.localizedDescription))
-      }
     case "generateNoirProof":
       guard let args = call.arguments as? [String: Any],
         let circuitPath = args["circuitPath"] as? String,
@@ -354,8 +299,30 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
             details: error.localizedDescription))
       }
 
+    case "getIOSMemoryUsage":
+        let memoryInfo = getMemoryUsage()
+        result(memoryInfo)
     default:
       result(FlutterMethodNotImplemented)
     }
+  }
+
+  func getMemoryUsage() -> [String: Int64] {
+      var taskInfo = mach_task_basic_info()
+      var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
+      let kerr: kern_return_t = withUnsafeMutablePointer(to: &taskInfo) {
+          $0.withMemoryRebound(to: integer_t.self, capacity: 1) {
+              task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+          }
+      }
+
+      var usedMemory: Int64 = 0
+      if kerr == KERN_SUCCESS {
+          usedMemory = Int64(taskInfo.resident_size)
+      }
+
+      let totalMemory = Int64(ProcessInfo.processInfo.physicalMemory)
+      
+      return ["used": usedMemory, "total": totalMemory]
   }
 }
