@@ -7,6 +7,7 @@ import 'dart:async';
 
 import 'package:mopro_flutter/mopro_flutter.dart';
 import 'package:mopro_flutter/mopro_types.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:http/http.dart' as http;
 import 'package:system_info2/system_info2.dart';
@@ -20,7 +21,6 @@ class InputData {
   
   InputData({required this.name, required this.description, required this.values});
 }
-
 
 class AppTheme {
   static const Color primary = Color(0xFF5B56E6);
@@ -1610,28 +1610,32 @@ class _ProofResultPageState extends State<ProofResultPage> {
     }
   }
 
+
+
   Future<String> _generateCircomProof(MoproFlutter plugin) async {
     // Get input data based on algorithm (special case for Poseidon)
     final inputData = _getInputDataForAlgorithm();
     final inputs = _inputDataToByteArrayJson(inputData);
     
     // Get the appropriate zkey path based on algorithm
-    final zkeyPath = _getZkeyPath();
-    
+    final zkeyAssetPath = _getZkeyPath();
+    print("DEBUG: Asset Path: $zkeyAssetPath");
+
     // Capture memory and battery BEFORE proof generation
-    _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
+    final memSnapshotBefore = await _getMemorySnapshot();
+    _freeMemoryBeforeProof = memSnapshotBefore.free;
     final battery = Battery();
     _batteryBeforeProof = await battery.batteryLevel;
-    
     // Start timing
     final stopwatch = Stopwatch()..start();
     
     // Start memory monitoring in background
     _startMemoryMonitoring();
     
-    // Generate proof using actual MoPro
+    // Generate proof using actual MoPro - use asset path directly like Halo2/Noir
+    print("DEBUG: Calling generateCircomProof with asset path: $zkeyAssetPath");
     final proofResult = await plugin.generateCircomProof(
-      zkeyPath, 
+      zkeyAssetPath, 
             inputs, 
       ProofLib.arkworks
     );
@@ -1639,7 +1643,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
     stopwatch.stop();
     
     // Capture memory and battery AFTER proof generation
-    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
+    final memSnapshotAfter = await _getMemorySnapshot();
+    _freeMemoryAfterProof = memSnapshotAfter.free;
     _batteryAfterProof = await battery.batteryLevel;
     
     if (proofResult == null) {
@@ -1662,7 +1667,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
     };
     
     // Capture memory and battery BEFORE proof generation
-    _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
+    final memSnapshotBefore = await _getMemorySnapshot();
+    _freeMemoryBeforeProof = memSnapshotBefore.free;
     final battery = Battery();
     _batteryBeforeProof = await battery.batteryLevel;
     
@@ -1683,7 +1689,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
     stopwatch.stop();
     
     // Capture memory and battery AFTER proof generation
-    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
+    final memSnapshotAfter = await _getMemorySnapshot();
+    _freeMemoryAfterProof = memSnapshotAfter.free;
     _batteryAfterProof = await battery.batteryLevel;
     
     if (proofResult == null) {
@@ -1709,7 +1716,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
     final (circuitPath, srsPath, onChain, vk) = await _getNoirSettings();
     
     // Capture memory and battery BEFORE proof generation
-    _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
+    final memSnapshotBefore = await _getMemorySnapshot();
+    _freeMemoryBeforeProof = memSnapshotBefore.free;
     final battery = Battery();
     _batteryBeforeProof = await battery.batteryLevel;
     
@@ -1733,7 +1741,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
     stopwatch.stop();
     
     // Capture memory and battery AFTER proof generation
-    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
+    final memSnapshotAfter = await _getMemorySnapshot();
+    _freeMemoryAfterProof = memSnapshotAfter.free;
     _batteryAfterProof = await battery.batteryLevel;
     
     // Store the proof result for verification
@@ -1753,7 +1762,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
     int numericInput = int.tryParse(inputData.first) ?? 17; // Default to 17 if parsing fails
     
     // Capture memory and battery BEFORE proof generation
-    _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
+    final memSnapshotBefore = await _getMemorySnapshot();
+    _freeMemoryBeforeProof = memSnapshotBefore.free;
     final battery = Battery();
     _batteryBeforeProof = await battery.batteryLevel;
     
@@ -1770,7 +1780,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
     stopwatch.stop();
     
     // Capture memory and battery AFTER proof generation
-    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
+    final memSnapshotAfter = await _getMemorySnapshot();
+    _freeMemoryAfterProof = memSnapshotAfter.free;
     _batteryAfterProof = await battery.batteryLevel;
     
     // Store the proof result for verification
@@ -2137,12 +2148,12 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       throw Exception('No proof available for verification');
     }
     
-    final zkeyPath = _getZkeyPath();
+    final zkeyAssetPath = _getZkeyPath();
     
     // Start timing
     final stopwatch = Stopwatch()..start();
     
-    final result = await plugin.verifyCircomProof(zkeyPath, _circomProofResult!, ProofLib.arkworks);
+    final result = await plugin.verifyCircomProof(zkeyAssetPath, _circomProofResult!, ProofLib.arkworks);
     
     // Stop timing and store
     stopwatch.stop();
@@ -2269,13 +2280,20 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
         };
       } else if (Platform.isIOS) {
         final iosInfo = await deviceInfoPlugin.iosInfo;
+        final deviceName = _mapIOSDeviceName(iosInfo.utsname.machine);
         deviceData = {
           'platform': 'iOS',
-          'device': iosInfo.model,
+          'device': deviceName, 
+          'manufacturer': 'Apple',
+          'model': iosInfo.model,
           'systemName': iosInfo.systemName,
           'systemVersion': iosInfo.systemVersion,
+          'osVersion': iosInfo.systemVersion, // Alias for generic display
+          'androidVersion': iosInfo.systemVersion, // Fallback for dashboard compatibility
           'name': iosInfo.name,
           'identifierForVendor': iosInfo.identifierForVendor,
+          'deviceId': iosInfo.identifierForVendor, // Alias for generic ID
+          'androidId': iosInfo.identifierForVendor, // Fallback for dashboard compatibility
           'isPhysicalDevice': iosInfo.isPhysicalDevice,
           'utsname': {
             'machine': iosInfo.utsname.machine,
@@ -2296,7 +2314,8 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
   Future<Map<String, dynamic>> _collectSystemInfo() async {
     try {
       // Get memory information
-      final totalPhysicalMemory = SysInfo.getTotalPhysicalMemory(); // in bytes
+      final memSnapshot = await _getMemorySnapshot();
+      final totalPhysicalMemory = memSnapshot.total;
       
       // Calculate memory used during proof generation
       final memoryUsedBeforeProof = totalPhysicalMemory - _freeMemoryBeforeProof;
@@ -2319,10 +2338,14 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
           'memoryConsumedByProof': memoryConsumedByProof,
 
           // Peak memory load during percentage
-          'peakMemoryLoadInPercentage': _peakMemoryUsage / totalPhysicalMemory * 100,
+          'peakMemoryLoadInPercentage': totalPhysicalMemory > 0 
+              ? (_peakMemoryUsage / totalPhysicalMemory * 100) 
+              : 0.0,
 
           // Memory consumed percentage
-          'memoryConsumedInPercentage': memoryConsumedByProof / totalPhysicalMemory * 100,
+          'memoryConsumedInPercentage': totalPhysicalMemory > 0 
+              ? (memoryConsumedByProof / totalPhysicalMemory * 100) 
+              : 0.0,
         },
         'battery': {
           'batteryBeforeProof': _batteryBeforeProof,
@@ -2344,15 +2367,18 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     _minFreeMemoryDuringProof = 0;
     
     // Sample memory every 100ms during proof generation
-    Timer.periodic(const Duration(milliseconds: 100), (timer) {
+    Timer.periodic(const Duration(milliseconds: 100), (timer) async {
       if (_isGenerating) {
-        final currentFreeMemory = SysInfo.getFreePhysicalMemory();
-        final currentUsedMemory = SysInfo.getTotalPhysicalMemory() - currentFreeMemory;
+        // Skip memory monitoring on non-Android platforms, except iOS now supported
+        if (!Platform.isAndroid && !Platform.isIOS) return;
+        
+        final memSnapshot = await _getMemorySnapshot();
+        final currentUsedMemory = memSnapshot.total - memSnapshot.free;
         
         // Track peak memory usage
         if (currentUsedMemory > _peakMemoryUsage) {
           _peakMemoryUsage = currentUsedMemory;
-          _minFreeMemoryDuringProof = currentFreeMemory;
+          _minFreeMemoryDuringProof = memSnapshot.free;
         }
       } else {
         timer.cancel();
@@ -2394,5 +2420,47 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     return 0;
   }
 
-}
+  // Helper to safely get current memory snapshot
+  Future<({int free, int total})> _getMemorySnapshot() async {
+    if (Platform.isAndroid) {
+      try {
+        return (
+          free: SysInfo.getFreePhysicalMemory(),
+          total: SysInfo.getTotalPhysicalMemory()
+        );
+      } catch (e) {
+        print("Error getting memory info: $e");
+      }
+    } else if (Platform.isIOS) {
+      try {
+        final memoryInfo = await MoproFlutter().getIOSMemoryUsage();
+        final used = memoryInfo['used'] ?? 0;
+        final total = memoryInfo['total'] ?? 0;
+        // Map iOS "App Used" to "Free" for compatibility with existing logic
+        // Logic: Used = Total - Free  =>  Free = Total - Used
+        return (free: total - used, total: total);
+      } catch (e) {
+        print("Error getting iOS memory info: $e");
+      }
+    }
+    return (free: 0, total: 0);
+  }
+  String _mapIOSDeviceName(String machineId) {
+    switch (machineId) {
+      case 'iPhone14,5': return 'iPhone 13';
+      case 'iPhone14,4': return 'iPhone 13 Mini';
+      case 'iPhone14,2': return 'iPhone 13 Pro';
+      case 'iPhone14,3': return 'iPhone 13 Pro Max';
+      case 'iPhone14,7': return 'iPhone 14';
+      case 'iPhone14,8': return 'iPhone 14 Plus';
+      case 'iPhone15,2': return 'iPhone 14 Pro';
+      case 'iPhone15,3': return 'iPhone 14 Pro Max';
+      case 'iPhone15,4': return 'iPhone 15';
+      case 'iPhone15,5': return 'iPhone 15 Plus';
+      case 'iPhone16,1': return 'iPhone 15 Pro';
+      case 'iPhone16,2': return 'iPhone 15 Pro Max';
+      default: return machineId;
+    }
+  }
+} // End of class
 

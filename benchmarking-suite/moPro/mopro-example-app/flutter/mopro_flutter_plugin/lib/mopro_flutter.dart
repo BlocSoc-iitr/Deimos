@@ -95,4 +95,8 @@ class MoproFlutter {
   Future<Risc0VerifyOutput> verifyRisc0Proof(Uint8List receiptBytes) async {
     return await MoproFlutterPlatform.instance.verifyRisc0Proof(receiptBytes);
   }
+
+  Future<Map<String, int>> getIOSMemoryUsage() async {
+    return await MoproFlutterPlatform.instance.getIOSMemoryUsage();
+  }
 }

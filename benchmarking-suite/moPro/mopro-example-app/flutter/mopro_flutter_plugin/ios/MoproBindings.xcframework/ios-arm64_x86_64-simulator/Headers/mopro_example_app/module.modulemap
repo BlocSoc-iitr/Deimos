@@ -1,4 +1,0 @@
-module mopro_example_appFFI {
-    header "mopro_example_appFFI.h"
-    export *
-}

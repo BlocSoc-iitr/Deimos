@@ -11,14 +11,14 @@ export default function BenchmarksPage() {
   const [filterPlatform, setFilterPlatform] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
-  
+
   const [benchmarkData, setBenchmarkData] = useState<BenchmarkData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  
+
   const [circuits, setCircuits] = useState<string[]>(['all']);
   const [frameworks, setFrameworks] = useState<string[]>(['all']);
   const [languages, setLanguages] = useState<string[]>(['all']);
@@ -49,7 +49,7 @@ export default function BenchmarksPage() {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         const params = new URLSearchParams({
           circuit: filterCircuit,
@@ -61,11 +61,11 @@ export default function BenchmarksPage() {
         });
 
         const response = await fetch(`${API_URL}/api/benchmarks?${params}`);
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const result = await response.json();
         setBenchmarkData(result.data);
         setTotalPages(result.pagination.totalPages);
@@ -151,10 +151,10 @@ export default function BenchmarksPage() {
     const day = date.getDate();
     const month = date.toLocaleString('en-US', { month: 'long' });
     const year = date.getFullYear();
-    const time = date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
+    const time = date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: true 
+      hour12: true
     });
     return `${day} ${month} ${year}, ${time}`;
   };
@@ -262,7 +262,7 @@ export default function BenchmarksPage() {
                     return (
                       <React.Fragment key={item.id || index}>
                         {/* Main Row */}
-                        <tr 
+                        <tr
                           className="hover:bg-[#F7F5F3] cursor-pointer transition-colors"
                           onClick={() => toggleRow(item.id || index.toString())}
                         >
@@ -278,9 +278,8 @@ export default function BenchmarksPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              item.deviceInfo?.platform === 'Android' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                            }`}>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.deviceInfo?.platform === 'Android' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                              }`}>
                               {item.deviceInfo?.platform || 'Unknown'}
                             </span>
                           </td>
@@ -288,135 +287,135 @@ export default function BenchmarksPage() {
                           <td className="px-6 py-4 text-sm font-semibold text-[#37322F]">{(item.provingTimeMiliSeconds / 1000).toFixed(2)}</td>
                           <td className="px-6 py-4 text-sm font-semibold text-[#37322F]">{(item.verificationTimeMiliSeconds / 1000).toFixed(2)}</td>
                         </tr>
-                        
+
                         {/* Expanded Details Row */}
                         {isExpanded && (
                           <tr>
                             <td colSpan={7} className="px-6 py-4 bg-[#F7F5F3]">
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {/* Device Info */}
-                        <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
-                            <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
-                            <svg className="w-4 h-4 mr-1.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                              </svg>
-                              Device Information
-                            </h4>
-                          <div className="space-y-1.5 text-xs">
-                            <div className="flex justify-between">
-                              <span className="text-[#605A57]">Device:</span>
-                              <span className="font-medium text-[#37322F]">{item.deviceInfo?.device || 'N/A'}</span>
-                            </div>
-                            {item.deviceInfo?.manufacturer && (
-                              <div className="flex justify-between">
-                                <span className="text-[#605A57]">Manufacturer:</span>
-                                <span className="font-medium text-[#37322F]">{item.deviceInfo.manufacturer}</span>
-                              </div>
-                            )}
-                            {item.deviceInfo?.androidVersion && (
-                              <div className="flex justify-between">
-                                <span className="text-[#605A57]">Android Version:</span>
-                                <span className="font-medium text-[#37322F]">{item.deviceInfo.androidVersion}</span>
-                              </div>
-                            )}
-                            {item.deviceInfo?.androidId && (
-                              <div className="flex justify-between">
-                                <span className="text-[#605A57]">Android ID:</span>
-                                <span className="font-mono text-xs font-medium text-[#37322F] break-all">{item.deviceInfo.androidId}</span>
-                              </div>
-                            )}
-                            <div className="flex justify-between">
-                              <span className="text-[#605A57]">Proof Size:</span>
-                              <span className="font-medium text-[#37322F]">{formatBytes(item.proofSize)}</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Memory Info */}
-                        {item.deviceInfo?.memory && (
-                          <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
-                            <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
-                              <svg className="w-4 h-4 mr-1.5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                              </svg>
-                              Memory Usage
-                            </h4>
-                            <div className="space-y-1.5 text-xs">
-                              <div className="flex justify-between">
-                                <span className="text-[#605A57]">Total RAM:</span>
-                                <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.totalPhysicalMemory)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-[#605A57]">Peak Usage:</span>
-                                <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.peakMemoryUsage)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-[#605A57]">Consumed:</span>
-                                <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.memoryConsumedByProof)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-[#605A57]">Peak Load:</span>
-                                <span className="font-semibold text-[#37322F]">{item.deviceInfo.memory.peakMemoryLoadInPercentage.toFixed(1)}%</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-[#605A57]">Consumed %:</span>
-                                <span className="font-semibold text-[#37322F]">{item.deviceInfo.memory.memoryConsumedInPercentage.toFixed(1)}%</span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Battery & Timing Info */}
-                        <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
-                          <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
-                            <svg className="w-4 h-4 mr-1.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                            Performance Metrics
-                          </h4>
-                          <div className="space-y-1.5 text-xs">
-                            <div className="flex justify-between">
-                              <span className="text-[#605A57]">Proving Time:</span>
-                              <span className="font-semibold text-[#37322F]">{(item.provingTimeMiliSeconds / 1000).toFixed(3)}s</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-[#605A57]">Verification Time:</span>
-                              <span className="font-semibold text-[#37322F]">{(item.verificationTimeMiliSeconds / 1000).toFixed(3)}s</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-[#605A57]">Total Time:</span>
-                              <span className="font-semibold text-[#37322F]">{((item.provingTimeMiliSeconds + item.verificationTimeMiliSeconds) / 1000).toFixed(3)}s</span>
-                            </div>
-                            {item.deviceInfo?.battery && (
-                              <>
-                                <div className="flex justify-between pt-1.5 border-t border-[rgba(55,50,47,0.12)]">
-                                  <span className="text-[#605A57]">Battery Before:</span>
-                                  <span className="font-medium text-[#37322F]">{item.deviceInfo.battery.batteryBeforeProof}%</span>
+                                {/* Device Info */}
+                                <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
+                                  <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
+                                    <svg className="w-4 h-4 mr-1.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                    Device Information
+                                  </h4>
+                                  <div className="space-y-1.5 text-xs">
+                                    <div className="flex justify-between">
+                                      <span className="text-[#605A57]">Device:</span>
+                                      <span className="font-medium text-[#37322F]">{item.deviceInfo?.device || 'N/A'}</span>
+                                    </div>
+                                    {item.deviceInfo?.manufacturer && (
+                                      <div className="flex justify-between">
+                                        <span className="text-[#605A57]">Manufacturer:</span>
+                                        <span className="font-medium text-[#37322F]">{item.deviceInfo.manufacturer}</span>
+                                      </div>
+                                    )}
+                                    {item.deviceInfo?.androidVersion && (
+                                      <div className="flex justify-between">
+                                        <span className="text-[#605A57]">Android Version:</span>
+                                        <span className="font-medium text-[#37322F]">{item.deviceInfo.androidVersion}</span>
+                                      </div>
+                                    )}
+                                    {item.deviceInfo?.androidId && (
+                                      <div className="flex justify-between">
+                                        <span className="text-[#605A57]">Android ID:</span>
+                                        <span className="font-mono text-xs font-medium text-[#37322F] break-all">{item.deviceInfo.androidId}</span>
+                                      </div>
+                                    )}
+                                    <div className="flex justify-between">
+                                      <span className="text-[#605A57]">Proof Size:</span>
+                                      <span className="font-medium text-[#37322F]">{formatBytes(item.proofSize)}</span>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="flex justify-between">
-                                  <span className="text-[#605A57]">Battery After:</span>
-                                  <span className="font-medium text-[#37322F]">{item.deviceInfo.battery.batteryAfterProof}%</span>
+
+                                {/* Memory Info */}
+                                {item.deviceInfo?.memory && (
+                                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
+                                    <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
+                                      <svg className="w-4 h-4 mr-1.5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                                      </svg>
+                                      Memory Usage
+                                    </h4>
+                                    <div className="space-y-1.5 text-xs">
+                                      <div className="flex justify-between">
+                                        <span className="text-[#605A57]">Total RAM:</span>
+                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.totalPhysicalMemory)}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-[#605A57]">Peak Usage:</span>
+                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.peakMemoryUsage)}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-[#605A57]">Consumed:</span>
+                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.memoryConsumedByProof)}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-[#605A57]">Peak Load:</span>
+                                        <span className="font-semibold text-[#37322F]">{item.deviceInfo.memory.peakMemoryLoadInPercentage.toFixed(1)}%</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-[#605A57]">Consumed %:</span>
+                                        <span className="font-semibold text-[#37322F]">{item.deviceInfo.memory.memoryConsumedInPercentage.toFixed(1)}%</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Battery & Timing Info */}
+                                <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
+                                  <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
+                                    <svg className="w-4 h-4 mr-1.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    Performance Metrics
+                                  </h4>
+                                  <div className="space-y-1.5 text-xs">
+                                    <div className="flex justify-between">
+                                      <span className="text-[#605A57]">Proving Time:</span>
+                                      <span className="font-semibold text-[#37322F]">{(item.provingTimeMiliSeconds / 1000).toFixed(3)}s</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-[#605A57]">Verification Time:</span>
+                                      <span className="font-semibold text-[#37322F]">{(item.verificationTimeMiliSeconds / 1000).toFixed(3)}s</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-[#605A57]">Total Time:</span>
+                                      <span className="font-semibold text-[#37322F]">{((item.provingTimeMiliSeconds + item.verificationTimeMiliSeconds) / 1000).toFixed(3)}s</span>
+                                    </div>
+                                    {item.deviceInfo?.battery && (
+                                      <>
+                                        <div className="flex justify-between pt-1.5 border-t border-[rgba(55,50,47,0.12)]">
+                                          <span className="text-[#605A57]">Battery Before:</span>
+                                          <span className="font-medium text-[#37322F]">{item.deviceInfo.battery.batteryBeforeProof}%</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-[#605A57]">Battery After:</span>
+                                          <span className="font-medium text-[#37322F]">{item.deviceInfo.battery.batteryAfterProof}%</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-[#605A57]">Consumed:</span>
+                                          <span className="font-semibold text-[#37322F]">{item.deviceInfo.battery.batteryConsumed}%</span>
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="flex justify-between">
-                                  <span className="text-[#605A57]">Consumed:</span>
-                                  <span className="font-semibold text-[#37322F]">{item.deviceInfo.battery.batteryConsumed}%</span>
+
+                                {/* Timestamp */}
+                                <div className="bg-white rounded-lg p-3 shadow-sm md:col-span-2 lg:col-span-3">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <div className="flex items-center text-[#605A57]">
+                                      <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                      </svg>
+                                      <span>Benchmark recorded on: <span className="font-medium text-[#37322F]">{formatTimestamp(item.timestamp)}</span></span>
+                                    </div>
+                                  </div>
                                 </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {/* Timestamp */}
-                        <div className="bg-white rounded-lg p-3 shadow-sm md:col-span-2 lg:col-span-3">
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center text-[#605A57]">
-                              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                              <span>Benchmark recorded on: <span className="font-medium text-[#37322F]">{formatTimestamp(item.timestamp)}</span></span>
-                            </div>
-                          </div>
-                        </div>
                               </div>
                             </td>
                           </tr>
@@ -432,84 +431,81 @@ export default function BenchmarksPage() {
               <p className="text-sm text-[#605A57]">No benchmark data matches the selected filters</p>
             </div>
           )
-        }
+          }
         </div>
 
         {/* Pagination Controls */}
         {!loading && !error && totalCount > 0 && (
           <div className="mt-4 bg-white rounded-lg shadow-sm p-4 border border-[#E0DEDB]">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            {/* Items per page selector */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-[#37322F]">Show</span>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                className="px-2 py-1.5 border border-[#E0DEDB] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs bg-white"
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={30}>30</option>
-                <option value={40}>40</option>
-                <option value={50}>50</option>
-              </select>
-              <span className="text-xs font-medium text-[#37322F]">per page</span>
-            </div>
+              {/* Items per page selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-[#37322F]">Show</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="px-2 py-1.5 border border-[#E0DEDB] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs bg-white"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={30}>30</option>
+                  <option value={40}>40</option>
+                  <option value={50}>50</option>
+                </select>
+                <span className="text-xs font-medium text-[#37322F]">per page</span>
+              </div>
 
-            {/* Page info */}
-            <div className="text-xs text-[#605A57]">
-              Showing <span className="font-bold text-[#37322F]">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
-              <span className="font-bold text-[#37322F]">{Math.min(currentPage * itemsPerPage, totalCount)}</span> of{' '}
-              <span className="font-bold text-[#37322F]">{totalCount}</span> results
-            </div>
-
-            {/* Page numbers */}
-            <div className="flex items-center gap-1">
-              {/* Previous button */}
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  currentPage === 1
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-[#37322F] hover:bg-blue-600 hover:text-white border border-[#E0DEDB]'
-                }`}
-              >
-                Previous
-              </button>
+              {/* Page info */}
+              <div className="text-xs text-[#605A57]">
+                Showing <span className="font-bold text-[#37322F]">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
+                <span className="font-bold text-[#37322F]">{Math.min(currentPage * itemsPerPage, totalCount)}</span> of{' '}
+                <span className="font-bold text-[#37322F]">{totalCount}</span> results
+              </div>
 
               {/* Page numbers */}
-              {getPageNumbers().map((page, index) => (
+              <div className="flex items-center gap-1">
+                {/* Previous button */}
                 <button
-                  key={index}
-                  onClick={() => typeof page === 'number' && setCurrentPage(page)}
-                  disabled={page === '...'}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    page === currentPage
-                      ? 'bg-blue-600 text-white'
-                      : page === '...'
-                      ? 'bg-white text-gray-400 cursor-default'
-                      : 'bg-white text-[#37322F] hover:bg-blue-600 hover:text-white border border-[#E0DEDB]'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
-
-              {/* Next button */}
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  currentPage === totalPages
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${currentPage === 1
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : 'bg-white text-[#37322F] hover:bg-blue-600 hover:text-white border border-[#E0DEDB]'
-                }`}
-              >
-                Next
-              </button>
+                    }`}
+                >
+                  Previous
+                </button>
+
+                {/* Page numbers */}
+                {getPageNumbers().map((page, index) => (
+                  <button
+                    key={index}
+                    onClick={() => typeof page === 'number' && setCurrentPage(page)}
+                    disabled={page === '...'}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${page === currentPage
+                      ? 'bg-blue-600 text-white'
+                      : page === '...'
+                        ? 'bg-white text-gray-400 cursor-default'
+                        : 'bg-white text-[#37322F] hover:bg-blue-600 hover:text-white border border-[#E0DEDB]'
+                      }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                {/* Next button */}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${currentPage === totalPages
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-[#37322F] hover:bg-blue-600 hover:text-white border border-[#E0DEDB]'
+                    }`}
+                >
+                  Next
+                </button>
+              </div>
             </div>
-          </div>
           </div>
         )}
 

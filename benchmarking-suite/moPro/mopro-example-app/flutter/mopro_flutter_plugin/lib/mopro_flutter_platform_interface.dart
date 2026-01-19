@@ -66,4 +66,8 @@ abstract class MoproFlutterPlatform extends PlatformInterface {
   Future<Risc0VerifyOutput> verifyRisc0Proof(Uint8List receiptBytes) {
     throw UnimplementedError('verifyRisc0Proof() has not been implemented.');
   }
+
+  Future<Map<String, int>> getIOSMemoryUsage() {
+    throw UnimplementedError('getIOSMemoryUsage() has not been implemented.');
+  }
 }
