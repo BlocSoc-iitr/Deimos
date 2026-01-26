@@ -118,6 +118,8 @@ class MoproFlutter {
 
   Future<CairoVerifyOutput> verifyCairoProof(Uint8List proof) async {
     return await MoproFlutterPlatform.instance.verifyCairoProof(proof);
+  }
+
   Future<Map<String, int>> getIOSMemoryUsage() async {
     return await MoproFlutterPlatform.instance.getIOSMemoryUsage();
   }

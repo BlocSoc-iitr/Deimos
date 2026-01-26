@@ -2481,6 +2481,18 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     );
 
     stopwatch.stop();
+    // Capture memory and battery AFTER proof generation
+    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
+    _batteryAfterProof = await battery.batteryLevel;
+
+    setState(() {
+      _cairoProofResult = proofResult;
+      _proofGenerationTime = stopwatch.elapsed;
+    });
+
+    return _formatCairoProofOutput(proofResult);
+  }
+
   // Helper to safely get current memory snapshot
   Future<({int free, int total})> _getMemorySnapshot() async {
     if (Platform.isAndroid) {
@@ -2506,6 +2518,7 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     }
     return (free: 0, total: 0);
   }
+
   String _mapIOSDeviceName(String machineId) {
     switch (machineId) {
       case 'iPhone14,5': return 'iPhone 13';
@@ -2522,19 +2535,6 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       case 'iPhone16,2': return 'iPhone 15 Pro Max';
       default: return machineId;
     }
-  }
-} // End of class
-
-    // Capture memory and battery AFTER proof generation
-    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
-    _batteryAfterProof = await battery.batteryLevel;
-
-    setState(() {
-      _cairoProofResult = proofResult;
-      _proofGenerationTime = stopwatch.elapsed;
-    });
-
-    return _formatCairoProofOutput(proofResult);
   }
 
   Future<bool> _verifyCairoProof(MoproFlutter plugin) async {
