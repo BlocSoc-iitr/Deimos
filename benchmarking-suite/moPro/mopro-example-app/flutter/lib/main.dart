@@ -13,6 +13,9 @@ import 'package:http/http.dart' as http;
 import 'package:system_info2/system_info2.dart';
 import 'package:battery_plus/battery_plus.dart';
 
+// IMP1 Integration
+import 'package:Deimos/channels/imp1_channel.dart';
+
 // Input data structure
 class InputData {
   final String name;
@@ -77,6 +80,8 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
   bool _isLoadingInputs = true;
   
   List<InputData> _availableInputs = [];
+  final List<InputData> _bytesInputs = [];
+  final List<InputData> _fieldInputs = [];
 
   @override
   void initState() {
@@ -86,24 +91,39 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
 
   Future<void> _loadInputs() async {
     try {
-      final List<InputData> loadedInputs = [];
-      
-      // Load input files
-      for (int i = 1; i <= 3; i++) {
+      // Load Bytes inputs
+      final byteSizes = ['16', '32', '64', '128'];
+      for (var size in byteSizes) {
         try {
-          final inputData = await _loadInputFromJson('inputs/input_$i.json');
-          loadedInputs.add(inputData);
+          final inputData = await _loadInputFromJson(
+            'inputs/bytes/input$size.json',
+            name: 'Input $size',
+            description: '$size bytes input',
+          );
+          _bytesInputs.add(inputData);
         } catch (e) {
-          debugPrint('Error loading input_$i.json: $e');
+          debugPrint('Error loading inputs/bytes/input$size.json: $e');
+        }
+      }
+
+      // Load Field inputs
+      final fieldSizes = ['16f', '32f', '64f', '128f'];
+      for (var size in fieldSizes) {
+        try {
+          final inputData = await _loadInputFromJson(
+            'inputs/field_elements/input$size.json',
+            name: 'Input $size',
+            description: '$size field elements input',
+          );
+          _fieldInputs.add(inputData);
+        } catch (e) {
+          debugPrint('Error loading inputs/field_elements/input$size.json: $e');
         }
       }
       
       setState(() {
-        _availableInputs = loadedInputs;
         _isLoadingInputs = false;
-        if (_availableInputs.isNotEmpty) {
-          _selectedInput = _availableInputs.first.name;
-        }
+        // Don't set _availableInputs here, it depends on selection
       });
     } catch (e) {
       debugPrint('Error loading inputs: $e');
@@ -113,22 +133,22 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
     }
   }
 
-  Future<InputData> _loadInputFromJson(String assetPath) async {
+  Future<InputData> _loadInputFromJson(String assetPath, {String? name, String? description}) async {
     try {
       final String jsonString = await rootBundle.loadString(assetPath);
       final Map<String, dynamic> jsonData = json.decode(jsonString);
       
       // Extract data from JSON
-      final String name = jsonData['name'] as String;
-      final String description = jsonData['description'] as String;
+      final String finalName = name ?? (jsonData['name'] as String? ?? 'Unknown');
+      final String finalDescription = description ?? (jsonData['description'] as String? ?? '');
       final List<dynamic> inArray = jsonData['in'] as List<dynamic>;
       
       // Convert the "in" array to List<String>
       final List<String> values = inArray.map((e) => e.toString()).toList();
       
       return InputData(
-        name: name,
-        description: description,
+        name: finalName,
+        description: finalDescription,
         values: values,
       );
     } catch (e) {
@@ -255,6 +275,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
       {'name': 'Noir', 'value': 'noir', 'icon': Icons.nightlight_round},
       {'name': 'RISC Zero', 'value': 'risc0', 'icon': Icons.developer_board},
       {'name': 'Cairo', 'value': 'cairo', 'icon': Icons.architecture},
+      {'name': 'IMP1', 'value': 'imp1', 'icon': Icons.flash_on},
     ];
 
     return _buildCard(
@@ -431,6 +452,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
                   onChanged: isEnabled ? (String? newValue) {
                     setState(() {
                       _selectedAlgorithm = newValue;
+                      _updateAvailableInputs();
                     });
                   } : null,
                 ),
@@ -765,6 +787,8 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
         return 'RISC Zero';
       case 'cairo':
         return 'Cairo-M';
+      case 'imp1':
+        return 'IMP1';
       default:
         return framework;
     }
@@ -782,8 +806,34 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
         return ['Factor'];
       case 'cairo':
         return ['SHA256'];
+      case 'imp1':
+        return ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'RescuePrime'];
       default:
         return [];
+    }
+  }
+
+  void _updateAvailableInputs() {
+    if (_selectedAlgorithm == null) {
+      _availableInputs = [];
+      _selectedInput = null;
+      return;
+    }
+
+    // Bytes circuits: SHA256, Keccak256, Blake2s256, Blake3, Pedersen
+    // Field circuits: MiMC256, Poseidon, RescuePrime
+    final bytesAlgorithms = ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'Pedersen'];
+    
+    if (bytesAlgorithms.contains(_selectedAlgorithm)) {
+      _availableInputs = _bytesInputs;
+    } else {
+      _availableInputs = _fieldInputs;
+    }
+
+    if (_availableInputs.isNotEmpty) {
+      _selectedInput = _availableInputs.first.name;
+    } else {
+      _selectedInput = null;
     }
   }
 
@@ -941,6 +991,10 @@ class _ProofResultPageState extends State<ProofResultPage> {
   // Cairo results
   CairoProofOutput? _cairoProofResult;
   CairoVerifyOutput? _cairoVerifyResult;
+  
+  // IMP1 results
+  IMP1ProofResult? _imp1ProofResult;
+  IMP1VerifyResult? _imp1VerifyResult;
   
   // Store Noir verification keys (like in old implementation)
   Uint8List? _noirMimcVerificationKey;
@@ -1619,6 +1673,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
         return await _generateRisc0Proof(moproFlutterPlugin);
       case 'cairo':
         return await _generateCairoProof(moproFlutterPlugin);
+      case 'imp1':
+        return await _generateIMP1Proof();
       default:
         throw Exception('Unknown framework: ${widget.framework}');
     }
@@ -1808,27 +1864,77 @@ class _ProofResultPageState extends State<ProofResultPage> {
     return _formatRisc0ProofOutput(proofResult);
   }
 
+  Future<String> _generateIMP1Proof() async {
+    // Get circuit name (lowercase)
+    final circuitName = _getImp1CircuitName();
+    
+    // Capture memory and battery BEFORE proof generation
+    _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
+    final battery = Battery();
+    _batteryBeforeProof = await battery.batteryLevel;
+    
+    // Start timing
+    final stopwatch = Stopwatch()..start();
+    
+    // Start memory monitoring in background
+    _startMemoryMonitoring();
+    
+    // Generate proof using IMP1
+    final proofResult = await IMP1Channel.generateProof(
+      circuitName: circuitName,
+    );
+    
+    // Stop timing
+    stopwatch.stop();
+    
+    // Capture memory and battery AFTER proof generation
+    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
+    _batteryAfterProof = await battery.batteryLevel;
+    
+    // Store the proof result for verification
+    setState(() {
+      _imp1ProofResult = proofResult;
+      _proofGenerationTime = stopwatch.elapsed;
+    });
+    
+    // Format proof output
+    return '''
+IMP1 Proof Generated Successfully!
+
+Circuit: $circuitName
+Proving Time: ${proofResult.provingTimeMs}ms
+Proof Size: ${proofResult.proofSizeBytes} bytes
+
+Proof Data:
+${proofResult.proof.substring(0, proofResult.proof.length > 200 ? 200 : proofResult.proof.length)}...
+
+Public Inputs:
+${proofResult.publicInputs}
+''';
+  }
+
+
   String _getZkeyPath() {
-    switch (widget.algorithm.toLowerCase()) {
-      case 'sha256':
-        return "assets/sha256.zkey";
-      case 'keccak256':
-        return "assets/keccak.zkey";
-      case 'blake2s256':
-        return "assets/blake2s256.zkey";
-      case 'mimc256':
-        return "assets/mimc256.zkey";
-      case 'pedersen':
-        return "assets/pedersen.zkey";
-      case 'poseidon':
-        return "assets/poseidon.zkey";
-      case 'blake3':
-        return "assets/blake3.zkey";
-      case 'rescueprime':
-        return "assets/rescueprime.zkey";
-      default:
-        return "assets/sha256.zkey";
+    // Construct path dynamically based on algorithm and input size
+    // naming convention: assets/circom/zkey/{algorithm}_{suffix}.zkey
+    
+    // 1. Get algorithm name prefix
+    String algoPrefix = widget.algorithm.toLowerCase();
+    switch (widget.algorithm) {
+      case 'RescuePrime':
+        algoPrefix = 'rescue-prime';
+        break;
+      case 'Blake2s256':
+        algoPrefix = 'blake2s256';
+        break;
+      // Other names match lowercase (sha256, keccak256, poseidon, mimc256, pedersen, blake3)
     }
+
+    // 2. Get suffix from input name (e.g. "Input 16" -> "16", "Input 32f" -> "32f")
+    // The input name format is strictly "Input {suffix}" as defined in MainSelectionPage
+    final suffix = widget.selectedInputName.split(' ').last;
+    
+    return "assets/circom/zkey/${algoPrefix}_${suffix}.zkey";
   }
 
   Future<(String, String, bool, Uint8List)> _getNoirSettings() async {
@@ -2070,35 +2176,9 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
 
 
   List<String> _getInputDataForAlgorithm() {
-    // Get the selected input data from JSON file
-    List<String> inputData = widget.selectedInputData.values;
-    
-    // Special case for Poseidon: use exactly 8 bytes (as per the circuit requirement)
-    if (widget.algorithm.toLowerCase() == 'poseidon') {
-      // Take first 8 bytes, pad with zeros if needed
-      List<String> poseidonInput = inputData.take(8).toList();
-      while (poseidonInput.length < 8) {
-        poseidonInput.add('0');
-      }
-      return poseidonInput;
-    }
-    
-    // Blake2 and Blake3 require exactly 32 bytes input
-    final algorithmLower = widget.algorithm.toLowerCase();
-    if (algorithmLower == 'blake2' || algorithmLower == 'blake3' || algorithmLower == 'rescueprime') {
-      List<String> blakeInput = List<String>.from(inputData);
-      // Take first 32 bytes, pad with zeros if needed
-      if (blakeInput.length > 32) {
-        blakeInput = blakeInput.take(32).toList();
-      } else {
-        while (blakeInput.length < 32) {
-          blakeInput.add('0');
-        }
-      }
-      return blakeInput;
-    }
-    
-    return inputData;
+    // Return the raw values from the selected input file.
+    // We trust that the input selection logic provided the correct file for the chosen circuit.
+    return widget.selectedInputData.values;
   }
 
   String _inputDataToByteArrayJson(List<String> inputData) {
@@ -2172,6 +2252,9 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
         break;
       case 'cairo':
         isValid = await _verifyCairoProof(moproFlutterPlugin);
+        break;
+      case 'imp1':
+        isValid = await _verifyIMP1Proof();
         break;
       default:
         throw Exception('Unknown framework: ${widget.framework}');
@@ -2264,6 +2347,55 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     });
     
     return verifyResult.isValid;
+  }
+
+  Future<bool> _verifyIMP1Proof() async {
+    if (_imp1ProofResult == null) {
+      throw Exception('No proof available for verification');
+    }
+    
+    final circuitName = _getImp1CircuitName();
+    
+    // Start timing
+    final stopwatch = Stopwatch()..start();
+    
+    final verifyResult = await IMP1Channel.verifyProof(
+      circuitName: circuitName,
+      proofData: _imp1ProofResult!.proof,
+      publicInputs: _imp1ProofResult!.publicInputs,
+    );
+    
+    // Stop timing and store
+    stopwatch.stop();
+    setState(() {
+      _proofVerificationTime = stopwatch.elapsed;
+      _imp1VerifyResult = verifyResult;
+    });
+    
+    return verifyResult.isValid;
+  }
+
+
+  String _getImp1CircuitName() {
+    // Construct path dynamically based on algorithm and input size
+    // naming convention: {algorithm}_{suffix}
+    
+    // 1. Get algorithm name prefix
+    String algoPrefix = widget.algorithm.toLowerCase();
+    switch (widget.algorithm) {
+      case 'RescuePrime':
+        algoPrefix = 'rescue-prime';
+        break;
+      case 'Blake2s256':
+        algoPrefix = 'blake2s256';
+        break;
+      // Other names match lowercase (sha256, keccak256, poseidon, mimc256, pedersen, blake3)
+    }
+
+    // 2. Get suffix from input name (e.g. "Input 16" -> "16", "Input 32f" -> "32f")
+    final suffix = widget.selectedInputName.split(' ').last;
+    
+    return "${algoPrefix}_${suffix}";
   }
 
   // Collect device information and send to backend
@@ -2481,6 +2613,18 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     );
 
     stopwatch.stop();
+    // Capture memory and battery AFTER proof generation
+    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
+    _batteryAfterProof = await battery.batteryLevel;
+
+    setState(() {
+      _cairoProofResult = proofResult;
+      _proofGenerationTime = stopwatch.elapsed;
+    });
+
+    return _formatCairoProofOutput(proofResult);
+  }
+
   // Helper to safely get current memory snapshot
   Future<({int free, int total})> _getMemorySnapshot() async {
     if (Platform.isAndroid) {
@@ -2506,6 +2650,7 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     }
     return (free: 0, total: 0);
   }
+
   String _mapIOSDeviceName(String machineId) {
     switch (machineId) {
       case 'iPhone14,5': return 'iPhone 13';
@@ -2522,19 +2667,6 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       case 'iPhone16,2': return 'iPhone 15 Pro Max';
       default: return machineId;
     }
-  }
-} // End of class
-
-    // Capture memory and battery AFTER proof generation
-    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
-    _batteryAfterProof = await battery.batteryLevel;
-
-    setState(() {
-      _cairoProofResult = proofResult;
-      _proofGenerationTime = stopwatch.elapsed;
-    });
-
-    return _formatCairoProofOutput(proofResult);
   }
 
   Future<bool> _verifyCairoProof(MoproFlutter plugin) async {

@@ -1698,24 +1698,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "deimos-noir"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bincode 1.3.3",
- "gemini-fibonacci",
- "hyperplonk-fibonacci",
- "mopro-ffi",
- "mopro-wasm",
- "noir",
- "plonk-fibonacci",
- "serde",
- "serde_json",
- "serial_test",
- "thiserror 2.0.17",
-]
-
-[[package]]
 name = "der"
 version = "0.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3595,6 +3577,7 @@ dependencies = [
  "anyhow",
  "bincode 1.3.3",
  "cairo-m-prover 0.1.0",
+ "cc",
  "circom-prover",
  "gemini-fibonacci",
  "hyperplonk-fibonacci",
@@ -3604,7 +3587,6 @@ dependencies = [
  "noir",
  "num-bigint 0.4.6",
  "plonk-fibonacci",
- "risc0-circuit",
  "risc0-zkvm",
  "rust-witness",
  "serde",
@@ -3628,26 +3610,6 @@ dependencies = [
  "toml 0.8.23",
  "uniffi",
  "uuid",
-]
-
-[[package]]
-name = "mopro-keccack256"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bincode 1.3.3",
- "circom-prover",
- "methods",
- "mopro-ffi",
- "mopro-wasm",
- "num-bigint 0.4.6",
- "risc0-circuit",
- "risc0-zkvm",
- "rust-witness",
- "serde",
- "serde_json",
- "thiserror 2.0.17",
- "witnesscalc-adapter",
 ]
 
 [[package]]

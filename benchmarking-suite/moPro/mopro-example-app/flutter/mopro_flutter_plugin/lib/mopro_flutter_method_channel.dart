@@ -165,6 +165,9 @@ class MethodChannelMoproFlutter extends MoproFlutterPlatform {
     }
 
     return CairoVerifyOutput.fromMap(verifyResult);
+  }
+
+  @override
   Future<Map<String, int>> getIOSMemoryUsage() async {
     final result = await methodChannel.invokeMethod<Map<Object?, Object?>>('getIOSMemoryUsage');
     if (result == null) {
