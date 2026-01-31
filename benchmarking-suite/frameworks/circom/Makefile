@@ -10,9 +10,7 @@ INPUT_FILE ?= input_8.json
 
 # Derived file names
 # Derived file names
-INPUT_JSON ?= inputs/$(HASH_NAME)/$(INPUT_FILE)
-FLUTTER_ASSETS_DIR = ../../moPro/mopro-example-app/flutter/assets/circom
-TEST_VECTORS_DIR = ../../moPro/mopro-example-app/test-vectors/circom
+INPUT_JSON ?= ../../inputs/$(INPUT_FILE)
 PTAU_0000 = pot$(POT)_0000.ptau
 PTAU_0001 = pot$(POT)_0001.ptau
 PTAU_FINAL = pot$(POT)_final.ptau
@@ -59,25 +57,11 @@ full:
 	snarkjs zkey export verificationkey $(ZKEY_FINAL) $(VERIFICATION_KEY)
 	
 	@echo "🔐 Step 9: Generating proof..."
-	snarkjs groth16 prove $(ZKEY_FINAL) $(WITNESS_FILE) $(PROOF_FILE) $(PUBLIC_FILE)
+	snarkjs groth16 prove $(ZKEY_FINAL) $(CIRCUIT)_js/$(WITNESS_FILE) $(PROOF_FILE) $(PUBLIC_FILE)
 	
 	@echo "🔍 Step 10: Verifying proof..."
 	snarkjs groth16 verify $(VERIFICATION_KEY) $(PUBLIC_FILE) $(PROOF_FILE)
-
-	@echo "🚚 Step 11: Moving files to mobile app directories..."
-	mkdir -p $(FLUTTER_ASSETS_DIR)
-	mkdir -p $(TEST_VECTORS_DIR)
-	mv $(ZKEY_FINAL) $(FLUTTER_ASSETS_DIR)/
-	mv $(WITNESS_FILE) $(FLUTTER_ASSETS_DIR)/
-	mv $(VERIFICATION_KEY) $(FLUTTER_ASSETS_DIR)/
-	mv $(CIRCUIT)_js/$(WASM_FILE) $(TEST_VECTORS_DIR)/
-
-	@echo "🧹 Step 12: Cleaning up unnecessary files..."
-	rm -rf $(CIRCUIT)_js/ $(CIRCUIT)_cpp/
-	rm -f $(R1CS_FILE) $(ZKEY_0000)
-	rm -f $(PROOF_FILE) $(PUBLIC_FILE) $(CIRCUIT).sym
-	rm -f $(PTAU_0000) $(PTAU_0001) $(PTAU_FINAL)
-
+	
 	@echo "✅ Complete workflow finished successfully!"
 
 # Clean all generated files
