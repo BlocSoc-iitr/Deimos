@@ -9,7 +9,7 @@ def main():
     keep_filenames = {'Makefile', '.gitignore', 'clean.py', 'README.md'}
     
     # Directories that should be wholly preserved (content not scanned for deletion)
-    preserve_dirs = {'inputs', '.git', '.idea', '.vscode'}
+    preserve_dirs = {'inputs', '.git', '.idea', '.vscode', 'circomlib', 'hash-circuits'}
 
     print(f"Starting cleanup in: {root_dir}")
 
