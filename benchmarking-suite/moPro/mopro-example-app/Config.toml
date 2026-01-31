@@ -1,8 +1,8 @@
 build_mode = "release"
 target_adapters = [
-    "halo2",
     "noir",
     "circom",
+    "halo2",
 ]
 target_platforms = ["android"]
 android = ["aarch64-linux-android"]

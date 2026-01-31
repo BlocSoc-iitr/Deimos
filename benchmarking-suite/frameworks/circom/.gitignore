@@ -1,0 +1,21 @@
+*.r1cs
+*.sym
+*.zkey
+!*.zkey
+*.ptau
+!*.wasm
+!*.wtns
+*.json
+!package.json
+!tsconfig.json
+!input*.json
+!*_vk.json
+# Exceptions for input files
+!benchmarking-suite/frameworks/circom/inputs/**/*.json
+# But allow specific json if we want to keep them? Ideally generated stuff is ignored.
+# We want to ignore build artifacts.
+*_cpp/
+*_js/
+proof.json
+public.json
+verification_key.json

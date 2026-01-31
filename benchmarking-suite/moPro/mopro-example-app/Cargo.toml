@@ -61,6 +61,7 @@ noir_rs = { package = "noir", git = "https://github.com/zkmopro/noir-rs", featur
 # ==============================================================================
 witnesscalc-adapter = "0.1"
 rust-witness = "0.1"
+cc = "1.0"
 
 # HALO2_BUILD_DEPENDENCIES
 

@@ -1,0 +1,4 @@
+benchmarking-suite/moPro/mopro-example-app/flutter/assets/circom/zkey/keccak256_16.zkey filter=lfs diff=lfs merge=lfs -text
+benchmarking-suite/moPro/mopro-example-app/flutter/assets/circom/zkey/keccak256_32.zkey filter=lfs diff=lfs merge=lfs -text
+benchmarking-suite/moPro/mopro-example-app/flutter/assets/circom/zkey/keccak256_64.zkey filter=lfs diff=lfs merge=lfs -text
+benchmarking-suite/moPro/mopro-example-app/flutter/assets/circom/zkey/keccak256_128.zkey filter=lfs diff=lfs merge=lfs -text

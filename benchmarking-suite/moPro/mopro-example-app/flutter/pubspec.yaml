@@ -61,7 +61,6 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/multiplier2_final.zkey
     - assets/plonk_fibonacci_pk.bin
     - assets/plonk_fibonacci_vk.bin
     - assets/plonk_fibonacci_srs.bin
@@ -76,23 +75,20 @@ flutter:
     - assets/keccak256.srs
     - assets/pedersen.json
     - assets/pedersen.srs
-    - assets/keccak.zkey
-    - assets/blake2s256.zkey
-    - assets/mimc256.zkey
-    - assets/pedersen.zkey
-    - assets/poseidon.zkey
-    - assets/rescueprime.zkey
-    - assets/blake3.zkey
-    - assets/sha256.zkey
     - assets/sha256.srs
     - assets/sha256.json
     - assets/blake2.json
     - assets/blake2.srs
     - assets/blake3.json
     - assets/blake3.srs
+    - assets/circom/zkey/
+    - assets/circom/vk/
+    - assets/circom/wtns/
     - inputs/input_1.json
     - inputs/input_2.json
     - inputs/input_3.json
+    - inputs/bytes/
+    - inputs/field_elements/
     - inputs/cairo_input.json
     - assets/cairo_sha256.json
     - assets/cairo_input.json

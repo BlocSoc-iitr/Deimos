@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["mopro-keccack256", "risc0-circuit", "mopro-example-app"]
+members = ["risc0-circuit", "mopro-example-app"]
 exclude = ["risc0-circuit/guest"]
 
 [workspace.package]
