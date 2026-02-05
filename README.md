@@ -47,14 +47,14 @@ deimos/
 ├── APP_INTEGRATION_GUIDE.md
 └── LICENSE
 ```
----
-
+<!-- --- -->
+<!-- 
 ## Benchmarked Frameworks
 
 ### Currently Supported
 <!-- * **[MoPro](https://zkmopro.org/)** — Mobile-first ZK proving toolkit -->
 
-### Planned Integration
+<!-- ### Planned Integration -->
 <!-- * **[imp1](https://github.com/ingonyama-zk/zkml)** — Ingonyama's mobile proving toolkit
 * **[ProveKit](https://github.com/worldfnd/ProveKit)** — Worldcoin's Noir-based toolkit
 
@@ -65,24 +65,24 @@ deimos/
 * **Basic Arithmetic:** Fibonacci sequence
 * **Application-Level:** JWT parsing (planned) -->
 
-## Measured Metrics
+<!-- ## Measured Metrics -->
 
 <!-- * **Proving Time** — Time to generate ZK proof
 * **Peak Memory Usage** — Maximum RAM consumption during proving
 * **Battery Impact** — Energy consumption per proof (planned)
 * **Proof Size** — Generated proof artifact size -->
 
----
+<!-- --- -->
 
-## Development Status
+<!-- ## Development Status -->
 
-* **Current focus:** MoPro integration and core hash function benchmarks.
-* **Next milestone:** Database integration and basic web dashboard.
-* **Branch policy:**
-  * `main` → Stable releases only.
-  * `dev` → Active development; frequent breaking changes.
+<!-- * **Current focus:** MoPro integration and core hash function benchmarks. -->
+<!-- * **Next milestone:** Database integration and basic web dashboard. -->
+<!-- * **Branch policy:** -->
+  <!-- * `main` → Stable releases only. -->
+  <!-- * `dev` → Active development; frequent breaking changes. --> -->
 
----
+<!-- --- -->
 
 ## Getting Started
 

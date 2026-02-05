@@ -45,6 +45,10 @@ The benchmarking suite collects comprehensive performance data:
 
 - **Proof Generation Time** — Time required to generate ZK proofs
 - **Proof Verification Time** — Duration of proof validation
+- **Memory Usage** — Total RAM, peak usage, consumed memory, and percentages
+- **Battery Impact** — Battery consumption during proving operations
+- **Proof Size** — Generated proof artifact size in bytes
+- **Device Information** — Platform, device model, manufacturer, OS version
 
 ---
 
@@ -52,10 +56,11 @@ The benchmarking suite collects comprehensive performance data:
 
 ### High-Level Architecture
 
-Deimos is divided into two main components:
+Deimos is divided into three main components:
 
-1. **Website Dashboard** — A frontend interface where users can access project documentation and view all benchmark data
-2. **Mobile Applications** — Android and iOS apps used for benchmarking different zkVMs with various circuits and frameworks
+1. **Backend API** — Node.js/Express server with Firebase Firestore for data persistence and RESTful endpoints
+2. **Website Dashboard** — Next.js frontend interface where users can access project documentation and view all benchmark data
+3. **Mobile Applications** — Android and iOS apps used for benchmarking different zkVMs with various circuits and frameworks
 
 ### Mobile App: MoPro Architecture and Implementation
 
@@ -83,8 +88,9 @@ Each circuit follows a byte-to-bits conversion pattern with proper bit ordering 
 ### Main Directories
 
 - **`benchmarking-suite/`**: Core benchmarking implementations
-  - **`frameworks/`**: Circuit implementations for Circom and Noir
-  - **`moPro/`**: MoPro mobile app implementations
+  - **`frameworks/`**: Circuit implementations for Circom, Noir, and Cairo-M
+  - **`moPro/`**: MoPro mobile app implementations with Rust FFI
+- **`backend/`**: Node.js/Express API server with Firebase integration
 - **`website/`**: Next.js-based documentation and dashboard
 - **`.github/`**: CI/CD workflows and automation scripts
 
@@ -136,7 +142,14 @@ Each MoPro implementation follows a consistent pattern:
 
 - **Framework**: Next.js 15.5.3 with Turbopack
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS
+- **Styling**: Tailwind CSS with Radix UI components
+- **Features**: Card-based expandable design, real-time filtering, responsive layout
+
+### Backend API
+
+- **Framework**: Node.js with Express.js
+- **Database**: Firebase Firestore for data persistence
+- **Features**: Duplicate detection, comprehensive filtering, pagination, CORS support
 
 ---
 
@@ -145,9 +158,10 @@ Each MoPro implementation follows a consistent pattern:
 ### Prerequisites
 
 **System Requirements:**
-- Node.js 18+ for website development
+- Node.js 18+ for website and backend development
 - Rust toolchain (stable) for mobile app compilation
 - Git for version control
+- Firebase project for backend data persistence
 
 **Circuit Development Tools:**
 - Circom compiler (v2.1.6)
@@ -163,7 +177,16 @@ git clone https://github.com/aryanbaranwal001/temp_deimos.git
 cd temp_deimos
 ```
 
-**2. Run the Website Dashboard:**
+**2. Run the Backend API:**
+
+```bash
+cd backend
+npm install
+# Configure .env with Firebase credentials
+npm start
+```
+
+**3. Run the Website Dashboard:**
 
 ```bash
 cd website
@@ -171,9 +194,40 @@ npm install
 npm run dev
 ```
 
-**3. Run Mobile Benchmarks:**
+**4. Run Mobile Benchmarks:**
 
 Install the APK on your Android device to run benchmarks. The mobile app allows you to execute performance tests directly on physical hardware for accurate measurements.
+
+### Environment Configuration
+
+**Backend `.env` file:**
+```env
+FIREBASE_ADMINSDK_CREDENTIALS={"type":"service_account",...}
+PORT=5000
+NODE_ENV=development
+CORS_ORIGIN=*
+```
+
+## Data Flow Architecture
+
+### Mobile App → Backend
+
+1. Flutter app generates proof using MoPro framework
+2. App verifies the generated proof
+3. App collects device metrics (memory, battery, device info)
+4. App sends POST request to `/api/benchmark-result`
+5. Backend checks for duplicates based on device ID
+6. If not duplicate: saves to Firestore database
+7. Returns appropriate response (201 for created, 200 for duplicate)
+
+### Website ← Backend
+
+1. Website fetches available filters from `/api/filters`
+2. User applies filters (circuit, framework, platform, etc.)
+3. Website fetches paginated data from `/api/benchmarks`
+4. Backend queries Firestore with applied filters
+5. Backend returns data with pagination metadata
+6. Website displays results in card format with expandable details
 
 ## Circuit Implementation Guide
 
@@ -277,6 +331,45 @@ All code must pass the following checks:
 
 ---
 
+## Data Structure
+
+### Benchmark Data Format
+
+The benchmark data follows this comprehensive structure:
+
+```typescript
+{
+  circuit: string                    // e.g., "Poseidon"
+  framework: string                  // e.g., "MoPro"
+  language: string                   // e.g., "circom"
+  provingTimeMiliSeconds: number     // Proving time in ms
+  verificationTimeMiliSeconds: number // Verification time in ms
+  deviceInfo: {
+    platform: string                 // "Android" or "iOS"
+    device: string                   // Device model
+    manufacturer?: string            // Device manufacturer
+    androidVersion?: string          // Android version
+    androidId?: string               // Unique Android ID (for duplicate detection)
+    memory: {
+      totalPhysicalMemory: number
+      memoryUsedBeforeProof: number
+      peakMemoryUsage: number
+      memoryConsumedByProof: number
+      peakMemoryLoadInPercentage: number
+      memoryConsumedInPercentage: number
+    }
+    battery: {
+      batteryBeforeProof: number
+      batteryAfterProof: number
+      batteryConsumed: number
+    }
+  }
+  proofSize: number                  // Proof size in bytes
+  timestamp: string                  // ISO 8601 timestamp
+  createdAt?: string                 // Added by backend
+}
+```
+
 ## Website Documentation
 
 ### Documentation Structure
@@ -290,7 +383,7 @@ The website provides comprehensive documentation organized into logical sections
 5. **MoPro** — MoPro integration documentation
 6. **Contributing** — Contribution guidelines
 7. **About** — Project information and roadmap
-8. **Benchmarks** — Future benchmark dashboard
+8. **Benchmarks** — Live benchmark dashboard with card-based interface
 
 ### Design Philosophy
 
@@ -300,7 +393,68 @@ The documentation website follows a simple, content-focused approach with emphas
 - Complete information in one place
 - Easy navigation
 
---- 
+### Dashboard Features
+
+The benchmark dashboard provides:
+- **Card-based Layout**: User-friendly expandable cards for each benchmark
+- **Summary Statistics**: Total benchmarks, average times, memory usage
+- **Real-time Filtering**: By circuit, framework, language, and platform
+- **Detailed Metrics**: Expandable sections showing device info, memory usage, and performance data
+- **Responsive Design**: Optimized for mobile, tablet, and desktop viewing
+- **Pagination**: Efficient handling of large datasets
+
+## Testing
+
+### Backend Testing
+
+```bash
+cd backend
+npm start  # Start the server in one terminal
+
+# In another terminal:
+node test-api.js  # Run the test script
+```
+
+The test script will:
+1. Check health endpoint
+2. Fetch available filters
+3. Submit a benchmark
+4. Test duplicate detection
+5. Fetch benchmarks with pagination
+6. Test filtered queries
+
+### Frontend Testing
+
+```bash
+cd website
+npm run dev  # Start Next.js dev server
+```
+
+Visit `http://localhost:3000` to see the dashboard.
+
+## Implementation Notes
+
+### Key Features Implemented
+
+✅ **Backend Data Persistence**: Benchmark data saved to Firestore
+✅ **Duplicate Detection**: Prevents duplicate entries based on device IDs
+✅ **Card-based UI**: User-friendly expandable design
+✅ **Comprehensive Metrics**: All benchmark metrics including memory and battery
+✅ **Real-time Filtering**: Dynamic filtering by multiple criteria
+✅ **Responsive Design**: Works on all device sizes
+✅ **Extensible Structure**: Easy to add new metrics and frameworks
+
+### Future Enhancements
+
+The current architecture allows for easy addition of:
+- More device metrics (CPU usage, temperature, etc.)
+- Comparison views between different devices
+- Charts and graphs for performance visualization
+- Export functionality for benchmark data
+- Advanced filtering (date ranges, performance thresholds)
+- Additional zkVM frameworks and circuits
+
+---
 
 ## Use Cases
 
