@@ -43,11 +43,21 @@ export const receiveBenchmarkResult = async (req, res) => {
       }
     }
 
-    // Add the benchmark data to Firestore
-    const docRef = await db.collection(COLLECTION_NAMES.BENCHMARKS).add({
+    // Prepare data for Firestore, including custom inputs if they exist
+    const firestoreData = {
       ...data,
-      createdAt: new Date().toISOString()
-    });
+      createdAt: new Date().toISOString(),
+    };
+
+    // If customInputs exists, process and add it
+    if (data.customInputs) {
+      // Assuming customInputs is an object like { "Proving time": "1024" }
+      // We can add it directly to the document
+      firestoreData.customInputs = data.customInputs;
+    }
+
+    // Add the benchmark data to Firestore
+    const docRef = await db.collection(COLLECTION_NAMES.BENCHMARKS).add(firestoreData);
 
     logger.info(`Benchmark data saved successfully with ID: ${docRef.id}`);
 

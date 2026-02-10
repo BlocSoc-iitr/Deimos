@@ -2556,6 +2556,11 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
   }
   
   Map<String, dynamic> _prepareBenchmarkData(Map<String, dynamic> deviceInfo) {
+    // Prepare custom inputs
+    final Map<String, String> customInputs = {
+      widget.selectedInputName: '[${widget.selectedInputData.values.join(', ')}]'
+    };
+
     return {
       // Circuit and framework info
       'circuit': widget.algorithm,
@@ -2571,6 +2576,7 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       
       // Additional metadata
       'proofSize': _getProofSize(),
+      'customInputs': customInputs, // Add custom inputs here
 
       'timestamp': DateTime.now().toIso8601String(),
     };
