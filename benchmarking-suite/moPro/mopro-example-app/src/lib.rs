@@ -107,10 +107,10 @@ set_circom_circuits! {
     ("poseidon_64f.zkey", circom_prover::witness::WitnessFn::RustWitness(poseidon64f_witness)),
     ("poseidon_128f.zkey", circom_prover::witness::WitnessFn::RustWitness(poseidon128f_witness)),
 
-    ("rescueprime_16f.zkey", circom_prover::witness::WitnessFn::RustWitness(rescueprime16f_witness)),
-    ("rescueprime_32f.zkey", circom_prover::witness::WitnessFn::RustWitness(rescueprime32f_witness)),
-    ("rescueprime_64f.zkey", circom_prover::witness::WitnessFn::RustWitness(rescueprime64f_witness)),
-    ("rescueprime_128f.zkey", circom_prover::witness::WitnessFn::RustWitness(rescueprime128f_witness)),
+    ("rescue-prime_16f.zkey", circom_prover::witness::WitnessFn::RustWitness(rescueprime16f_witness)),
+    ("rescue-prime_32f.zkey", circom_prover::witness::WitnessFn::RustWitness(rescueprime32f_witness)),
+    ("rescue-prime_64f.zkey", circom_prover::witness::WitnessFn::RustWitness(rescueprime64f_witness)),
+    ("rescue-prime_128f.zkey", circom_prover::witness::WitnessFn::RustWitness(rescueprime128f_witness)),
 }
 
 // #[cfg(test)]

@@ -123,6 +123,23 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
         return
       }
 
+      // Resolve Flutter asset path to real iOS bundle filesystem path
+      let resolvedZkeyPath: String
+      let key = FlutterDartProject.lookupKey(forAsset: zkeyPath)
+      NSLog("DEBUG CIRCOM: Original path: %@, Lookup key: %@", zkeyPath, key)
+      if let bundlePath = Bundle.main.path(forResource: key, ofType: nil) {
+        resolvedZkeyPath = bundlePath
+        NSLog("DEBUG CIRCOM: Resolved to bundle path: %@", bundlePath)
+      } else {
+        // Fallback: try using the path as-is (might be an absolute path already)
+        resolvedZkeyPath = zkeyPath
+        NSLog("DEBUG CIRCOM: WARNING - Could not resolve bundle path, using as-is: %@", zkeyPath)
+      }
+      
+      // Check if file exists at resolved path
+      let fileExists = FileManager.default.fileExists(atPath: resolvedZkeyPath)
+      NSLog("DEBUG CIRCOM: File exists at resolved path: %@", fileExists ? "YES" : "NO")
+
       DispatchQueue.global(qos: .userInitiated).async {
         do {
           var moproProofLib: CircomProofLib
@@ -131,9 +148,11 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
           } else {
             moproProofLib = CircomProofLib.rapidsnark
           }
-          // Call the function from mopro.swift
+          NSLog("DEBUG CIRCOM: Starting proof generation with path: %@", resolvedZkeyPath)
+          // Call the function from mopro.swift with resolved bundle path
           let proofResult = try generateCircomProof(
-            zkeyPath: zkeyPath, circuitInputs: inputs, proofLib: moproProofLib)
+            zkeyPath: resolvedZkeyPath, circuitInputs: inputs, proofLib: moproProofLib)
+          NSLog("DEBUG CIRCOM: Proof generation succeeded!")
           let resultMap = convertCircomProof(res: proofResult)
 
           // Return the proof and inputs as a map supported by the StandardMethodCodec
@@ -141,6 +160,7 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
             result(resultMap)
           }
         } catch {
+          NSLog("DEBUG CIRCOM: Proof generation FAILED: %@", error.localizedDescription)
           DispatchQueue.main.async {
             result(
               FlutterError(
@@ -160,6 +180,15 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
         return
       }
 
+      // Resolve Flutter asset path to real iOS bundle filesystem path
+      let resolvedVerifyZkeyPath: String
+      let verifyKey = FlutterDartProject.lookupKey(forAsset: zkeyPath)
+      if let bundlePath = Bundle.main.path(forResource: verifyKey, ofType: nil) {
+        resolvedVerifyZkeyPath = bundlePath
+      } else {
+        resolvedVerifyZkeyPath = zkeyPath
+      }
+
       DispatchQueue.global(qos: .userInitiated).async {
         do {
           var moproProofLib: CircomProofLib
@@ -169,9 +198,9 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
             moproProofLib = CircomProofLib.rapidsnark
           }
           let circomProofResult = convertCircomProofResult(proof: proof)
-          // Call the function from mopro.swift
+          // Call the function from mopro.swift with resolved bundle path
           let valid = try verifyCircomProof(
-            zkeyPath: zkeyPath, proofResult: circomProofResult, proofLib: moproProofLib)
+            zkeyPath: resolvedVerifyZkeyPath, proofResult: circomProofResult, proofLib: moproProofLib)
 
           // Return the proof and inputs as a map supported by the StandardMethodCodec
           DispatchQueue.main.async {
@@ -255,49 +284,49 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
             code: "VK_GENERATION_ERROR", message: "Failed to generate verification key",
             details: error.localizedDescription))
       }
-    case "generateCairoProof":
-      guard let args = call.arguments as? [String: Any],
-        let programJson = args["programJson"] as? String,
-        let inputsJson = args["inputsJson"] as? String
-      else {
-        result(FlutterError(code: "ARGUMENT_ERROR", message: "Missing arguments", details: nil))
-        return
-      }
+    // case "generateCairoProof":
+    //   guard let args = call.arguments as? [String: Any],
+    //     let programJson = args["programJson"] as? String,
+    //     let inputsJson = args["inputsJson"] as? String
+    //   else {
+    //     result(FlutterError(code: "ARGUMENT_ERROR", message: "Missing arguments", details: nil))
+    //     return
+    //   }
+    //
+    //   do {
+    //     let proofOutput = try cairoProve(programJson: programJson, inputsJson: inputsJson)
+    //     // Convert to map for Flutter
+    //     let resultMap: [String: Any] = [
+    //         "proof": proofOutput.proof
+    //     ]
+    //     result(resultMap)
+    //   } catch {
+    //     result(
+    //       FlutterError(
+    //         code: "CAIRO_PROOF_ERROR", message: "Failed to generate Cairo proof",
+    //         details: error.localizedDescription))
+    //   }
 
-      do {
-        let proofOutput = try cairoProve(programJson: programJson, inputsJson: inputsJson)
-        // Convert to map for Flutter
-        let resultMap: [String: Any] = [
-            "proof": proofOutput.proof
-        ]
-        result(resultMap)
-      } catch {
-        result(
-          FlutterError(
-            code: "CAIRO_PROOF_ERROR", message: "Failed to generate Cairo proof",
-            details: error.localizedDescription))
-      }
-
-    case "verifyCairoProof":
-      guard let args = call.arguments as? [String: Any],
-        let proof = args["proof"] as? FlutterStandardTypedData
-      else {
-        result(FlutterError(code: "ARGUMENT_ERROR", message: "Missing arguments", details: nil))
-        return
-      }
-
-      do {
-        let verifyOutput = try cairoVerify(proofBytes: proof.data)
-        let resultMap: [String: Any] = [
-            "is_valid": verifyOutput.isValid
-        ]
-        result(resultMap)
-      } catch {
-        result(
-          FlutterError(
-            code: "CAIRO_VERIFY_ERROR", message: "Failed to verify Cairo proof",
-            details: error.localizedDescription))
-      }
+    // case "verifyCairoProof":
+    //   guard let args = call.arguments as? [String: Any],
+    //     let proof = args["proof"] as? FlutterStandardTypedData
+    //   else {
+    //     result(FlutterError(code: "ARGUMENT_ERROR", message: "Missing arguments", details: nil))
+    //     return
+    //   }
+    //
+    //   do {
+    //     let verifyOutput = try cairoVerify(proofBytes: proof.data)
+    //     let resultMap: [String: Any] = [
+    //         "is_valid": verifyOutput.isValid
+    //     ]
+    //     result(resultMap)
+    //   } catch {
+    //     result(
+    //       FlutterError(
+    //         code: "CAIRO_VERIFY_ERROR", message: "Failed to verify Cairo proof",
+    //         details: error.localizedDescription))
+    //   }
 
     case "getIOSMemoryUsage":
         let memoryInfo = getMemoryUsage()
