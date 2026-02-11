@@ -41,4 +41,5 @@ export interface BenchmarkData {
   proofSize: number;
   timestamp: string;
   createdAt?: string;
+  customInputs?: { [key: string]: string };
 }

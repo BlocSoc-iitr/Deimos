@@ -404,6 +404,26 @@ export default function BenchmarksPage() {
                                     )}
                                   </div>
                                 </div>
+                                
+                                {/* Custom Inputs */}
+                                {item.customInputs && Object.keys(item.customInputs).length > 0 && (
+                                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
+                                    <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
+                                      <svg className="w-4 h-4 mr-1.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                      </svg>
+                                      Custom Inputs
+                                    </h4>
+                                    <div className="space-y-1.5 text-xs">
+                                      {Object.entries(item.customInputs).map(([key, value]) => (
+                                        <div key={key} className="flex justify-between">
+                                          <span className="text-[#605A57]">{key}:</span>
+                                          <span className="font-medium text-[#37322F]">{value}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
 
                                 {/* Timestamp */}
                                 <div className="bg-white rounded-lg p-3 shadow-sm md:col-span-2 lg:col-span-3">
