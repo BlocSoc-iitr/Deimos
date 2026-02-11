@@ -120,3 +120,4 @@ This project is licensed under the [MIT License](LICENSE).
 ---
 
 *Building neutral, comprehensive benchmarks for mobile ZK proving.*
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/BlocSoc-iitr/Deimos)
