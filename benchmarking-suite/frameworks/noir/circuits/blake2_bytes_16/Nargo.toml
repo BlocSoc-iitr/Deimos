@@ -1,0 +1,6 @@
+[package]
+name = "blake2_bytes_16"
+type = "bin"
+authors = [""]
+
+[dependencies]

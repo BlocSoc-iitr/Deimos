@@ -1,0 +1,6 @@
+[package]
+name = "anemoi_field_3"
+type = "bin"
+authors = [""]
+
+[dependencies]

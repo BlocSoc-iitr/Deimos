@@ -1,0 +1,6 @@
+[package]
+name = "rescue_prime_field_1"
+type = "bin"
+authors = [""]
+
+[dependencies]
