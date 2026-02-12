@@ -81,7 +81,8 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
   
   List<InputData> _availableInputs = [];
   final List<InputData> _bytesInputs = [];
-  final List<InputData> _fieldInputs = [];
+  final List<InputData> _fieldInputsNoir = [];
+  final List<InputData> _fieldInputsCircom = [];
 
   @override
   void initState() {
@@ -91,8 +92,8 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
 
   Future<void> _loadInputs() async {
     try {
-      // Load Bytes inputs
-      final byteSizes = ['16', '32', '64', '128'];
+      // Load Bytes inputs - all available sizes
+      final byteSizes = ['16', '32', '64', '128', '256', '512', '1028'];
       for (var size in byteSizes) {
         try {
           final inputData = await _loadInputFromJson(
@@ -106,16 +107,31 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
         }
       }
 
-      // Load Field inputs
-      final fieldSizes = ['16f', '32f', '64f', '128f'];
-      for (var size in fieldSizes) {
+      // Load Field inputs for Noir
+      final fieldSizesNoir = ['1f', '2f', '3f', '5f', '9f', '17f', '34f'];
+      for (var size in fieldSizesNoir) {
         try {
           final inputData = await _loadInputFromJson(
             'inputs/field_elements/input$size.json',
             name: 'Input $size',
             description: '$size field elements input',
           );
-          _fieldInputs.add(inputData);
+          _fieldInputsNoir.add(inputData);
+        } catch (e) {
+          debugPrint('Error loading inputs/field_elements/input$size.json: $e');
+        }
+      }
+
+      // Load Field inputs for Circom
+      final fieldSizesCircom = ['1f', '2f', '3f', '5f', '9f', '16f', '32f', '64f', '128f'];
+      for (var size in fieldSizesCircom) {
+        try {
+          final inputData = await _loadInputFromJson(
+            'inputs/field_elements/input$size.json',
+            name: 'Input $size',
+            description: '$size field elements input',
+          );
+          _fieldInputsCircom.add(inputData);
         } catch (e) {
           debugPrint('Error loading inputs/field_elements/input$size.json: $e');
         }
@@ -801,7 +817,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
       case 'halo2':
         return ['Fibonacci'];
       case 'noir':
-        return ['SHA256', 'Keccak256', 'Poseidon', 'MiMC', 'Pedersen', 'Blake2', 'Blake3', 'RescuePrime'];
+        return ['SHA256', 'Keccak256', 'Poseidon', 'MiMC', 'Blake2', 'Blake3', 'RescuePrime', 'Anemoi'];
       case 'risc0':
         return ['Factor'];
       case 'cairo':
@@ -822,12 +838,20 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
 
     // Bytes circuits: SHA256, Keccak256, Blake2s256, Blake3, Pedersen
     // Field circuits: MiMC256, Poseidon, RescuePrime
-    final bytesAlgorithms = ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'Pedersen'];
+    final bytesAlgorithms = ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'Pedersen', 'Blake2'];
     
     if (bytesAlgorithms.contains(_selectedAlgorithm)) {
       _availableInputs = _bytesInputs;
     } else {
-      _availableInputs = _fieldInputs;
+      // Select field inputs based on framework
+      if (_selectedFramework == 'noir') {
+        _availableInputs = _fieldInputsNoir;
+      } else if (_selectedFramework == 'circom') {
+        _availableInputs = _fieldInputsCircom;
+      } else {
+        // For other frameworks, use Circom inputs as default
+        _availableInputs = _fieldInputsCircom;
+      }
     }
 
     if (_availableInputs.isNotEmpty) {
@@ -997,14 +1021,7 @@ class _ProofResultPageState extends State<ProofResultPage> {
   IMP1VerifyResult? _imp1VerifyResult;
   
   // Store Noir verification keys (like in old implementation)
-  Uint8List? _noirMimcVerificationKey;
-  Uint8List? _noirKeccakVerificationKey;
-  Uint8List? _noirPoseidonVerificationKey;
-  Uint8List? _noirPedersenVerificationKey;
-  Uint8List? _noirSha256VerificationKey;
-  Uint8List? _noirBlake2VerificationKey;
-  Uint8List? _noirBlake3VerificationKey;
-  Uint8List? _noirRescuePrimeVerificationKey;
+  final Map<String, Uint8List> _noirVerificationKeys = {};
   
   // Benchmarking timing
   Duration? _proofGenerationTime;
@@ -1780,10 +1797,10 @@ class _ProofResultPageState extends State<ProofResultPage> {
   Future<String> _generateNoirProof(MoproFlutter plugin) async {
     // Get input data and convert to Noir format
     final inputData = _getInputDataForAlgorithm();
-    final List<String> noirInputs = _inputDataToNoirInput(inputData);
     
     // Get the appropriate circuit path and settings
-    final (circuitPath, srsPath, onChain, vk) = await _getNoirSettings();
+    final (circuitPath, srsPath, onChain, vk, targetInputSize) = await _getNoirSettings();
+    final List<String> noirInputs = _inputDataToNoirInput(inputData, targetInputSize);
     
     // Capture memory and battery BEFORE proof generation
     final memSnapshotBefore = await _getMemorySnapshot();
@@ -1937,163 +1954,120 @@ ${proofResult.publicInputs}
     return "assets/circom/zkey/${algoPrefix}_${suffix}.zkey";
   }
 
-  Future<(String, String, bool, Uint8List)> _getNoirSettings() async {
+  bool _isNoirBytesAlgorithm(String algorithm) {
+    return ['SHA256', 'Keccak256', 'Blake2', 'Blake3', 'Pedersen']
+        .contains(algorithm);
+  }
+
+  bool _isNoirFieldAlgorithm(String algorithm) {
+    return ['Poseidon', 'MiMC', 'RescuePrime', 'Anemoi'].contains(algorithm);
+  }
+
+  int _parseSelectedInputSize() {
+    final suffix = widget.selectedInputName.split(' ').last;
+    final normalized = suffix.replaceAll('f', '');
+    return int.tryParse(normalized) ?? 0;
+  }
+
+  int _mapNoirByteSize(int size) {
+    // Map to nearest available circuit size
+    if (size <= 16) return 16;
+    if (size <= 32) return 32;
+    if (size <= 64) return 64;
+    if (size <= 128) return 128;
+    if (size <= 256) return 256;
+    if (size <= 512) return 512;
+    return 1028;
+  }
+
+  int _mapNoirFieldSize(int size) {
+    // Map to nearest available circuit size
+    if (size <= 1) return 1;
+    if (size <= 2) return 2;
+    if (size <= 3) return 3;
+    if (size <= 5) return 5;
+    if (size <= 9) return 9;
+    if (size <= 17) return 17;
+    return 34;
+  }
+
+  String _normalizeNoirAlgorithmKey(String algorithm) {
+    switch (algorithm.toLowerCase()) {
+      case 'rescueprime':
+      case 'rescue_prime':
+        return 'rescue_prime';
+      default:
+        return algorithm.toLowerCase();
+    }
+  }
+
+  Future<(String, String, bool, Uint8List, int)> _getNoirSettings() async {
     final moproFlutterPlugin = MoproFlutter();
     const bool lowMemoryMode = false;
-      
-      String assetPath;
-      String srsPath;
-      bool onChain;
-      Uint8List? verificationKey;
-    
-    switch (widget.algorithm.toLowerCase()) {
-      case 'sha256':
-        assetPath = "assets/sha256.json";
-        srsPath = "assets/sha256.srs";
-          onChain = true;
-        if (_noirSha256VerificationKey == null) {
-            try {
-            final vkAsset = await rootBundle.load('assets/sha256.vk');
-            _noirSha256VerificationKey = vkAsset.buffer.asUint8List();
-            } catch (e) {
-            _noirSha256VerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
-                assetPath, srsPath, onChain, lowMemoryMode,
-              );
-            }
-          }
-        verificationKey = _noirSha256VerificationKey;
-          break;
-      case 'RescuePrime':
-        assetPath = "assets/rescue_prime.json";
-        srsPath = "assets/rescue_prime.srs";
-          onChain = true;
-        if (_noirSha256VerificationKey == null) {
-            try {
-            final vkAsset = await rootBundle.load('assets/rescue_prime.vk');
-            _noirSha256VerificationKey = vkAsset.buffer.asUint8List();
-            } catch (e) {
-            _noirSha256VerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
-                assetPath, srsPath, onChain, lowMemoryMode,
-              );
-            }
-          }
-        verificationKey = _noirSha256VerificationKey;
-          break;
-      case 'keccak256':
-          assetPath = "assets/keccak256.json";
-          srsPath = "assets/keccak256.srs";
-          onChain = true;
-          if (_noirKeccakVerificationKey == null) {
-            try {
-              final vkAsset = await rootBundle.load('assets/keccak.vk');
-              _noirKeccakVerificationKey = vkAsset.buffer.asUint8List();
-            } catch (e) {
-            _noirKeccakVerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
-                assetPath, srsPath, onChain, lowMemoryMode,
-              );
-            }
-          }
-          verificationKey = _noirKeccakVerificationKey;
-          break;
-      case 'poseidon':
-          assetPath = "assets/poseidon.json";
-          srsPath = "assets/poseidon.srs";
-          onChain = false;
-          if (_noirPoseidonVerificationKey == null) {
-            try {
-              final vkAsset = await rootBundle.load('assets/poseidon.vk');
-              _noirPoseidonVerificationKey = vkAsset.buffer.asUint8List();
-            } catch (e) {
-            _noirPoseidonVerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
-                assetPath, srsPath, onChain, lowMemoryMode,
-              );
-            }
-          }
-          verificationKey = _noirPoseidonVerificationKey;
-          break;
-      case 'mimc':
-        assetPath = "assets/mimc.json";
-        srsPath = "assets/mimc.srs";
+
+    final algorithm = widget.algorithm;
+    final algorithmKey = _normalizeNoirAlgorithmKey(algorithm);
+    final rawInputSize = _parseSelectedInputSize();
+
+    String assetPath;
+    String srsPath;
+    bool onChain;
+    String? vkAssetPath;
+    int targetInputSize;
+
+    if (_isNoirBytesAlgorithm(algorithm)) {
+      targetInputSize = _mapNoirByteSize(rawInputSize);
+      if (algorithm == 'Pedersen') {
+        assetPath = 'assets/pedersen.json';
+        srsPath = 'assets/pedersen.srs';
         onChain = true;
-        if (_noirMimcVerificationKey == null) {
-          try {
-            final vkAsset = await rootBundle.load('assets/mimc.vk');
-            _noirMimcVerificationKey = vkAsset.buffer.asUint8List();
-          } catch (e) {
-            _noirMimcVerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
-              assetPath, srsPath, onChain, lowMemoryMode,
-            );
-          }
-        }
-        verificationKey = _noirMimcVerificationKey;
-        break;
-      case 'pedersen':
-          assetPath = "assets/pedersen.json";
-          srsPath = "assets/pedersen.srs";
-          onChain = true;
-          if (_noirPedersenVerificationKey == null) {
-            try {
-              final vkAsset = await rootBundle.load('assets/pedersen.vk');
-              _noirPedersenVerificationKey = vkAsset.buffer.asUint8List();
-            } catch (e) {
-            _noirPedersenVerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
-                assetPath, srsPath, onChain, lowMemoryMode,
-              );
-            }
-          }
-          verificationKey = _noirPedersenVerificationKey;
-          break;
-      case 'blake2':
-          assetPath = "assets/blake2.json";
-          srsPath = "assets/blake2.srs";
-          onChain = true;
-          if (_noirBlake2VerificationKey == null) {
-            try {
-              final vkAsset = await rootBundle.load('assets/blake2.vk');
-              _noirBlake2VerificationKey = vkAsset.buffer.asUint8List();
-            } catch (e) {
-            _noirBlake2VerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
-                assetPath, srsPath, onChain, lowMemoryMode,
-              );
-            }
-          }
-          verificationKey = _noirBlake2VerificationKey;
-          break;
-      case 'blake3':
-          assetPath = "assets/blake3.json";
-          srsPath = "assets/blake3.srs";
-          onChain = true;
-          if (_noirBlake3VerificationKey == null) {
-            try {
-              final vkAsset = await rootBundle.load('assets/blake3.vk');
-              _noirBlake3VerificationKey = vkAsset.buffer.asUint8List();
-            } catch (e) {
-            _noirBlake3VerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
-                assetPath, srsPath, onChain, lowMemoryMode,
-              );
-            }
-          }
-          verificationKey = _noirBlake3VerificationKey;
-          break;
-      default:
-          assetPath = "assets/sha256.json";
-          srsPath = "assets/sha256.srs";
-          onChain = true;
-          if (_noirSha256VerificationKey == null) {
-            try {
-              final vkAsset = await rootBundle.load('assets/sha256.vk');
-              _noirSha256VerificationKey = vkAsset.buffer.asUint8List();
-            } catch (e) {
-            _noirSha256VerificationKey = await moproFlutterPlugin.getNoirVerificationKey(
-                assetPath, srsPath, onChain, lowMemoryMode,
-              );
-            }
-          }
-          verificationKey = _noirSha256VerificationKey;
-          break;
+        vkAssetPath = 'assets/pedersen.vk';
+      } else {
+        final baseName = '${algorithmKey}_bytes_$targetInputSize';
+        assetPath = 'assets/noir/$baseName.json';
+        srsPath = 'assets/noir/$baseName.srs';
+        onChain = true;
+      }
+    } else if (_isNoirFieldAlgorithm(algorithm)) {
+      targetInputSize = _mapNoirFieldSize(rawInputSize);
+      final baseName = '${algorithmKey}_field_$targetInputSize';
+      assetPath = 'assets/noir/$baseName.json';
+      srsPath = 'assets/noir/$baseName.srs';
+      onChain = algorithm != 'Poseidon';
+    } else {
+      targetInputSize = _mapNoirByteSize(rawInputSize);
+      assetPath = 'assets/sha256.json';
+      srsPath = 'assets/sha256.srs';
+      onChain = true;
+      vkAssetPath = 'assets/sha256.vk';
     }
-    
-    return (assetPath, srsPath, onChain, verificationKey!);
+
+    final cacheKey = '$assetPath|$srsPath|$onChain';
+    final cachedKey = _noirVerificationKeys[cacheKey];
+    if (cachedKey != null) {
+      return (assetPath, srsPath, onChain, cachedKey, targetInputSize);
+    }
+
+    Uint8List? verificationKey;
+    if (vkAssetPath != null) {
+      try {
+        final vkAsset = await rootBundle.load(vkAssetPath);
+        verificationKey = vkAsset.buffer.asUint8List();
+      } catch (e) {
+        // Fall back to generating the verification key
+      }
+    }
+
+    verificationKey ??= await moproFlutterPlugin.getNoirVerificationKey(
+      assetPath,
+      srsPath,
+      onChain,
+      lowMemoryMode,
+    );
+
+    _noirVerificationKeys[cacheKey] = verificationKey;
+
+    return (assetPath, srsPath, onChain, verificationKey, targetInputSize);
   }
 
   String _formatCircomProofOutput(CircomProofResult proofResult) {
@@ -2186,14 +2160,13 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     return '{"in": [${inputData.map((b) => '"$b"').join(', ')}]}';
   }
 
-  List<String> _inputDataToNoirInput(List<String> inputData) {
-    // For Noir, we need to pad to 32 bytes if necessary
+  List<String> _inputDataToNoirInput(List<String> inputData, int targetSize) {
+    // Noir circuits expect a fixed input size; pad or truncate to match
     final paddedData = List<String>.from(inputData);
-    while (paddedData.length < 32) {
+    while (paddedData.length < targetSize) {
       paddedData.add('0');
     }
-    // Take only first 32 bytes if longer
-    return paddedData.take(32).toList();
+    return paddedData.take(targetSize).toList();
   }
 
   void _verifyProof() async {
@@ -2313,7 +2286,7 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       throw Exception('No proof available for verification');
     }
     
-    final (circuitPath, srsPath, onChain, vk) = await _getNoirSettings();
+    final (circuitPath, srsPath, onChain, vk, _) = await _getNoirSettings();
     
     // Start timing
     final stopwatch = Stopwatch()..start();

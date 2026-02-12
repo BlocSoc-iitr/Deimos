@@ -67,6 +67,7 @@ flutter:
     - assets/noir_multiplier2.json
     - assets/noir_multiplier2.srs
     - assets/noir_multiplier2.vk
+    - assets/noir/
     - assets/mimc.json
     - assets/mimc.srs
     - assets/poseidon.json

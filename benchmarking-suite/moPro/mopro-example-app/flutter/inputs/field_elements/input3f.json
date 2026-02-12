@@ -1,0 +1,5 @@
+{
+  "name": "Input 3f",
+  "description": "3 field elements input",
+  "in": ["1", "2", "3"]
+}

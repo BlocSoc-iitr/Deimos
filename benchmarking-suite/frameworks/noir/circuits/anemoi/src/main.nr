@@ -162,6 +162,7 @@ fn apply_sbox(state: &mut [Field; STATE_WIDTH]) {
     }
 }
 
+
 fn anemoi_permutation(state: &mut [Field; STATE_WIDTH]) {
     for round in 0..NUM_HASH_ROUNDS {
         apply_ark_layer(state, round);
@@ -199,7 +200,6 @@ fn get_padded_chunk(bytes: [u8; MAX_BYTES], message_len: u32, chunk_idx: u32) ->
 
     out
 }
-
 pub fn main(bytes: [u8; MAX_BYTES], message_len: u32) -> pub [Field; DIGEST_SIZE] {
     // ------------------------------------------------
     // 1. Compute number of field elements
