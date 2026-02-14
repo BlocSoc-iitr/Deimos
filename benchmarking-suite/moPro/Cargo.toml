@@ -12,6 +12,7 @@ risc0-circuit = { path = "./risc0-circuit" }
 risc0-build = { version = "3.0.3" }
 risc0-zkvm = { version = "3.0.3", default-features = false }
 cairo-m-prover = { path = "./cairo-m-prover" }
+provekit-prover = { path = "./provekit-prover" }
 
 [profile.dev]
 opt-level = 3
