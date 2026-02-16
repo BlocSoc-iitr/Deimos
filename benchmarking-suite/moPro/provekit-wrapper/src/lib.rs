@@ -1,15 +1,16 @@
 use anyhow::{Context, Result};
 use provekit_common::{file::read, Prover, Verifier};
-use provekit_prover::Prove;
+use provekit_core_prover::Prove;
 use provekit_verifier::Verify;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
 pub fn prove(prover_path: &str, input_toml: &str) -> Result<Vec<u8>> {
     // Write input TOML to a temporary file because Prover::prove expects a path
-    let mut input_file = NamedTempFile::new().context("Failed to create temp input file")?;
-    input_file.write_all(input_toml.as_bytes()).context("Failed to write input data")?;
-    let input_path = input_file.path();
+    // Create temp file for input
+    let mut file = tempfile::Builder::new().suffix(".toml").tempfile()?;
+    file.write_all(input_toml.as_bytes()).context("Failed to write input data")?;
+    let input_path = file.path();
 
     // Read the prover from the provided path
     // Note: The prover_path usually points to a .pkp file derived from setup
