@@ -12,6 +12,7 @@ crate-type = ["lib", "cdylib", "staticlib"]
 default = ["cairo", "noir"]
 cairo = ["dep:cairo-m-prover"]
 noir = ["dep:noir_rs"]
+provekit = ["dep:provekit-wrapper"]
 
 [dependencies]
 mopro-wasm = { git = "https://github.com/zkmopro/mopro.git", branch = "v0.2.x" }
@@ -25,6 +26,7 @@ bincode = "1.3"
 risc0-zkvm = { workspace = true, features = ["prove", "metal", "unstable"] }
 methods = { path = "../risc0-circuit/methods" }
 cairo-m-prover = { path = "../cairo-m-prover", optional = true }
+provekit-wrapper = { path = "../provekit-wrapper", optional = true }
 
 
 # ==============================================================================

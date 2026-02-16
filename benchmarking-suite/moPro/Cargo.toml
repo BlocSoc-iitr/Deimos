@@ -1,18 +1,19 @@
 [workspace]
 resolver = "2"
 members = ["risc0-circuit", "mopro-example-app"]
-exclude = ["risc0-circuit/guest"]
+exclude = ["risc0-circuit/guest", "provekit-wrapper"]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.85"
 
 [workspace.dependencies]
 risc0-circuit = { path = "./risc0-circuit" }
 risc0-build = { version = "3.0.3" }
 risc0-zkvm = { version = "3.0.3", default-features = false }
 cairo-m-prover = { path = "./cairo-m-prover" }
-provekit-prover = { path = "./provekit-prover" }
+
 
 [profile.dev]
 opt-level = 3

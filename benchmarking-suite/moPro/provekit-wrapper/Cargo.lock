@@ -705,7 +705,6 @@ dependencies = [
 [[package]]
 name = "bn254-multiplier"
 version = "0.1.0"
-source = "git+https://github.com/worldfnd/provekit.git?rev=e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3#e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3"
 dependencies = [
  "bn254-multiplier-codegen",
  "fp-rounding",
@@ -716,7 +715,6 @@ dependencies = [
 [[package]]
 name = "bn254-multiplier-codegen"
 version = "0.1.0"
-source = "git+https://github.com/worldfnd/provekit.git?rev=e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3#e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3"
 dependencies = [
  "hla",
 ]
@@ -1458,7 +1456,6 @@ dependencies = [
 [[package]]
 name = "fp-rounding"
 version = "0.1.0"
-source = "git+https://github.com/worldfnd/provekit.git?rev=e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3#e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3"
 
 [[package]]
 name = "funty"
@@ -1679,7 +1676,6 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 [[package]]
 name = "hla"
 version = "0.1.0"
-source = "git+https://github.com/worldfnd/provekit.git?rev=e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3#e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3"
 dependencies = [
  "paste",
 ]
@@ -3043,7 +3039,6 @@ checksum = "95067976aca6421a523e491fce939a3e65249bac4b977adee0ee9771568e8aa3"
 [[package]]
 name = "provekit-common"
 version = "0.1.0"
-source = "git+https://github.com/worldfnd/provekit.git?rev=e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3#e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3"
 dependencies = [
  "acir",
  "anyhow",
@@ -3075,7 +3070,6 @@ dependencies = [
 [[package]]
 name = "provekit-prover"
 version = "0.1.0"
-source = "git+https://github.com/worldfnd/provekit.git?rev=e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3#e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3"
 dependencies = [
  "acir",
  "anyhow",
@@ -3097,7 +3091,6 @@ dependencies = [
 [[package]]
 name = "provekit-verifier"
 version = "0.1.0"
-source = "git+https://github.com/worldfnd/provekit.git?rev=e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3#e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3"
 dependencies = [
  "anyhow",
  "ark-std 0.5.0",
@@ -3901,7 +3894,6 @@ dependencies = [
 [[package]]
 name = "skyscraper"
 version = "0.1.0"
-source = "git+https://github.com/worldfnd/provekit.git?rev=e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3#e2c5ea3e780afc1d4f0838e55adcd1e5b8cbfbf3"
 dependencies = [
  "ark-bn254",
  "ark-ff 0.5.0",

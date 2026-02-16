@@ -578,3 +578,81 @@ mod cairo_tests {
         assert!(verify_output.is_valid, "Proof should be valid");
     }
 }
+
+// PROVEKIT_TEMPLATE
+// --- ProveKit Example ---
+
+#[cfg(feature = "provekit")]
+use provekit_wrapper::{prove, verify};
+
+#[cfg(feature = "provekit")]
+#[derive(uniffi::Error, thiserror::Error, Debug)]
+pub enum ProveKitError {
+    #[error("Failed to prove: {0}")]
+    ProveError(String),
+    #[error("Failed to verify: {0}")]
+    VerifyError(String),
+}
+
+#[cfg(feature = "provekit")]
+#[derive(uniffi::Record, Clone)]
+pub struct ProveKitProofOutput {
+    pub proof: Vec<u8>,
+}
+
+#[cfg(feature = "provekit")]
+#[derive(uniffi::Record, Clone)]
+pub struct ProveKitVerifyOutput {
+    pub is_valid: bool,
+}
+
+#[cfg(feature = "provekit")]
+#[uniffi::export]
+pub fn provekit_prove(prover_path: String, input_toml: String) -> Result<ProveKitProofOutput, ProveKitError> {
+    let proof = prove(&prover_path, &input_toml)
+        .map_err(|e| ProveKitError::ProveError(e.to_string()))?;
+    Ok(ProveKitProofOutput { proof })
+}
+
+#[cfg(feature = "provekit")]
+#[uniffi::export]
+pub fn provekit_verify(verifier_path: String, proof: Vec<u8>) -> Result<ProveKitVerifyOutput, ProveKitError> {
+    let is_valid = verify(&verifier_path, &proof)
+        .map_err(|e| ProveKitError::VerifyError(e.to_string()))?;
+    Ok(ProveKitVerifyOutput { is_valid })
+}
+
+#[cfg(all(test, feature = "provekit"))]
+mod provekit_tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_provekit_prove_verify_mimc() {
+        // Locate keys in the local test-vectors directory
+        let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let pkp_path = manifest_dir.join("test-vectors/provekit/mimc_field_1.pkp");
+        let pkv_path = manifest_dir.join("test-vectors/provekit/mimc_field_1.pkv");
+
+        assert!(pkp_path.exists(), "Prover key not found at {:?}", pkp_path);
+        assert!(pkv_path.exists(), "Verifier key not found at {:?}", pkv_path);
+
+        let input_toml = r#"
+            input = ["123"]
+        "#.to_string();
+
+        println!("Generating ProveKit proof...");
+        let prove_result = provekit_prove(pkp_path.to_string_lossy().to_string(), input_toml);
+        assert!(prove_result.is_ok(), "Proving failed: {:?}", prove_result.err());
+
+        let proof_output = prove_result.unwrap();
+        println!("Proof generated. Size: {} bytes", proof_output.proof.len());
+
+        println!("Verifying ProveKit proof...");
+        let verify_result = provekit_verify(pkv_path.to_string_lossy().to_string(), proof_output.proof);
+        assert!(verify_result.is_ok(), "Verification failed: {:?}", verify_result.err());
+
+        let verify_output = verify_result.unwrap();
+        assert!(verify_output.is_valid, "Proof should be valid");
+    }
+}
