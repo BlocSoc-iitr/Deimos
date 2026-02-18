@@ -1,13 +1,13 @@
 [package]
 name = "cairo-m-prover"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-cairo-m-runner = { git = "https://github.com/AnInsaneJimJam/cairo-m", default-features = false }
+cairo-m-runner = { git = "https://github.com/x-senpai-x/cairo-m", default-features = false }
 # Aliased to avoid conflict with this crate's name
-cairo-m-prover-core = { git = "https://github.com/AnInsaneJimJam/cairo-m", package = "cairo-m-prover" }
-cairo-m-common = { git = "https://github.com/AnInsaneJimJam/cairo-m" }
+cairo-m-prover-core = { git = "https://github.com/x-senpai-x/cairo-m", package = "cairo-m-prover" }
+cairo-m-common = { git = "https://github.com/x-senpai-x/cairo-m" }
 stwo-prover = { git = "https://github.com/starkware-libs/stwo", rev = "ab57a1c", features = [
     "parallel",
 ] }

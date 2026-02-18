@@ -5,7 +5,7 @@ exclude = ["risc0-circuit/guest", "provekit-wrapper"]
 
 [workspace.package]
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 rust-version = "1.85"
 
 [workspace.dependencies]
@@ -21,6 +21,16 @@ opt-level = 3
 [profile.release]
 debug = 1
 lto = true
+
+# Patch cairo-m git deps to use the local clone
+[patch."https://github.com/x-senpai-x/cairo-m"]
+cairo-m-runner = { path = "../../../cairo-m/crates/runner" }
+cairo-m-prover = { path = "../../../cairo-m/crates/prover" }
+cairo-m-common = { path = "../../../cairo-m/crates/common" }
+
+# Patch stwo to use the local submodule inside cairo-m (same rev)
+[patch."https://github.com/starkware-libs/stwo"]
+stwo-prover = { path = "../../../cairo-m/external/stwo/crates/prover" }
 
 # Patch zkhash to use the fork with M31 field support (same as cairo-m)
 [patch."https://github.com/HorizenLabs/poseidon2.git"]

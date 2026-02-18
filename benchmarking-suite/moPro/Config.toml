@@ -1,9 +1,7 @@
 build_mode = "release"
 target_adapters = []
-target_platforms = []
-ios = []
-android = []
-react_native = []
+target_platforms = ["android"]
+android = ["aarch64-linux-android"]
 auto_update = false
 
 [update]
