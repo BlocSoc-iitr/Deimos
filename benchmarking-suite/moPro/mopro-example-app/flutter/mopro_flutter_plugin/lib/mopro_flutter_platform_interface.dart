@@ -75,6 +75,14 @@ abstract class MoproFlutterPlatform extends PlatformInterface {
     throw UnimplementedError('verifyCairoProof() has not been implemented.');
   }
 
+  Future<ProveKitProofOutput> generateProveKitProof(String proverPath, String inputToml) {
+    throw UnimplementedError('generateProveKitProof() has not been implemented.');
+  }
+
+  Future<ProveKitVerifyOutput> verifyProveKitProof(String verifierPath, Uint8List proof) {
+    throw UnimplementedError('verifyProveKitProof() has not been implemented.');
+  }
+
   Future<Map<String, int>> getIOSMemoryUsage() {
     throw UnimplementedError('getIOSMemoryUsage() has not been implemented.');
   }

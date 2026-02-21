@@ -292,6 +292,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
       {'name': 'RISC Zero', 'value': 'risc0', 'icon': Icons.developer_board},
       {'name': 'Cairo', 'value': 'cairo', 'icon': Icons.architecture},
       {'name': 'IMP1', 'value': 'imp1', 'icon': Icons.flash_on},
+      {'name': 'ProveKit', 'value': 'provekit', 'icon': Icons.security},
     ];
 
     return _buildCard(
@@ -805,6 +806,8 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
         return 'Cairo-M';
       case 'imp1':
         return 'IMP1';
+      case 'provekit':
+        return 'ProveKit';
       default:
         return framework;
     }
@@ -824,6 +827,8 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
         return ['SHA256'];
       case 'imp1':
         return ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'RescuePrime'];
+      case 'provekit':
+        return ['Anemoi', 'MiMC', 'Poseidon', 'RescuePrime', 'SHA256'];
       default:
         return [];
     }
@@ -848,6 +853,11 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
         _availableInputs = _fieldInputsNoir;
       } else if (_selectedFramework == 'circom') {
         _availableInputs = _fieldInputsCircom;
+      } else if (_selectedFramework == 'provekit') {
+        _availableInputs = _fieldInputsCircom.where((input) {
+           final suffix = input.name.split(' ').last.replaceAll('f', '');
+           return ['1', '2', '3', '5', '9', '17', '34'].contains(suffix);
+        }).toList();
       } else {
         // For other frameworks, use Circom inputs as default
         _availableInputs = _fieldInputsCircom;
@@ -1019,6 +1029,10 @@ class _ProofResultPageState extends State<ProofResultPage> {
   // IMP1 results
   IMP1ProofResult? _imp1ProofResult;
   IMP1VerifyResult? _imp1VerifyResult;
+
+  // ProveKit results
+  ProveKitProofOutput? _provekitProofResult;
+  ProveKitVerifyOutput? _provekitVerifyResult;
   
   // Store Noir verification keys (like in old implementation)
   final Map<String, Uint8List> _noirVerificationKeys = {};
@@ -1456,6 +1470,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
         return _buildRisc0ProofDetails();
       case 'cairo':
         return _buildCairoProofDetails();
+      case 'provekit':
+        return _buildProveKitProofDetails();
       default:
         return const SizedBox.shrink();
     }
@@ -1692,6 +1708,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
         return await _generateCairoProof(moproFlutterPlugin);
       case 'imp1':
         return await _generateIMP1Proof();
+      case 'provekit':
+        return await _generateProveKitProof(moproFlutterPlugin);
       default:
         throw Exception('Unknown framework: ${widget.framework}');
     }
@@ -2229,6 +2247,9 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       case 'imp1':
         isValid = await _verifyIMP1Proof();
         break;
+      case 'provekit':
+        isValid = await _verifyProveKitProof(moproFlutterPlugin);
+        break;
       default:
         throw Exception('Unknown framework: ${widget.framework}');
     }
@@ -2566,6 +2587,8 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       return _risc0ProofResult!.receipt.length;
     } else if (_cairoProofResult != null) {
       return _cairoProofResult!.proof.length;
+    } else if (_provekitProofResult != null) {
+      return _provekitProofResult!.proof.length;
     }
     return 0;
   }
@@ -2700,6 +2723,103 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
         if (_cairoVerifyResult != null) ...[
           const SizedBox(height: 16),
           Text('Verification: ${_cairoVerifyResult!.isValid ? "PASSED" : "FAILED"}'),
+        ],
+      ],
+    );
+  }
+
+  Future<String> _generateProveKitProof(MoproFlutter plugin) async {
+    final circuitName = _getProveKitCircuitName();
+    final pkpPath = 'assets/provekit/$circuitName.pkp';
+    
+    // Prepare input as TOML
+    final inputValues = _getInputDataForAlgorithm();
+    final inputToml = 'input = [${inputValues.map((v) => '"$v"').join(', ')}]\n';
+
+    final memSnapshotBefore = await _getMemorySnapshot();
+    _freeMemoryBeforeProof = memSnapshotBefore.free;
+    final battery = Battery();
+    _batteryBeforeProof = await battery.batteryLevel;
+    
+    final stopwatch = Stopwatch()..start();
+    _startMemoryMonitoring();
+    
+    final proofResult = await plugin.generateProveKitProof(pkpPath, inputToml);
+    
+    stopwatch.stop();
+    final memSnapshotAfter = await _getMemorySnapshot();
+    _freeMemoryAfterProof = memSnapshotAfter.free;
+    _batteryAfterProof = await battery.batteryLevel;
+    
+    setState(() {
+      _provekitProofResult = proofResult;
+      _proofGenerationTime = stopwatch.elapsed;
+    });
+    
+    return _formatProveKitProofOutput(proofResult);
+  }
+
+  Future<bool> _verifyProveKitProof(MoproFlutter plugin) async {
+    if (_provekitProofResult == null) throw Exception('No proof available');
+    final circuitName = _getProveKitCircuitName();
+    final pkvPath = 'assets/provekit/$circuitName.pkv';
+    
+    final stopwatch = Stopwatch()..start();
+    final verifyResult = await plugin.verifyProveKitProof(pkvPath, _provekitProofResult!.proof);
+    stopwatch.stop();
+    
+    setState(() {
+      _proofVerificationTime = stopwatch.elapsed;
+      _provekitVerifyResult = verifyResult;
+    });
+    
+    return verifyResult.isValid;
+  }
+
+  String _getProveKitCircuitName() {
+    String algoPrefix = widget.algorithm.toLowerCase();
+    if (widget.algorithm == 'RescuePrime') {
+      algoPrefix = 'rescue_prime';
+    }
+    final suffix = widget.selectedInputName.split(' ').last;
+    if (_isNoirBytesAlgorithm(widget.algorithm) || widget.algorithm == 'SHA256') {
+      return "${algoPrefix}_bytes_${suffix}";
+    } else {
+      return "${algoPrefix}_field_${suffix.replaceAll('f', '')}";
+    }
+  }
+
+  String _formatProveKitProofOutput(ProveKitProofOutput output) {
+    return '''
+${widget.algorithm} Proof: ProveKitProofOutput(
+  proof_size: ${output.proof.length} bytes
+)
+
+Framework: ${widget.framework}
+Algorithm: ${widget.algorithm}
+Timestamp: ${DateTime.now().millisecondsSinceEpoch}
+''';
+  }
+
+  Widget _buildProveKitProofDetails() {
+    if (_provekitProofResult == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Proof Details:',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.secondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text('Proof Size: ${_provekitProofResult!.proof.length} bytes'),
+        if (_provekitVerifyResult != null) ...[
+          const SizedBox(height: 16),
+          Text('Verification: ${_provekitVerifyResult!.isValid ? "PASSED" : "FAILED"}'),
         ],
       ],
     );

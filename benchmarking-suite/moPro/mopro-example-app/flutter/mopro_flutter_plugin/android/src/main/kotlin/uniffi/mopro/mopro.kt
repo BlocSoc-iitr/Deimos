@@ -735,6 +735,10 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is 
 // rather `InterfaceTooLargeException`, caused by too many methods 
@@ -763,6 +767,10 @@ fun uniffi_mopro_example_app_checksum_func_generate_noir_proof(
 fun uniffi_mopro_example_app_checksum_func_get_noir_verification_key(
 ): Short
 fun uniffi_mopro_example_app_checksum_func_mopro_uniffi_hello_world(
+): Short
+fun uniffi_mopro_example_app_checksum_func_provekit_prove(
+): Short
+fun uniffi_mopro_example_app_checksum_func_provekit_verify(
 ): Short
 fun uniffi_mopro_example_app_checksum_func_risc0_prove(
 ): Short
@@ -832,6 +840,10 @@ fun uniffi_mopro_example_app_fn_func_generate_noir_proof(`circuitPath`: RustBuff
 fun uniffi_mopro_example_app_fn_func_get_noir_verification_key(`circuitPath`: RustBuffer.ByValue,`srsPath`: RustBuffer.ByValue,`onChain`: Byte,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 fun uniffi_mopro_example_app_fn_func_mopro_uniffi_hello_world(uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_mopro_example_app_fn_func_provekit_prove(`proverPath`: RustBuffer.ByValue,`inputToml`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_mopro_example_app_fn_func_provekit_verify(`verifierPath`: RustBuffer.ByValue,`proof`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 fun uniffi_mopro_example_app_fn_func_risc0_prove(`input`: Int,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
@@ -988,6 +1000,12 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_mopro_example_app_checksum_func_mopro_uniffi_hello_world() != 57387.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_mopro_example_app_checksum_func_provekit_prove() != 63529.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_mopro_example_app_checksum_func_provekit_verify() != 64676.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_mopro_example_app_checksum_func_risc0_prove() != 44720.toShort()) {
@@ -1419,6 +1437,62 @@ public object FfiConverterTypeHalo2ProofResult: FfiConverterRustBuffer<Halo2Proo
 
 
 
+data class ProveKitProofOutput (
+    var `proof`: kotlin.ByteArray
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeProveKitProofOutput: FfiConverterRustBuffer<ProveKitProofOutput> {
+    override fun read(buf: ByteBuffer): ProveKitProofOutput {
+        return ProveKitProofOutput(
+            FfiConverterByteArray.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ProveKitProofOutput) = (
+            FfiConverterByteArray.allocationSize(value.`proof`)
+    )
+
+    override fun write(value: ProveKitProofOutput, buf: ByteBuffer) {
+            FfiConverterByteArray.write(value.`proof`, buf)
+    }
+}
+
+
+
+data class ProveKitVerifyOutput (
+    var `isValid`: kotlin.Boolean
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeProveKitVerifyOutput: FfiConverterRustBuffer<ProveKitVerifyOutput> {
+    override fun read(buf: ByteBuffer): ProveKitVerifyOutput {
+        return ProveKitVerifyOutput(
+            FfiConverterBoolean.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ProveKitVerifyOutput) = (
+            FfiConverterBoolean.allocationSize(value.`isValid`)
+    )
+
+    override fun write(value: ProveKitVerifyOutput, buf: ByteBuffer) {
+            FfiConverterBoolean.write(value.`isValid`, buf)
+    }
+}
+
+
+
 data class Risc0ProofOutput (
     var `receipt`: kotlin.ByteArray
 ) {
@@ -1708,6 +1782,86 @@ public object FfiConverterTypeProofLib: FfiConverterRustBuffer<ProofLib> {
 }
 
 
+
+
+
+
+
+sealed class ProveKitException: kotlin.Exception() {
+    
+    class ProveException(
+        
+        val v1: kotlin.String
+        ) : ProveKitException() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+    class VerifyException(
+        
+        val v1: kotlin.String
+        ) : ProveKitException() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+
+    companion object ErrorHandler : UniffiRustCallStatusErrorHandler<ProveKitException> {
+        override fun lift(error_buf: RustBuffer.ByValue): ProveKitException = FfiConverterTypeProveKitError.lift(error_buf)
+    }
+
+    
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeProveKitError : FfiConverterRustBuffer<ProveKitException> {
+    override fun read(buf: ByteBuffer): ProveKitException {
+        
+
+        return when(buf.getInt()) {
+            1 -> ProveKitException.ProveException(
+                FfiConverterString.read(buf),
+                )
+            2 -> ProveKitException.VerifyException(
+                FfiConverterString.read(buf),
+                )
+            else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: ProveKitException): ULong {
+        return when(value) {
+            is ProveKitException.ProveException -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+            is ProveKitException.VerifyException -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+        }
+    }
+
+    override fun write(value: ProveKitException, buf: ByteBuffer) {
+        when(value) {
+            is ProveKitException.ProveException -> {
+                buf.putInt(1)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+            is ProveKitException.VerifyException -> {
+                buf.putInt(2)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+
+}
 
 
 
@@ -2015,6 +2169,26 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     uniffiRustCall() { _status ->
     UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_mopro_uniffi_hello_world(
         _status)
+}
+    )
+    }
+    
+
+    @Throws(ProveKitException::class) fun `provekitProve`(`proverPath`: kotlin.String, `inputToml`: kotlin.String): ProveKitProofOutput {
+            return FfiConverterTypeProveKitProofOutput.lift(
+    uniffiRustCallWithError(ProveKitException) { _status ->
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_provekit_prove(
+        FfiConverterString.lower(`proverPath`),FfiConverterString.lower(`inputToml`),_status)
+}
+    )
+    }
+    
+
+    @Throws(ProveKitException::class) fun `provekitVerify`(`verifierPath`: kotlin.String, `proof`: kotlin.ByteArray): ProveKitVerifyOutput {
+            return FfiConverterTypeProveKitVerifyOutput.lift(
+    uniffiRustCallWithError(ProveKitException) { _status ->
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_provekit_verify(
+        FfiConverterString.lower(`verifierPath`),FfiConverterByteArray.lower(`proof`),_status)
 }
     )
     }

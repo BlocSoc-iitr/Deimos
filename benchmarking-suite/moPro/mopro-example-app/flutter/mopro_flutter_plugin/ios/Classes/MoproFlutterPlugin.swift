@@ -328,6 +328,50 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
     //         details: error.localizedDescription))
     //   }
 
+    case "generateProveKitProof":
+      guard let args = call.arguments as? [String: Any],
+        let proverPath = args["proverPath"] as? String,
+        let inputToml = args["inputToml"] as? String
+      else {
+        result(FlutterError(code: "ARGUMENT_ERROR", message: "Missing arguments", details: nil))
+        return
+      }
+
+      do {
+        let proofOutput = try provekitProve(proverPath: proverPath, inputToml: inputToml)
+        let resultMap: [String: Any] = [
+            "proof": proofOutput.proof
+        ]
+        result(resultMap)
+      } catch {
+        result(
+          FlutterError(
+            code: "PROVEKIT_PROOF_ERROR", message: "Failed to generate ProveKit proof",
+            details: error.localizedDescription))
+      }
+
+    case "verifyProveKitProof":
+      guard let args = call.arguments as? [String: Any],
+        let verifierPath = args["verifierPath"] as? String,
+        let proof = args["proof"] as? FlutterStandardTypedData
+      else {
+        result(FlutterError(code: "ARGUMENT_ERROR", message: "Missing arguments", details: nil))
+        return
+      }
+
+      do {
+        let verifyOutput = try provekitVerify(verifierPath: verifierPath, proof: proof.data)
+        let resultMap: [String: Any] = [
+            "is_valid": verifyOutput.isValid
+        ]
+        result(resultMap)
+      } catch {
+        result(
+          FlutterError(
+            code: "PROVEKIT_VERIFY_ERROR", message: "Failed to verify ProveKit proof",
+            details: error.localizedDescription))
+      }
+
     case "getIOSMemoryUsage":
         let memoryInfo = getMemoryUsage()
         result(memoryInfo)

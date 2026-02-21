@@ -388,6 +388,50 @@ class MoproFlutterPlugin : FlutterPlugin, MethodCallHandler {
                 result.error("CAIRO_VERIFY_ERROR", "Failed to verify Cairo proof: ${e.message}", null)
             }
 
+        } else if (call.method == "generateProveKitProof") {
+            val proverPath = call.argument<String>("proverPath") ?: return result.error(
+                "ARGUMENT_ERROR",
+                "Missing proverPath",
+                null
+            )
+            val inputToml = call.argument<String>("inputToml") ?: return result.error(
+                "ARGUMENT_ERROR",
+                "Missing inputToml",
+                null
+            )
+
+            try {
+                val res = provekitProve(proverPath, inputToml)
+                val resultMap = mapOf(
+                    "proof" to res.proof
+                )
+                result.success(resultMap)
+            } catch (e: Exception) {
+                result.error("PROVEKIT_PROOF_ERROR", "Failed to generate ProveKit proof: ${e.message}", null)
+            }
+
+        } else if (call.method == "verifyProveKitProof") {
+            val verifierPath = call.argument<String>("verifierPath") ?: return result.error(
+                "ARGUMENT_ERROR",
+                "Missing verifierPath",
+                null
+            )
+            val proof = call.argument<ByteArray>("proof") ?: return result.error(
+                "ARGUMENT_ERROR",
+                "Missing proof",
+                null
+            )
+
+            try {
+                val res = provekitVerify(verifierPath, proof)
+                val resultMap = mapOf(
+                    "is_valid" to res.isValid
+                )
+                result.success(resultMap)
+            } catch (e: Exception) {
+                result.error("PROVEKIT_VERIFY_ERROR", "Failed to verify ProveKit proof: ${e.message}", null)
+            }
+
         } else {
             result.notImplemented()
         }

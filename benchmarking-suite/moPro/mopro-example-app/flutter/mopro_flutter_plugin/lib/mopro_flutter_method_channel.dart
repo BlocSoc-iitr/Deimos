@@ -168,6 +168,36 @@ class MethodChannelMoproFlutter extends MoproFlutterPlatform {
   }
 
   @override
+  Future<ProveKitProofOutput> generateProveKitProof(String proverPath, String inputToml) async {
+    final proofResult = await methodChannel
+        .invokeMethod<Map<Object?, Object?>>('generateProveKitProof', {
+      'proverPath': proverPath,
+      'inputToml': inputToml,
+    });
+
+    if (proofResult == null) {
+      throw Exception('Failed to generate ProveKit proof');
+    }
+
+    return ProveKitProofOutput.fromMap(proofResult);
+  }
+
+  @override
+  Future<ProveKitVerifyOutput> verifyProveKitProof(String verifierPath, Uint8List proof) async {
+    final verifyResult = await methodChannel
+        .invokeMethod<Map<Object?, Object?>>('verifyProveKitProof', {
+      'verifierPath': verifierPath,
+      'proof': proof,
+    });
+
+    if (verifyResult == null) {
+      throw Exception('Failed to verify ProveKit proof');
+    }
+
+    return ProveKitVerifyOutput.fromMap(verifyResult);
+  }
+
+  @override
   Future<Map<String, int>> getIOSMemoryUsage() async {
     final result = await methodChannel.invokeMethod<Map<Object?, Object?>>('getIOSMemoryUsage');
     if (result == null) {
