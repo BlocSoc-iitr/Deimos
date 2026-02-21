@@ -828,7 +828,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
       case 'imp1':
         return ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'RescuePrime'];
       case 'provekit':
-        return ['Anemoi', 'MiMC', 'Poseidon', 'RescuePrime', 'SHA256'];
+        return ['Anemoi', 'MiMC', 'Poseidon', 'RescuePrime'];
       default:
         return [];
     }
@@ -854,10 +854,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
       } else if (_selectedFramework == 'circom') {
         _availableInputs = _fieldInputsCircom;
       } else if (_selectedFramework == 'provekit') {
-        _availableInputs = _fieldInputsCircom.where((input) {
-           final suffix = input.name.split(' ').last.replaceAll('f', '');
-           return ['1', '2', '3', '5', '9', '17', '34'].contains(suffix);
-        }).toList();
+        _availableInputs = _fieldInputsNoir;
       } else {
         // For other frameworks, use Circom inputs as default
         _availableInputs = _fieldInputsCircom;

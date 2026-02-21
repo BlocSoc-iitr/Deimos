@@ -610,7 +610,7 @@ pub struct ProveKitVerifyOutput {
 #[uniffi::export]
 pub fn provekit_prove(prover_path: String, input_toml: String) -> Result<ProveKitProofOutput, ProveKitError> {
     let proof = _provekit_prove(&prover_path, &input_toml)
-        .map_err(|e| ProveKitError::ProveError(e.to_string()))?;
+        .map_err(|e| ProveKitError::ProveError(format!("{:?}", e)))?;
     Ok(ProveKitProofOutput { proof })
 }
 
@@ -618,7 +618,7 @@ pub fn provekit_prove(prover_path: String, input_toml: String) -> Result<ProveKi
 #[uniffi::export]
 pub fn provekit_verify(verifier_path: String, proof: Vec<u8>) -> Result<ProveKitVerifyOutput, ProveKitError> {
     let is_valid = _provekit_verify(&verifier_path, &proof)
-        .map_err(|e| ProveKitError::VerifyError(e.to_string()))?;
+        .map_err(|e| ProveKitError::VerifyError(format!("{:?}", e)))?;
     Ok(ProveKitVerifyOutput { is_valid })
 }
 
