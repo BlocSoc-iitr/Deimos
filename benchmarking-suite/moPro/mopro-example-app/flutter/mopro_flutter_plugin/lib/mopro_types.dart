@@ -173,3 +173,41 @@ class CairoVerifyOutput {
     return "CairoVerifyOutput(isValid: $isValid)";
   }
 }
+
+class ProveKitProofOutput {
+  final Uint8List proof;
+
+  ProveKitProofOutput(this.proof);
+
+  factory ProveKitProofOutput.fromMap(Map<Object?, Object?> proofResult) {
+    return ProveKitProofOutput(proofResult["proof"] as Uint8List);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {"proof": proof};
+  }
+
+  @override
+  String toString() {
+    return "ProveKitProofOutput(proof: ${proof.length} bytes)";
+  }
+}
+
+class ProveKitVerifyOutput {
+  final bool isValid;
+
+  ProveKitVerifyOutput(this.isValid);
+
+  factory ProveKitVerifyOutput.fromMap(Map<Object?, Object?> verifyResult) {
+    return ProveKitVerifyOutput(verifyResult["is_valid"] as bool);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {"is_valid": isValid};
+  }
+
+  @override
+  String toString() {
+    return "ProveKitVerifyOutput(isValid: $isValid)";
+  }
+}

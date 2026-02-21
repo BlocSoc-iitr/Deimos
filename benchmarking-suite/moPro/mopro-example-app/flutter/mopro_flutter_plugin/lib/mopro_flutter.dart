@@ -120,6 +120,18 @@ class MoproFlutter {
     return await MoproFlutterPlatform.instance.verifyCairoProof(proof);
   }
 
+  Future<ProveKitProofOutput> generateProveKitProof(String proverPath, String inputToml) async {
+    return await copyAssetToFileSystem(proverPath).then((path) async {
+      return await MoproFlutterPlatform.instance.generateProveKitProof(path, inputToml);
+    });
+  }
+
+  Future<ProveKitVerifyOutput> verifyProveKitProof(String verifierPath, Uint8List proof) async {
+    return await copyAssetToFileSystem(verifierPath).then((path) async {
+      return await MoproFlutterPlatform.instance.verifyProveKitProof(path, proof);
+    });
+  }
+
   Future<Map<String, int>> getIOSMemoryUsage() async {
     return await MoproFlutterPlatform.instance.getIOSMemoryUsage();
   }
