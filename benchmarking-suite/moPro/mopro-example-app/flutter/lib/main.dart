@@ -123,7 +123,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
       }
 
       // Load Field inputs for Circom
-      final fieldSizesCircom = ['1f', '2f', '3f', '5f', '9f', '16f', '32f', '64f', '128f'];
+      final fieldSizesCircom = ['16f', '32f', '64f', '128f'];
       for (var size in fieldSizesCircom) {
         try {
           final inputData = await _loadInputFromJson(
@@ -846,7 +846,12 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
     final bytesAlgorithms = ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'Pedersen', 'Blake2'];
     
     if (bytesAlgorithms.contains(_selectedAlgorithm)) {
-      _availableInputs = _bytesInputs;
+      if (_selectedFramework == 'circom' || _selectedFramework == 'imp1') {
+        final allowed = ['Input 16', 'Input 32', 'Input 64', 'Input 128'];
+        _availableInputs = _bytesInputs.where((input) => allowed.contains(input.name)).toList();
+      } else {
+        _availableInputs = _bytesInputs;
+      }
     } else {
       // Select field inputs based on framework
       if (_selectedFramework == 'noir') {
