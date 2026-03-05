@@ -88,15 +88,17 @@ impl From<CircomProverProof> for Groth16Proof {
     }
 }
 
-impl From<Groth16Proof> for CircomProverProof {
-    fn from(proof: Groth16Proof) -> Self {
-        CircomProverProof {
-            a: proof.a.into(),
-            b: proof.b.into(),
-            c: proof.c.into(),
+impl TryFrom<Groth16Proof> for CircomProverProof {
+    type Error = MoproError;
+
+    fn try_from(proof: Groth16Proof) -> Result<Self, Self::Error> {
+        Ok(CircomProverProof {
+            a: proof.a.try_into()?,
+            b: proof.b.try_into()?,
+            c: proof.c.try_into()?,
             protocol: proof.protocol,
             curve: proof.curve,
-        }
+        })
     }
 }
 

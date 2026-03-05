@@ -735,10 +735,6 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
-
-
-
-
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is 
 // rather `InterfaceTooLargeException`, caused by too many methods 
@@ -758,13 +754,11 @@ internal interface IntegrityCheckingUniffiLib : Library {
 ): Short
 fun uniffi_mopro_example_app_checksum_func_cairo_verify(
 ): Short
-fun uniffi_mopro_example_app_checksum_func_generate_circom_proof(
+fun uniffi_mopro_example_app_checksum_func_generate_barretenberg_proof(
 ): Short
-fun uniffi_mopro_example_app_checksum_func_generate_halo2_proof(
+fun uniffi_mopro_example_app_checksum_func_generate_groth16_proof(
 ): Short
-fun uniffi_mopro_example_app_checksum_func_generate_noir_proof(
-): Short
-fun uniffi_mopro_example_app_checksum_func_get_noir_verification_key(
+fun uniffi_mopro_example_app_checksum_func_get_barretenberg_verification_key(
 ): Short
 fun uniffi_mopro_example_app_checksum_func_mopro_uniffi_hello_world(
 ): Short
@@ -776,11 +770,9 @@ fun uniffi_mopro_example_app_checksum_func_risc0_prove(
 ): Short
 fun uniffi_mopro_example_app_checksum_func_risc0_verify(
 ): Short
-fun uniffi_mopro_example_app_checksum_func_verify_circom_proof(
+fun uniffi_mopro_example_app_checksum_func_verify_barretenberg_proof(
 ): Short
-fun uniffi_mopro_example_app_checksum_func_verify_halo2_proof(
-): Short
-fun uniffi_mopro_example_app_checksum_func_verify_noir_proof(
+fun uniffi_mopro_example_app_checksum_func_verify_groth16_proof(
 ): Short
 fun ffi_mopro_example_app_uniffi_contract_version(
 ): Int
@@ -831,13 +823,11 @@ internal interface UniffiLib : Library {
 ): RustBuffer.ByValue
 fun uniffi_mopro_example_app_fn_func_cairo_verify(`proof`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
-fun uniffi_mopro_example_app_fn_func_generate_circom_proof(`zkeyPath`: RustBuffer.ByValue,`circuitInputs`: RustBuffer.ByValue,`proofLib`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+fun uniffi_mopro_example_app_fn_func_generate_barretenberg_proof(`circuitPath`: RustBuffer.ByValue,`srsPath`: RustBuffer.ByValue,`inputs`: RustBuffer.ByValue,`onChain`: Byte,`vk`: RustBuffer.ByValue,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
-fun uniffi_mopro_example_app_fn_func_generate_halo2_proof(`srsPath`: RustBuffer.ByValue,`pkPath`: RustBuffer.ByValue,`circuitInputs`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+fun uniffi_mopro_example_app_fn_func_generate_groth16_proof(`zkeyPath`: RustBuffer.ByValue,`circuitInputs`: RustBuffer.ByValue,`proofLib`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
-fun uniffi_mopro_example_app_fn_func_generate_noir_proof(`circuitPath`: RustBuffer.ByValue,`srsPath`: RustBuffer.ByValue,`inputs`: RustBuffer.ByValue,`onChain`: Byte,`vk`: RustBuffer.ByValue,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
-): RustBuffer.ByValue
-fun uniffi_mopro_example_app_fn_func_get_noir_verification_key(`circuitPath`: RustBuffer.ByValue,`srsPath`: RustBuffer.ByValue,`onChain`: Byte,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
+fun uniffi_mopro_example_app_fn_func_get_barretenberg_verification_key(`circuitPath`: RustBuffer.ByValue,`srsPath`: RustBuffer.ByValue,`onChain`: Byte,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 fun uniffi_mopro_example_app_fn_func_mopro_uniffi_hello_world(uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
@@ -849,11 +839,9 @@ fun uniffi_mopro_example_app_fn_func_risc0_prove(`input`: Int,uniffi_out_err: Un
 ): RustBuffer.ByValue
 fun uniffi_mopro_example_app_fn_func_risc0_verify(`receiptBytes`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
-fun uniffi_mopro_example_app_fn_func_verify_circom_proof(`zkeyPath`: RustBuffer.ByValue,`proofResult`: RustBuffer.ByValue,`proofLib`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+fun uniffi_mopro_example_app_fn_func_verify_barretenberg_proof(`circuitPath`: RustBuffer.ByValue,`proof`: RustBuffer.ByValue,`onChain`: Byte,`vk`: RustBuffer.ByValue,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
 ): Byte
-fun uniffi_mopro_example_app_fn_func_verify_halo2_proof(`srsPath`: RustBuffer.ByValue,`vkPath`: RustBuffer.ByValue,`proof`: RustBuffer.ByValue,`publicInput`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-): Byte
-fun uniffi_mopro_example_app_fn_func_verify_noir_proof(`circuitPath`: RustBuffer.ByValue,`proof`: RustBuffer.ByValue,`onChain`: Byte,`vk`: RustBuffer.ByValue,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
+fun uniffi_mopro_example_app_fn_func_verify_groth16_proof(`zkeyPath`: RustBuffer.ByValue,`proofResult`: RustBuffer.ByValue,`proofLib`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): Byte
 fun ffi_mopro_example_app_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
@@ -981,46 +969,40 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
 }
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
-    if (lib.uniffi_mopro_example_app_checksum_func_cairo_prove() != 48657.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_cairo_prove() != 8447.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_example_app_checksum_func_cairo_verify() != 7631.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_cairo_verify() != 38798.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_example_app_checksum_func_generate_circom_proof() != 27552.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_generate_barretenberg_proof() != 55213.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_example_app_checksum_func_generate_halo2_proof() != 12749.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_generate_groth16_proof() != 60165.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_example_app_checksum_func_generate_noir_proof() != 54298.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_get_barretenberg_verification_key() != 58699.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_example_app_checksum_func_get_noir_verification_key() != 38748.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_mopro_uniffi_hello_world() != 63785.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_example_app_checksum_func_mopro_uniffi_hello_world() != 57387.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_provekit_prove() != 47875.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_example_app_checksum_func_provekit_prove() != 63529.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_provekit_verify() != 59468.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_example_app_checksum_func_provekit_verify() != 64676.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_risc0_prove() != 41807.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_example_app_checksum_func_risc0_prove() != 44720.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_risc0_verify() != 53526.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_example_app_checksum_func_risc0_verify() != 58691.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_verify_barretenberg_proof() != 23756.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_mopro_example_app_checksum_func_verify_circom_proof() != 8858.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_mopro_example_app_checksum_func_verify_halo2_proof() != 24595.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_mopro_example_app_checksum_func_verify_noir_proof() != 40491.toShort()) {
+    if (lib.uniffi_mopro_example_app_checksum_func_verify_groth16_proof() != 5366.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -1201,7 +1183,13 @@ public object FfiConverterByteArray: FfiConverterRustBuffer<ByteArray> {
 
 
 
+/**
+ * Output of a Cairo-M proof generation call.
+ */
 data class CairoProofOutput (
+    /**
+     * Serialized proof bytes.
+     */
     var `proof`: kotlin.ByteArray
 ) {
     
@@ -1229,7 +1217,13 @@ public object FfiConverterTypeCairoProofOutput: FfiConverterRustBuffer<CairoProo
 
 
 
+/**
+ * Output of a Cairo-M proof verification call.
+ */
 data class CairoVerifyOutput (
+    /**
+     * Whether the proof is valid.
+     */
     var `isValid`: kotlin.Boolean
 ) {
     
@@ -1257,85 +1251,21 @@ public object FfiConverterTypeCairoVerifyOutput: FfiConverterRustBuffer<CairoVer
 
 
 
-data class CircomProof (
-    var `a`: G1, 
-    var `b`: G2, 
-    var `c`: G1, 
-    var `protocol`: kotlin.String, 
-    var `curve`: kotlin.String
-) {
-    
-    companion object
-}
-
 /**
- * @suppress
+ * A point on a G1 elliptic curve group, represented as string-encoded coordinates.
  */
-public object FfiConverterTypeCircomProof: FfiConverterRustBuffer<CircomProof> {
-    override fun read(buf: ByteBuffer): CircomProof {
-        return CircomProof(
-            FfiConverterTypeG1.read(buf),
-            FfiConverterTypeG2.read(buf),
-            FfiConverterTypeG1.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
-        )
-    }
-
-    override fun allocationSize(value: CircomProof) = (
-            FfiConverterTypeG1.allocationSize(value.`a`) +
-            FfiConverterTypeG2.allocationSize(value.`b`) +
-            FfiConverterTypeG1.allocationSize(value.`c`) +
-            FfiConverterString.allocationSize(value.`protocol`) +
-            FfiConverterString.allocationSize(value.`curve`)
-    )
-
-    override fun write(value: CircomProof, buf: ByteBuffer) {
-            FfiConverterTypeG1.write(value.`a`, buf)
-            FfiConverterTypeG2.write(value.`b`, buf)
-            FfiConverterTypeG1.write(value.`c`, buf)
-            FfiConverterString.write(value.`protocol`, buf)
-            FfiConverterString.write(value.`curve`, buf)
-    }
-}
-
-
-
-data class CircomProofResult (
-    var `proof`: CircomProof, 
-    var `inputs`: List<kotlin.String>
-) {
-    
-    companion object
-}
-
-/**
- * @suppress
- */
-public object FfiConverterTypeCircomProofResult: FfiConverterRustBuffer<CircomProofResult> {
-    override fun read(buf: ByteBuffer): CircomProofResult {
-        return CircomProofResult(
-            FfiConverterTypeCircomProof.read(buf),
-            FfiConverterSequenceString.read(buf),
-        )
-    }
-
-    override fun allocationSize(value: CircomProofResult) = (
-            FfiConverterTypeCircomProof.allocationSize(value.`proof`) +
-            FfiConverterSequenceString.allocationSize(value.`inputs`)
-    )
-
-    override fun write(value: CircomProofResult, buf: ByteBuffer) {
-            FfiConverterTypeCircomProof.write(value.`proof`, buf)
-            FfiConverterSequenceString.write(value.`inputs`, buf)
-    }
-}
-
-
-
 data class G1 (
+    /**
+     * X coordinate.
+     */
     var `x`: kotlin.String, 
+    /**
+     * Y coordinate.
+     */
     var `y`: kotlin.String, 
+    /**
+     * Z coordinate (projective).
+     */
     var `z`: kotlin.String
 ) {
     
@@ -1369,9 +1299,21 @@ public object FfiConverterTypeG1: FfiConverterRustBuffer<G1> {
 
 
 
+/**
+ * A point on a G2 elliptic curve group, represented as string-encoded coordinate pairs.
+ */
 data class G2 (
+    /**
+     * X coordinates (degree-2 extension field).
+     */
     var `x`: List<kotlin.String>, 
+    /**
+     * Y coordinates (degree-2 extension field).
+     */
     var `y`: List<kotlin.String>, 
+    /**
+     * Z coordinates (projective, degree-2 extension field).
+     */
     var `z`: List<kotlin.String>
 ) {
     
@@ -1405,9 +1347,30 @@ public object FfiConverterTypeG2: FfiConverterRustBuffer<G2> {
 
 
 
-data class Halo2ProofResult (
-    var `proof`: kotlin.ByteArray, 
-    var `inputs`: kotlin.ByteArray
+/**
+ * A Groth16 proof in G1/G2 representation.
+ */
+data class Groth16Proof (
+    /**
+     * First G1 element (A).
+     */
+    var `a`: G1, 
+    /**
+     * G2 element (B).
+     */
+    var `b`: G2, 
+    /**
+     * Second G1 element (C).
+     */
+    var `c`: G1, 
+    /**
+     * Proof protocol identifier (e.g. "groth16").
+     */
+    var `protocol`: kotlin.String, 
+    /**
+     * Elliptic curve identifier (e.g. "bn254").
+     */
+    var `curve`: kotlin.String
 ) {
     
     companion object
@@ -1416,28 +1379,84 @@ data class Halo2ProofResult (
 /**
  * @suppress
  */
-public object FfiConverterTypeHalo2ProofResult: FfiConverterRustBuffer<Halo2ProofResult> {
-    override fun read(buf: ByteBuffer): Halo2ProofResult {
-        return Halo2ProofResult(
-            FfiConverterByteArray.read(buf),
-            FfiConverterByteArray.read(buf),
+public object FfiConverterTypeGroth16Proof: FfiConverterRustBuffer<Groth16Proof> {
+    override fun read(buf: ByteBuffer): Groth16Proof {
+        return Groth16Proof(
+            FfiConverterTypeG1.read(buf),
+            FfiConverterTypeG2.read(buf),
+            FfiConverterTypeG1.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
         )
     }
 
-    override fun allocationSize(value: Halo2ProofResult) = (
-            FfiConverterByteArray.allocationSize(value.`proof`) +
-            FfiConverterByteArray.allocationSize(value.`inputs`)
+    override fun allocationSize(value: Groth16Proof) = (
+            FfiConverterTypeG1.allocationSize(value.`a`) +
+            FfiConverterTypeG2.allocationSize(value.`b`) +
+            FfiConverterTypeG1.allocationSize(value.`c`) +
+            FfiConverterString.allocationSize(value.`protocol`) +
+            FfiConverterString.allocationSize(value.`curve`)
     )
 
-    override fun write(value: Halo2ProofResult, buf: ByteBuffer) {
-            FfiConverterByteArray.write(value.`proof`, buf)
-            FfiConverterByteArray.write(value.`inputs`, buf)
+    override fun write(value: Groth16Proof, buf: ByteBuffer) {
+            FfiConverterTypeG1.write(value.`a`, buf)
+            FfiConverterTypeG2.write(value.`b`, buf)
+            FfiConverterTypeG1.write(value.`c`, buf)
+            FfiConverterString.write(value.`protocol`, buf)
+            FfiConverterString.write(value.`curve`, buf)
     }
 }
 
 
 
+/**
+ * The result of a Groth16 proof generation, containing the proof and public inputs.
+ */
+data class Groth16ProofResult (
+    /**
+     * The Groth16 proof.
+     */
+    var `proof`: Groth16Proof, 
+    /**
+     * The public inputs as string-encoded field elements.
+     */
+    var `inputs`: List<kotlin.String>
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeGroth16ProofResult: FfiConverterRustBuffer<Groth16ProofResult> {
+    override fun read(buf: ByteBuffer): Groth16ProofResult {
+        return Groth16ProofResult(
+            FfiConverterTypeGroth16Proof.read(buf),
+            FfiConverterSequenceString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: Groth16ProofResult) = (
+            FfiConverterTypeGroth16Proof.allocationSize(value.`proof`) +
+            FfiConverterSequenceString.allocationSize(value.`inputs`)
+    )
+
+    override fun write(value: Groth16ProofResult, buf: ByteBuffer) {
+            FfiConverterTypeGroth16Proof.write(value.`proof`, buf)
+            FfiConverterSequenceString.write(value.`inputs`, buf)
+    }
+}
+
+
+
+/**
+ * Output of a ProveKit proof generation call.
+ */
 data class ProveKitProofOutput (
+    /**
+     * Serialized proof bytes.
+     */
     var `proof`: kotlin.ByteArray
 ) {
     
@@ -1465,7 +1484,13 @@ public object FfiConverterTypeProveKitProofOutput: FfiConverterRustBuffer<ProveK
 
 
 
+/**
+ * Output of a ProveKit proof verification call.
+ */
 data class ProveKitVerifyOutput (
+    /**
+     * Whether the proof is valid.
+     */
     var `isValid`: kotlin.Boolean
 ) {
     
@@ -1493,7 +1518,13 @@ public object FfiConverterTypeProveKitVerifyOutput: FfiConverterRustBuffer<Prove
 
 
 
+/**
+ * Output of a RISC0 proof generation call.
+ */
 data class Risc0ProofOutput (
+    /**
+     * Serialized RISC0 receipt bytes.
+     */
     var `receipt`: kotlin.ByteArray
 ) {
     
@@ -1521,8 +1552,17 @@ public object FfiConverterTypeRisc0ProofOutput: FfiConverterRustBuffer<Risc0Proo
 
 
 
+/**
+ * Output of a RISC0 proof verification call.
+ */
 data class Risc0VerifyOutput (
+    /**
+     * Whether the proof is valid.
+     */
     var `isValid`: kotlin.Boolean, 
+    /**
+     * The u32 output value committed in the journal.
+     */
     var `outputValue`: kotlin.UInt
 ) {
     
@@ -1555,8 +1595,14 @@ public object FfiConverterTypeRisc0VerifyOutput: FfiConverterRustBuffer<Risc0Ver
 
 
 
+/**
+ * Error type for the Cairo-M (Stwo STARKs) backend.
+ */
 sealed class CairoException: kotlin.Exception() {
     
+    /**
+     * Proof generation failed.
+     */
     class ProveException(
         
         val v1: kotlin.String
@@ -1565,6 +1611,9 @@ sealed class CairoException: kotlin.Exception() {
             get() = "v1=${ v1 }"
     }
     
+    /**
+     * Proof verification failed.
+     */
     class VerifyException(
         
         val v1: kotlin.String
@@ -1573,6 +1622,9 @@ sealed class CairoException: kotlin.Exception() {
             get() = "v1=${ v1 }"
     }
     
+    /**
+     * Proof serialization or deserialization failed.
+     */
     class SerializeException(
         
         val v1: kotlin.String
@@ -1656,9 +1708,21 @@ public object FfiConverterTypeCairoError : FfiConverterRustBuffer<CairoException
 
 
 
+/**
+ * The unified error type exposed to UniFFI consumers.
+ *
+ * Each variant corresponds to one proving backend. The inner `String`
+ * carries a human-readable description of what went wrong.
+ *
+ * Note: declared inside this file rather than via the `mopro_ffi::app!()`
+ * macro due to a UniFFI limitation (see <https://github.com/mozilla/uniffi-rs/issues/2257>).
+ */
 sealed class MoproException: kotlin.Exception() {
     
-    class CircomException(
+    /**
+     * An error that occurred in the Groth16 (Arkworks/Circom) backend.
+     */
+    class Groth16Exception(
         
         val v1: kotlin.String
         ) : MoproException() {
@@ -1666,15 +1730,10 @@ sealed class MoproException: kotlin.Exception() {
             get() = "v1=${ v1 }"
     }
     
-    class Halo2Exception(
-        
-        val v1: kotlin.String
-        ) : MoproException() {
-        override val message
-            get() = "v1=${ v1 }"
-    }
-    
-    class NoirException(
+    /**
+     * An error that occurred in the Barretenberg (Noir/UltraHonk) backend.
+     */
+    class BarretenbergException(
         
         val v1: kotlin.String
         ) : MoproException() {
@@ -1698,13 +1757,10 @@ public object FfiConverterTypeMoproError : FfiConverterRustBuffer<MoproException
         
 
         return when(buf.getInt()) {
-            1 -> MoproException.CircomException(
+            1 -> MoproException.Groth16Exception(
                 FfiConverterString.read(buf),
                 )
-            2 -> MoproException.Halo2Exception(
-                FfiConverterString.read(buf),
-                )
-            3 -> MoproException.NoirException(
+            2 -> MoproException.BarretenbergException(
                 FfiConverterString.read(buf),
                 )
             else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
@@ -1713,17 +1769,12 @@ public object FfiConverterTypeMoproError : FfiConverterRustBuffer<MoproException
 
     override fun allocationSize(value: MoproException): ULong {
         return when(value) {
-            is MoproException.CircomException -> (
+            is MoproException.Groth16Exception -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
                 4UL
                 + FfiConverterString.allocationSize(value.v1)
             )
-            is MoproException.Halo2Exception -> (
-                // Add the size for the Int that specifies the variant plus the size needed for all fields
-                4UL
-                + FfiConverterString.allocationSize(value.v1)
-            )
-            is MoproException.NoirException -> (
+            is MoproException.BarretenbergException -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
                 4UL
                 + FfiConverterString.allocationSize(value.v1)
@@ -1733,18 +1784,13 @@ public object FfiConverterTypeMoproError : FfiConverterRustBuffer<MoproException
 
     override fun write(value: MoproException, buf: ByteBuffer) {
         when(value) {
-            is MoproException.CircomException -> {
+            is MoproException.Groth16Exception -> {
                 buf.putInt(1)
                 FfiConverterString.write(value.v1, buf)
                 Unit
             }
-            is MoproException.Halo2Exception -> {
+            is MoproException.BarretenbergException -> {
                 buf.putInt(2)
-                FfiConverterString.write(value.v1, buf)
-                Unit
-            }
-            is MoproException.NoirException -> {
-                buf.putInt(3)
                 FfiConverterString.write(value.v1, buf)
                 Unit
             }
@@ -1755,10 +1801,19 @@ public object FfiConverterTypeMoproError : FfiConverterRustBuffer<MoproException
 
 
 
+/**
+ * Selects the proof backend library for Groth16 proof generation.
+ */
 
 enum class ProofLib {
     
+    /**
+     * Use the Arkworks Rust library (default).
+     */
     ARKWORKS,
+    /**
+     * Use the Rapidsnark C++ library.
+     */
     RAPIDSNARK;
     companion object
 }
@@ -1787,8 +1842,14 @@ public object FfiConverterTypeProofLib: FfiConverterRustBuffer<ProofLib> {
 
 
 
+/**
+ * Error type for the ProveKit backend.
+ */
 sealed class ProveKitException: kotlin.Exception() {
     
+    /**
+     * Proof generation failed.
+     */
     class ProveException(
         
         val v1: kotlin.String
@@ -1797,6 +1858,9 @@ sealed class ProveKitException: kotlin.Exception() {
             get() = "v1=${ v1 }"
     }
     
+    /**
+     * Proof verification failed.
+     */
     class VerifyException(
         
         val v1: kotlin.String
@@ -1867,8 +1931,14 @@ public object FfiConverterTypeProveKitError : FfiConverterRustBuffer<ProveKitExc
 
 
 
+/**
+ * Error type for the RISC0 zkVM backend.
+ */
 sealed class Risc0Exception: kotlin.Exception() {
     
+    /**
+     * Proof generation failed.
+     */
     class ProveException(
         
         val v1: kotlin.String
@@ -1877,6 +1947,9 @@ sealed class Risc0Exception: kotlin.Exception() {
             get() = "v1=${ v1 }"
     }
     
+    /**
+     * Receipt serialization or deserialization failed.
+     */
     class SerializeException(
         
         val v1: kotlin.String
@@ -1885,6 +1958,9 @@ sealed class Risc0Exception: kotlin.Exception() {
             get() = "v1=${ v1 }"
     }
     
+    /**
+     * Proof verification failed.
+     */
     class VerifyException(
         
         val v1: kotlin.String
@@ -1893,6 +1969,9 @@ sealed class Risc0Exception: kotlin.Exception() {
             get() = "v1=${ v1 }"
     }
     
+    /**
+     * Journal decoding failed.
+     */
     class DecodeException(
         
         val v1: kotlin.String
@@ -2044,45 +2123,16 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.Str
         }
     }
 }
-
-
-
-
-/**
- * @suppress
- */
-public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<kotlin.String, List<kotlin.String>>> {
-    override fun read(buf: ByteBuffer): Map<kotlin.String, List<kotlin.String>> {
-        val len = buf.getInt()
-        return buildMap<kotlin.String, List<kotlin.String>>(len) {
-            repeat(len) {
-                val k = FfiConverterString.read(buf)
-                val v = FfiConverterSequenceString.read(buf)
-                this[k] = v
-            }
-        }
-    }
-
-    override fun allocationSize(value: Map<kotlin.String, List<kotlin.String>>): ULong {
-        val spaceForMapSize = 4UL
-        val spaceForChildren = value.map { (k, v) ->
-            FfiConverterString.allocationSize(k) +
-            FfiConverterSequenceString.allocationSize(v)
-        }.sum()
-        return spaceForMapSize + spaceForChildren
-    }
-
-    override fun write(value: Map<kotlin.String, List<kotlin.String>>, buf: ByteBuffer) {
-        buf.putInt(value.size)
-        // The parens on `(k, v)` here ensure we're calling the right method,
-        // which is important for compatibility with older android devices.
-        // Ref https://blog.danlew.net/2017/03/16/kotlin-puzzler-whose-line-is-it-anyways/
-        value.forEach { (k, v) ->
-            FfiConverterString.write(k, buf)
-            FfiConverterSequenceString.write(v, buf)
-        }
-    }
-}
+        /**
+         * Generates a Cairo-M STARK proof for a compiled Cairo program.
+         *
+         * # Arguments
+         * - `program_json`: JSON-encoded Cairo-M program
+         * - `inputs_json`: JSON-encoded program inputs
+         *
+         * # Returns
+         * `Ok(CairoProofOutput)` with serialized proof, or a `CairoError`.
+         */
     @Throws(CairoException::class) fun `cairoProve`(`programJson`: kotlin.String, `inputsJson`: kotlin.String): CairoProofOutput {
             return FfiConverterTypeCairoProofOutput.lift(
     uniffiRustCallWithError(CairoException) { _status ->
@@ -2093,6 +2143,15 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     }
     
 
+        /**
+         * Verifies a Cairo-M STARK proof.
+         *
+         * # Arguments
+         * - `proof`: serialized proof bytes produced by `cairo_prove`
+         *
+         * # Returns
+         * `Ok(CairoVerifyOutput)` with validation result, or a `CairoError`.
+         */
     @Throws(CairoException::class) fun `cairoVerify`(`proof`: kotlin.ByteArray): CairoVerifyOutput {
             return FfiConverterTypeCairoVerifyOutput.lift(
     uniffiRustCallWithError(CairoException) { _status ->
@@ -2103,39 +2162,17 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     }
     
 
-    @Throws(MoproException::class) fun `generateCircomProof`(`zkeyPath`: kotlin.String, `circuitInputs`: kotlin.String, `proofLib`: ProofLib): CircomProofResult {
-            return FfiConverterTypeCircomProofResult.lift(
-    uniffiRustCallWithError(MoproException) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_generate_circom_proof(
-        FfiConverterString.lower(`zkeyPath`),FfiConverterString.lower(`circuitInputs`),FfiConverterTypeProofLib.lower(`proofLib`),_status)
-}
-    )
-    }
-    
-
-    @Throws(MoproException::class) fun `generateHalo2Proof`(`srsPath`: kotlin.String, `pkPath`: kotlin.String, `circuitInputs`: Map<kotlin.String, List<kotlin.String>>): Halo2ProofResult {
-            return FfiConverterTypeHalo2ProofResult.lift(
-    uniffiRustCallWithError(MoproException) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_generate_halo2_proof(
-        FfiConverterString.lower(`srsPath`),FfiConverterString.lower(`pkPath`),FfiConverterMapStringSequenceString.lower(`circuitInputs`),_status)
-}
-    )
-    }
-    
-
         /**
-         * Generates a Noir proof with automatic hash function selection
+         * Generates a Barretenberg (UltraHonk) proof with automatic hash function selection.
          *
-         * This is the main proof generation function that automatically chooses
-         * the appropriate hash function based on the intended use case:
-         *
+         * Automatically chooses the appropriate hash function based on the intended use case:
          * - `on_chain = true`: Uses Keccak hash for Solidity verifier compatibility
          * - `on_chain = false`: Uses Poseidon hash for better performance
          */
-    @Throws(MoproException::class) fun `generateNoirProof`(`circuitPath`: kotlin.String, `srsPath`: kotlin.String?, `inputs`: List<kotlin.String>, `onChain`: kotlin.Boolean, `vk`: kotlin.ByteArray, `lowMemoryMode`: kotlin.Boolean): kotlin.ByteArray {
+    @Throws(MoproException::class) fun `generateBarretenbergProof`(`circuitPath`: kotlin.String, `srsPath`: kotlin.String?, `inputs`: List<kotlin.String>, `onChain`: kotlin.Boolean, `vk`: kotlin.ByteArray, `lowMemoryMode`: kotlin.Boolean): kotlin.ByteArray {
             return FfiConverterByteArray.lift(
     uniffiRustCallWithError(MoproException) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_generate_noir_proof(
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_generate_barretenberg_proof(
         FfiConverterString.lower(`circuitPath`),FfiConverterOptionalString.lower(`srsPath`),FfiConverterSequenceString.lower(`inputs`),FfiConverterBoolean.lower(`onChain`),FfiConverterByteArray.lower(`vk`),FfiConverterBoolean.lower(`lowMemoryMode`),_status)
 }
     )
@@ -2143,18 +2180,36 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     
 
         /**
-         * Generates a verification key with automatic hash function selection
+         * Generates a Groth16 proof for a Circom circuit.
          *
-         * This function automatically chooses the appropriate hash function based
-         * on the intended use case:
+         * # Arguments
+         * - `zkey_path`: path to the `.zkey` proving key file
+         * - `circuit_inputs`: JSON-encoded circuit inputs
+         * - `proof_lib`: which backend library to use (Arkworks or Rapidsnark)
+         *
+         * # Returns
+         * `Ok(Groth16ProofResult)` containing the proof and public inputs, or a `MoproError`.
+         */
+    @Throws(MoproException::class) fun `generateGroth16Proof`(`zkeyPath`: kotlin.String, `circuitInputs`: kotlin.String, `proofLib`: ProofLib): Groth16ProofResult {
+            return FfiConverterTypeGroth16ProofResult.lift(
+    uniffiRustCallWithError(MoproException) { _status ->
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_generate_groth16_proof(
+        FfiConverterString.lower(`zkeyPath`),FfiConverterString.lower(`circuitInputs`),FfiConverterTypeProofLib.lower(`proofLib`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Generates a verification key with automatic hash function selection.
          *
          * - `on_chain = true`: Uses Keccak hash for Solidity verifier compatibility
-         * - `on_chain = false`: Uses Poseidon hash fotr better performance
+         * - `on_chain = false`: Uses Poseidon hash for better performance
          */
-    @Throws(MoproException::class) fun `getNoirVerificationKey`(`circuitPath`: kotlin.String, `srsPath`: kotlin.String?, `onChain`: kotlin.Boolean, `lowMemoryMode`: kotlin.Boolean): kotlin.ByteArray {
+    @Throws(MoproException::class) fun `getBarretenbergVerificationKey`(`circuitPath`: kotlin.String, `srsPath`: kotlin.String?, `onChain`: kotlin.Boolean, `lowMemoryMode`: kotlin.Boolean): kotlin.ByteArray {
             return FfiConverterByteArray.lift(
     uniffiRustCallWithError(MoproException) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_get_noir_verification_key(
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_get_barretenberg_verification_key(
         FfiConverterString.lower(`circuitPath`),FfiConverterOptionalString.lower(`srsPath`),FfiConverterBoolean.lower(`onChain`),FfiConverterBoolean.lower(`lowMemoryMode`),_status)
 }
     )
@@ -2162,8 +2217,7 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     
 
         /**
-         * You can also customize the bindings by #[uniffi::export]
-         * Reference: https://mozilla.github.io/uniffi-rs/latest/proc_macro/index.html
+         * Returns a simple greeting string to verify FFI connectivity.
          */ fun `moproUniffiHelloWorld`(): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
@@ -2174,6 +2228,16 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     }
     
 
+        /**
+         * Generates a ProveKit proof using a compiled prover key.
+         *
+         * # Arguments
+         * - `prover_path`: path to the `.pkp` prover key file
+         * - `input_toml`: TOML-encoded circuit inputs
+         *
+         * # Returns
+         * `Ok(ProveKitProofOutput)` with serialized proof, or a `ProveKitError`.
+         */
     @Throws(ProveKitException::class) fun `provekitProve`(`proverPath`: kotlin.String, `inputToml`: kotlin.String): ProveKitProofOutput {
             return FfiConverterTypeProveKitProofOutput.lift(
     uniffiRustCallWithError(ProveKitException) { _status ->
@@ -2184,6 +2248,16 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     }
     
 
+        /**
+         * Verifies a ProveKit proof using a compiled verifier key.
+         *
+         * # Arguments
+         * - `verifier_path`: path to the `.pkv` verifier key file
+         * - `proof`: serialized proof bytes produced by `provekit_prove`
+         *
+         * # Returns
+         * `Ok(ProveKitVerifyOutput)` with validation result, or a `ProveKitError`.
+         */
     @Throws(ProveKitException::class) fun `provekitVerify`(`verifierPath`: kotlin.String, `proof`: kotlin.ByteArray): ProveKitVerifyOutput {
             return FfiConverterTypeProveKitVerifyOutput.lift(
     uniffiRustCallWithError(ProveKitException) { _status ->
@@ -2194,6 +2268,15 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     }
     
 
+        /**
+         * Generates a RISC0 zkVM proof for a u32 input.
+         *
+         * # Arguments
+         * - `input`: a u32 value written to the zkVM executor environment
+         *
+         * # Returns
+         * `Ok(Risc0ProofOutput)` with the serialized receipt, or a `Risc0Error`.
+         */
     @Throws(Risc0Exception::class) fun `risc0Prove`(`input`: kotlin.UInt): Risc0ProofOutput {
             return FfiConverterTypeRisc0ProofOutput.lift(
     uniffiRustCallWithError(Risc0Exception) { _status ->
@@ -2204,6 +2287,15 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     }
     
 
+        /**
+         * Verifies a RISC0 zkVM proof and extracts the journal output.
+         *
+         * # Arguments
+         * - `receipt_bytes`: serialized RISC0 receipt produced by `risc0_prove`
+         *
+         * # Returns
+         * `Ok(Risc0VerifyOutput)` with validation result and output value, or a `Risc0Error`.
+         */
     @Throws(Risc0Exception::class) fun `risc0Verify`(`receiptBytes`: kotlin.ByteArray): Risc0VerifyOutput {
             return FfiConverterTypeRisc0VerifyOutput.lift(
     uniffiRustCallWithError(Risc0Exception) { _status ->
@@ -2214,40 +2306,39 @@ public object FfiConverterMapStringSequenceString: FfiConverterRustBuffer<Map<ko
     }
     
 
-    @Throws(MoproException::class) fun `verifyCircomProof`(`zkeyPath`: kotlin.String, `proofResult`: CircomProofResult, `proofLib`: ProofLib): kotlin.Boolean {
+        /**
+         * Verifies a Barretenberg (UltraHonk) proof with automatic hash function selection.
+         *
+         * Automatically uses the correct verification method based on how the proof was generated:
+         * - `on_chain = true`: Verifies Keccak-based proof (Solidity compatible)
+         * - `on_chain = false`: Verifies Poseidon-based proof (performance optimized)
+         */
+    @Throws(MoproException::class) fun `verifyBarretenbergProof`(`circuitPath`: kotlin.String, `proof`: kotlin.ByteArray, `onChain`: kotlin.Boolean, `vk`: kotlin.ByteArray, `lowMemoryMode`: kotlin.Boolean): kotlin.Boolean {
             return FfiConverterBoolean.lift(
     uniffiRustCallWithError(MoproException) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_verify_circom_proof(
-        FfiConverterString.lower(`zkeyPath`),FfiConverterTypeCircomProofResult.lower(`proofResult`),FfiConverterTypeProofLib.lower(`proofLib`),_status)
-}
-    )
-    }
-    
-
-    @Throws(MoproException::class) fun `verifyHalo2Proof`(`srsPath`: kotlin.String, `vkPath`: kotlin.String, `proof`: kotlin.ByteArray, `publicInput`: kotlin.ByteArray): kotlin.Boolean {
-            return FfiConverterBoolean.lift(
-    uniffiRustCallWithError(MoproException) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_verify_halo2_proof(
-        FfiConverterString.lower(`srsPath`),FfiConverterString.lower(`vkPath`),FfiConverterByteArray.lower(`proof`),FfiConverterByteArray.lower(`publicInput`),_status)
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_verify_barretenberg_proof(
+        FfiConverterString.lower(`circuitPath`),FfiConverterByteArray.lower(`proof`),FfiConverterBoolean.lower(`onChain`),FfiConverterByteArray.lower(`vk`),FfiConverterBoolean.lower(`lowMemoryMode`),_status)
 }
     )
     }
     
 
         /**
-         * Verifies a Noir proof with automatic hash function selection
+         * Verifies a Groth16 proof for a Circom circuit.
          *
-         * This function automatically uses the correct verification method based
-         * on how the proof was generated:
+         * # Arguments
+         * - `zkey_path`: path to the `.zkey` proving key file
+         * - `proof_result`: the proof and public inputs to verify
+         * - `proof_lib`: which backend library was used to generate the proof
          *
-         * - `on_chain = true`: Verifies Keccak-based proof (Solidity compatible)
-         * - `on_chain = false`: Verifies Poseidon-based proof (performance optimized)
+         * # Returns
+         * `Ok(true)` if the proof is valid, `Err(MoproError)` on failure.
          */
-    @Throws(MoproException::class) fun `verifyNoirProof`(`circuitPath`: kotlin.String, `proof`: kotlin.ByteArray, `onChain`: kotlin.Boolean, `vk`: kotlin.ByteArray, `lowMemoryMode`: kotlin.Boolean): kotlin.Boolean {
+    @Throws(MoproException::class) fun `verifyGroth16Proof`(`zkeyPath`: kotlin.String, `proofResult`: Groth16ProofResult, `proofLib`: ProofLib): kotlin.Boolean {
             return FfiConverterBoolean.lift(
     uniffiRustCallWithError(MoproException) { _status ->
-    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_verify_noir_proof(
-        FfiConverterString.lower(`circuitPath`),FfiConverterByteArray.lower(`proof`),FfiConverterBoolean.lower(`onChain`),FfiConverterByteArray.lower(`vk`),FfiConverterBoolean.lower(`lowMemoryMode`),_status)
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_verify_groth16_proof(
+        FfiConverterString.lower(`zkeyPath`),FfiConverterTypeGroth16ProofResult.lower(`proofResult`),FfiConverterTypeProofLib.lower(`proofLib`),_status)
 }
     )
     }
