@@ -1,16 +1,14 @@
 mopro_ffi::app!();
 
+/// Groth16-only MoproError for single-backend configurations.
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum MoproError {
-    #[error("Circom error: {0}")]
-    CircomError(String),
+    #[error("Groth16 error: {0}")]
+    Groth16Error(String),
 }
 
-mod circom;
-
-use std::collections::HashMap;
-use num_bigint::BigInt;
-
+#[macro_use]
+mod groth16;
 
 // Bytes circuits
 rust_witness::witness!(blake2s25616);
@@ -54,7 +52,7 @@ rust_witness::witness!(rescueprime32f);
 rust_witness::witness!(rescueprime64f);
 rust_witness::witness!(rescueprime128f);
 
-set_circom_circuits! {
+set_groth16_circuits! {
     ("blake2s256_16.zkey", circom_prover::witness::WitnessFn::RustWitness(blake2s25616_witness)),
     ("blake2s256_32.zkey", circom_prover::witness::WitnessFn::RustWitness(blake2s25632_witness)),
     ("blake2s256_64.zkey", circom_prover::witness::WitnessFn::RustWitness(blake2s25664_witness)),
@@ -96,6 +94,7 @@ set_circom_circuits! {
     ("rescue-prime_128f.zkey", circom_prover::witness::WitnessFn::RustWitness(rescueprime128f_witness)),
 }
 
+/// Returns a greeting string to verify FFI connectivity.
 #[uniffi::export]
 fn mopro_uniffi_hello_world() -> String {
     "Hello, World!".to_string()

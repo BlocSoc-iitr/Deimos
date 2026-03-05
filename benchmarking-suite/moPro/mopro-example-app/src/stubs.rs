@@ -1,12 +1,24 @@
+//! Feature-gated stubs for optional backends.
+//!
+//! When a backend feature is disabled at compile time, UniFFI still requires
+//! that the exported function symbols exist. These macros generate stub
+//! implementations that panic with a descriptive message at runtime if called.
+//!
+//! Usage: invoke the appropriate stub macro in `lib.rs` inside a
+//! `#[cfg(not(feature = "..."))]` block.
+
+/// Generates stub implementations for the Groth16 (circom-prover) backend.
+///
+/// Invoke with `groth16_stub!()` when the `groth16` feature is not enabled.
 #[macro_export]
-macro_rules! circom_stub {
+macro_rules! groth16_stub {
     () => {
-        mod circom_stub {
+        mod groth16_stub {
             use crate::error::MoproError;
 
             #[derive(uniffi::Record)]
-            pub struct CircomProofResult {
-                pub proof: CircomProof,
+            pub struct Groth16ProofResult {
+                pub proof: Groth16Proof,
                 pub inputs: Vec<String>,
             }
 
@@ -25,7 +37,7 @@ macro_rules! circom_stub {
             }
 
             #[derive(uniffi::Record)]
-            pub struct CircomProof {
+            pub struct Groth16Proof {
                 pub a: G1,
                 pub b: G2,
                 pub c: G1,
@@ -40,68 +52,37 @@ macro_rules! circom_stub {
             }
 
             #[uniffi::export]
-            pub(crate) fn generate_circom_proof(
+            pub(crate) fn generate_groth16_proof(
                 _zkey_path: String,
                 _circuit_inputs: String,
                 _proof_lib: ProofLib,
-            ) -> Result<CircomProofResult, MoproError> {
-                panic!("Circom is not enabled in this build. Please select \"circom\" adapter when initializing the project.");
+            ) -> Result<Groth16ProofResult, MoproError> {
+                panic!("Groth16 backend is not enabled. Enable the `groth16` feature to use this.");
             }
 
             #[uniffi::export]
-            pub(crate) fn verify_circom_proof(
+            pub(crate) fn verify_groth16_proof(
                 _zkey_path: String,
-                _proof_result: CircomProofResult,
+                _proof_result: Groth16ProofResult,
                 _proof_lib: ProofLib,
             ) -> Result<bool, MoproError> {
-                panic!("Circom is not enabled in this build. Please select \"circom\" adapter when initializing the project.");
+                panic!("Groth16 backend is not enabled. Enable the `groth16` feature to use this.");
             }
         }
     };
 }
 
+/// Generates stub implementations for the Barretenberg (noir_rs) backend.
+///
+/// Invoke with `barretenberg_stub!()` when the `barretenberg` feature is not enabled.
 #[macro_export]
-macro_rules! halo2_stub {
+macro_rules! barretenberg_stub {
     () => {
-        mod halo2_stub {
-            use crate::error::MoproError;
-
-            #[derive(uniffi::Record)]
-            pub struct Halo2ProofResult {
-                pub proof: Vec<u8>,
-                pub inputs: Vec<u8>,
-            }
-
-            #[uniffi::export]
-            pub(crate) fn generate_halo2_proof(
-                _srs_path: String,
-                _pk_path: String,
-                _circuit_inputs: std::collections::HashMap<String, Vec<String>>,
-            ) -> Result<Halo2ProofResult, MoproError> {
-                panic!("Halo2 is not enabled in this build. Please select \"halo2\" adapter when initializing the project.");
-            }
-
-            #[uniffi::export]
-            pub(crate) fn verify_halo2_proof(
-                _srs_path: String,
-                _vk_path: String,
-                _proof: Vec<u8>,
-                _public_input: Vec<u8>,
-            ) -> Result<bool, MoproError> {
-                panic!("Halo2 is not enabled in this build. Please select \"halo2\" adapter when initializing the project.");
-            }
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! noir_stub {
-    () => {
-        mod noir_stub {
+        mod barretenberg_stub {
             use crate::error::MoproError;
 
             #[uniffi::export]
-            pub(crate) fn generate_noir_proof(
+            pub(crate) fn generate_barretenberg_proof(
                 _circuit_path: String,
                 _srs_path: Option<String>,
                 _inputs: Vec<String>,
@@ -109,34 +90,29 @@ macro_rules! noir_stub {
                 _vk: Vec<u8>,
                 _low_memory_mode: bool,
             ) -> Result<Vec<u8>, MoproError> {
-                panic!("Noir is not enabled in this build. Please select \"noir\" adapter when initializing the project.");
+                panic!("Barretenberg backend is not enabled. Enable the `barretenberg` feature to use this.");
             }
 
             #[uniffi::export]
-            pub(crate) fn verify_noir_proof(
+            pub(crate) fn verify_barretenberg_proof(
                 _circuit_path: String,
                 _proof: Vec<u8>,
                 _on_chain: bool,
                 _vk: Vec<u8>,
                 _low_memory_mode: bool,
             ) -> Result<bool, MoproError> {
-                panic!("Noir is not enabled in this build. Please select \"noir\" adapter when initializing the project.");
-
+                panic!("Barretenberg backend is not enabled. Enable the `barretenberg` feature to use this.");
             }
 
-
             #[uniffi::export]
-            pub(crate) fn get_noir_verification_key(
+            pub(crate) fn get_barretenberg_verification_key(
                 _circuit_path: String,
                 _srs_path: Option<String>,
                 _on_chain: bool,
                 _low_memory_mode: bool,
             ) -> Result<Vec<u8>, MoproError> {
-                panic!("Noir is not enabled in this build. Please select \"noir\" adapter when initializing the project.");
-
+                panic!("Barretenberg backend is not enabled. Enable the `barretenberg` feature to use this.");
             }
-
-
         }
     };
 }
