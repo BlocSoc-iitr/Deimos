@@ -17,13 +17,12 @@ A deep-dive into how ZK proving on mobile works: from circuit compilation throug
    - [C Headers — How Swift Calls the .a (iOS)](#36-c-headers--how-swift-calls-the-a-ios)
 4. [Complete Call Stack Trace](#4-complete-call-stack-trace-generatecircomproof)
 5. [Proof System Flows](#5-proof-system-flows)
-   - [Circom / Groth16](#51-circom--groth16)
-   - [Halo2](#52-halo2)
-   - [Noir / Ultra Honk](#53-noir--ultra-honk)
-   - [RISC0 zkVM](#54-risc0-zkvm)
-   - [Cairo-M](#55-cairo-m)
-   - [ProveKit](#56-provekit)
-   - [IMP1 (External AAR)](#57-imp1-external-aar--bypasses-uniffi)
+   - [Groth16 (Arkworks/Circom)](#51-groth16-arkworkscircom)
+   - [Barretenberg (Noir / Ultra Honk)](#52-barretenberg-noir--ultra-honk)
+   - [RISC0 zkVM](#53-risc0-zkvm)
+   - [Cairo-M](#54-cairo-m)
+   - [ProveKit](#55-provekit)
+   - [IMP1 (External AAR)](#56-imp1-external-aar--bypasses-uniffi)
 6. [Flutter Plugin Layer](#6-flutter-plugin-layer)
 7. [Circuit Artifacts Reference](#7-circuit-artifacts-reference)
 8. [Memory Ownership Rules](#8-memory-ownership-rules)
@@ -58,20 +57,18 @@ A deep-dive into how ZK proving on mobile works: from circuit compilation throug
                      │  C ABI  (extern "C", no mangling)
                      ▼
    Rust: mopro-example-app crate
-     src/lib.rs      — UniFFI exports, circuit registries
-     src/circom.rs   — Groth16 prove/verify
-     src/halo2.rs    — Halo2 function pointer dispatch
-     src/noir.rs     — Ultra Honk prove/verify
-     (risc0/cairo/provekit via feature flags)
+     src/lib.rs           — UniFFI exports, circuit registries
+     src/groth16.rs       — Groth16 (Arkworks/Circom) prove/verify
+     src/barretenberg.rs  — Barretenberg (Noir/UltraHonk) prove/verify
+     (risc0/cairo_m/provekit via feature flags)
                      │
                      ▼
    Proving Backends (Rust crates)
-     circom-prover   — Arkworks / Rapidsnark Groth16
-     halo2 variants  — Plonk / HyperPlonk / Gemini
-     noir_rs         — Barretenberg Ultra Honk
-     risc0-zkvm      — RISC-V zkVM
-     cairo-m-prover  — STARK over M31 field
-     provekit-wrapper
+     circom-prover    — Arkworks / Rapidsnark Groth16 (feature: groth16)
+     noir_rs          — Barretenberg Ultra Honk (feature: barretenberg)
+     risc0-zkvm       — RISC-V zkVM (always enabled)
+     cairo-m-prover   — STARK over M31 field (feature: cairo_m)
+     provekit-wrapper — ProveKit accelerated Noir (feature: provekit)
                      │
                      ▼
    libwitnesses.a (static)
@@ -80,10 +77,10 @@ A deep-dive into how ZK proving on mobile works: from circuit compilation throug
                      │
                      ▼
    Circuit Artifacts (bundled as Flutter assets)
-     test-vectors/circom/*.zkey  *.wasm
-     test-vectors/halo2/*.bin
-     test-vectors/noir/*.json  *.srs  *.vk
-     test-vectors/provekit/*.pkp  *.pkv
+     test-vectors/circom/*.zkey  *.wasm   (groth16 circuits)
+     test-vectors/noir/*.json  *.srs  *.vk  (barretenberg circuits)
+     test-vectors/provekit/*.pkp  *.pkv     (provekit keys)
+     test-vectors/cairo-m/*.json            (cairo_m programs)
 ```
 
 ---
@@ -143,31 +140,19 @@ RustBuffer ffi_mopro_example_app_fn_func_generate_circom_proof(
 
 Two compile-time registries are built in `lib.rs`:
 
-**Circom witness registry** (`src/lib.rs`):
+**Groth16 witness registry** (`src/lib.rs`, requires `groth16` feature):
 ```rust
 rust_witness::witness!(sha25616);     // generates sha25616_witness fn ptr → compiled C++
 rust_witness::witness!(keccak25616);
-// ... 28 circuits
+// ... 28 circuits total
 
-set_circom_circuits! {
+set_groth16_circuits! {
     ("sha256_16.zkey", WitnessFn::RustWitness(sha25616_witness)),
     ("keccak256_16.zkey", WitnessFn::RustWitness(keccak25616_witness)),
     // ...
 }
-// Expands to: static CIRCOM_CIRCUITS: &[(&str, WitnessFn)] = &[...];
-// And: pub fn circom_get(name: &str) -> Option<WitnessFn>
-```
-
-**Halo2 function pointer registry** (`src/halo2.rs`):
-```rust
-set_halo2_circuits! {
-    ("plonk_fibonacci_pk.bin",     plonk_fibonacci::prove,
-     "plonk_fibonacci_vk.bin",     plonk_fibonacci::verify),
-    ("hyperplonk_fibonacci_pk.bin", hyperplonk_fibonacci::prove,
-     "hyperplonk_fibonacci_vk.bin", hyperplonk_fibonacci::verify),
-    ("gemini_fibonacci_pk.bin",    gemini_fibonacci::prove,
-     "gemini_fibonacci_vk.bin",    gemini_fibonacci::verify),
-}
+// Expands to: static GROTH16_CIRCUITS: &[(&str, WitnessFn)] = &[...];
+// And: pub fn groth16_get(name: &str) -> Option<WitnessFn>
 ```
 
 ### 2d. `mopro build` and `mopro update`
@@ -180,7 +165,7 @@ set_halo2_circuits! {
 - **iOS**: `MoproBindings.xcframework` → `flutter/mopro_flutter_plugin/ios/Frameworks/`
 - **iOS**: `mopro.swift` (renamed to `MoproCircom.swift` or `MoproNoir.swift`) → `flutter/mopro_flutter_plugin/ios/Classes/`
 
-**iOS config-swap**: Because Swift has global symbol scope, each proof system (Circom, Noir) gets a separate two-pass build. `src/configs/lib_circom.rs` is copied to `src/lib.rs`, built, then `src/configs/lib_noir.rs` is copied and built again. Each pass produces a different `mopro.swift` with prefixed type names (`CircomRustBuffer`, `NoirRustBuffer`) to prevent symbol collisions.
+**iOS config-swap**: Because Swift has global symbol scope, each proof system gets a separate two-pass build. `src/configs/lib_groth16.rs` is copied to `src/lib.rs`, built, then `src/configs/lib_barretenberg.rs` is copied and built again. Each pass produces a different `mopro.swift` with prefixed type names (`Groth16RustBuffer`, `BarretenbergRustBuffer`) to prevent symbol collisions.
 
 ---
 
@@ -419,13 +404,13 @@ let result = try rustCall { status in
 
 ---
 
-## 4. Complete Call Stack Trace: `generateCircomProof`
+## 4. Complete Call Stack Trace: `generateGroth16Proof`
 
 Tracing one call from Dart to Rust and back, referencing actual file locations.
 
 ```
 [Dart] mopro_flutter_method_channel.dart:16
-  await methodChannel.invokeMethod('generateCircomProof', {
+  await methodChannel.invokeMethod('generateGroth16Proof', {
       'zkeyPath': '/data/.../sha256_16.zkey',
       'inputs': '{"in":["0","1",...]}',
       'proofLib': 0,    // 0 = Arkworks
@@ -437,7 +422,7 @@ Tracing one call from Dart to Rust and back, referencing actual file locations.
   val zkeyPath = call.argument<String>("zkeyPath")
   val inputs = call.argument<String>("inputs")
   val proofLib = if (proofLibIndex == 0) ProofLib.ARKWORKS else ProofLib.RAPIDSNARK
-  val res = generateCircomProof(zkeyPath, inputs, proofLib)  // ← from uniffi.mopro.*
+  val res = generateGroth16Proof(zkeyPath, inputs, proofLib)  // ← from uniffi.mopro.*
 
 [Generated Kotlin] mopro.kt (uniffi-generated function)
   // 1. Serialize arguments into RustBuffers
@@ -449,7 +434,7 @@ Tracing one call from Dart to Rust and back, referencing actual file locations.
   FfiConverterTypeProofLib.lower(ProofLib.ARKWORKS) → Byte(0)
 
   // 2. JNA call crosses into native code
-  UniffiLib.INSTANCE.ffi_mopro_example_app_fn_func_generate_circom_proof(
+  UniffiLib.INSTANCE.ffi_mopro_example_app_fn_func_generate_groth16_proof(
       zkeyBuf, inputsBuf, 0.toByte(), &status
   )
   // JNA: dlsym → calls C symbol in libmopro_example_app.so
@@ -462,18 +447,18 @@ Tracing one call from Dart to Rust and back, referencing actual file locations.
   let proof_lib: ProofLib = FfiConverter::<ProofLib>::try_lift(0u8)?;  // → Arkworks
 
   // Call actual Rust function
-  let result = generate_circom_proof(zkey_path, circuit_inputs, proof_lib);
+  let result = generate_groth16_proof(zkey_path, circuit_inputs, proof_lib);
 
   // Serialize result
   match result {
-      Ok(v)  => { status.code = 0; return FfiConverter::<CircomProofResult>::lower(v); }
+      Ok(v)  => { status.code = 0; return FfiConverter::<Groth16ProofResult>::lower(v); }
       Err(e) => { status.code = 1; status.error_buf = FfiConverter::<MoproError>::lower(e); }
   }
 
-[Rust] src/lib.rs → src/circom.rs
-  fn generate_circom_proof(zkey_path, circuit_inputs, proof_lib):
+[Rust] src/lib.rs → src/groth16.rs
+  fn generate_groth16_proof(zkey_path, circuit_inputs, proof_lib):
     name = Path::new(&zkey_path).file_name() → "sha256_16.zkey"
-    witness_fn = circom_get("sha256_16.zkey") → sha25616_witness (fn ptr)
+    witness_fn = groth16_get("sha256_16.zkey") → sha25616_witness (fn ptr)
 
     CircomProver::prove(Arkworks, sha25616_witness, circuit_inputs, zkey_path):
       1. parse JSON → HashMap<"in", Vec<FieldElement>>
@@ -487,10 +472,10 @@ Tracing one call from Dart to Rust and back, referencing actual file locations.
          → Proof { a: G1Affine, b: G2Affine, c: G1Affine }
       5. Convert G1Affine { x: Fq, y: Fq } → G1 { x: BigUint.to_string(), y: ..., z: "1" }
 
-    → Ok(CircomProofResult { proof: CircomProof{a,b,c,...}, inputs: pub_inputs })
+    → Ok(Groth16ProofResult { proof: Groth16Proof{a,b,c,...}, inputs: pub_inputs })
 
 [C ABI wrapper — serialize return]
-  FfiConverter::<CircomProofResult>::lower(result):
+  FfiConverter::<Groth16ProofResult>::lower(result):
     // Writes entire struct tree into one RustBuffer (see §3.3 for wire layout)
     → RustBuffer { capacity, len, data: *Rust heap }
 
@@ -499,18 +484,18 @@ Tracing one call from Dart to Rust and back, referencing actual file locations.
   status.code == 0 → no exception thrown
 
 [Generated Kotlin — lift return value]
-  FfiConverterTypeCircomProofResult.lift(returnedBuf):
+  FfiConverterTypeGroth16ProofResult.lift(returnedBuf):
     ByteBuffer view over buf.data
-    read CircomProof:
+    read Groth16Proof:
       read G1 a: read String x, read String y, read String z
       read G2 b: read List<String> x (count=2), read List<String> y, read List<String> z
       read G1 c: ...
       read String protocol, read String curve
     read List<String> inputs
     RustBuffer.free(returnedBuf)  // calls ffi_..._rustbuffer_free back into .so
-    → CircomProofResult Kotlin object
+    → Groth16ProofResult Kotlin object
 
-[Kotlin] MoproFlutterPlugin.kt:38 convertCircomProof()
+[Kotlin] MoproFlutterPlugin.kt:38 convertGroth16Proof()
   → Map<String, Any> matching StandardMethodCodec serializable types
   result.success(resultMap)  // posts to Flutter message channel
 
@@ -522,30 +507,32 @@ Tracing one call from Dart to Rust and back, referencing actual file locations.
 
 ## 5. Proof System Flows
 
-### 5.1 Circom / Groth16
+### 5.1 Groth16 (Arkworks/Circom)
+
+**Feature flag**: `groth16` (enabled by default)
 
 **Circuit registration** (compile-time):
 ```rust
-// src/lib.rs
+// src/lib.rs (gated with #[cfg(feature = "groth16")])
 rust_witness::witness!(sha25616);   // → fn ptr to compiled C++ from sha256_16.wasm
 
-set_circom_circuits! {
+set_groth16_circuits! {
     ("sha256_16.zkey", WitnessFn::RustWitness(sha25616_witness)),
 }
-// expands to: static CIRCOM_CIRCUITS + fn circom_get(name) -> Option<WitnessFn>
+// expands to: static GROTH16_CIRCUITS + fn groth16_get(name) -> Option<WitnessFn>
 ```
 
 **Runtime flow**:
 ```
-User: Framework=Circom, Circuit=sha256_16, Input=16 bytes
+User: Framework=Groth16, Circuit=sha256_16, Input=16 bytes
   → input JSON: {"in": ["0","1",...,"15"]}
   → zkey asset extracted to filesystem: getApplicationDocumentsDirectory()/sha256_16.zkey
-  → generateCircomProof(zkeyPath, inputsJson, ProofLib.ARKWORKS)
-      → circom_get("sha256_16.zkey") → sha25616_witness
+  → generateGroth16Proof(zkeyPath, inputsJson, ProofLib.ARKWORKS)
+      → groth16_get("sha256_16.zkey") → sha25616_witness
       → sha25616_witness(inputs) → Vec<FieldElement> [native C++]
       → ProvingKey loaded from .zkey
       → Groth16::prove(pk, witness) → Proof{a:G1, b:G2, c:G1}
-      → CircomProofResult{proof, inputs: Vec<String>}
+      → Groth16ProofResult{proof, inputs: Vec<String>}
 ```
 
 **Supported circuits** (28 total):
@@ -565,32 +552,15 @@ User: Framework=Circom, Circuit=sha256_16, Input=16 bytes
 - `ProofLib.ARKWORKS` — pure Rust Groth16 (works everywhere)
 - `ProofLib.RAPIDSNARK` — C++ prover (faster on Android, native `.so` dependency)
 
-### 5.2 Halo2
+### 5.2 Barretenberg (Noir / Ultra Honk)
 
-**Function pointer registry** (`src/halo2.rs`):
-```rust
-pub type Halo2ProveFn = fn(srs: String, pk: String, inputs: HashMap<String, Vec<String>>)
-    -> Result<Halo2ProofResult, String>;
+**Feature flag**: `barretenberg` (enabled by default)
 
-set_halo2_circuits! {
-    ("plonk_fibonacci_pk.bin", plonk_fibonacci::prove,
-     "plonk_fibonacci_vk.bin", plonk_fibonacci::verify),
-    ("hyperplonk_fibonacci_pk.bin", hyperplonk_fibonacci::prove, ...),
-    ("gemini_fibonacci_pk.bin",     gemini_fibonacci::prove, ...),
-}
-```
+> **Historical note**: The Halo2 backend (Plonk/HyperPlonk/Gemini Fibonacci circuits) was removed as unused dead code. Groth16 and Barretenberg are the primary proving systems.
 
-Lookup key is `pk_path` filename (not `.zkey`). Three variants:
-- **Plonk**: base PLONK protocol
-- **HyperPlonk**: multivariate extension (more efficient for high-degree gates)
-- **Gemini**: supports recursive proof composition
+**Source**: `src/barretenberg.rs` — wraps `noir_rs` crate.
 
-**FFI type**: `HashMap<String, Vec<String>>` crosses as a sequence of `(key: String, values: Vec<String>)` pairs in the `RustBuffer`.
-**Return**: `Halo2ProofResult { proof: Vec<u8>, inputs: Vec<u8> }` — raw binary bytes, no coordinate stringification.
-
-**Artifacts**: `test-vectors/halo2/*.bin` (SRS, proving key, verification key) — pre-generated KZG setups.
-
-### 5.3 Noir / Ultra Honk
+### Barretenberg: Noir / Ultra Honk
 
 **Circuit format**: `noir_multiplier2.json` contains ACIR bytecode:
 ```json
@@ -600,14 +570,14 @@ Lookup key is `pk_path` filename (not `.zkey`). Three variants:
 **Lifecycle**:
 ```
 First call (expensive):
-  getNoirVerificationKey(circuitPath, srsPath, onChain=true, lowMemoryMode)
+  getBarretenbergVerificationKey(circuitPath, srsPath, onChain=true, lowMemoryMode)
     → get_bytecode(circuitPath): read JSON, extract "bytecode" field, decode
     → setup_srs_from_bytecode(bytecode, srsPath)
     → derive verification key
     → Vec<u8>   (store this — generation is slow)
 
 Prove:
-  generateNoirProof(circuitPath, srsPath, inputs, onChain=true, vk, lowMemoryMode)
+  generateBarretenbergProof(circuitPath, srsPath, inputs, onChain=true, vk, lowMemoryMode)
     → on_chain=true  → prove_ultra_honk_keccak()   (Solidity-verifiable)
     → on_chain=false → prove_ultra_honk_poseidon()  (faster, off-chain)
     → Vec<u8> proof bytes
@@ -667,7 +637,7 @@ pub fn risc0_verify(receipt_bytes: Vec<u8>) -> Result<Risc0VerifyOutput, Risc0Er
 
 ### 5.5 Cairo-M
 
-Feature-gated (`#[cfg(feature = "cairo")]`). Uses the Cairo-M prover — a fork optimized for the M31 (Mersenne 31) prime field. STARK-based (no trusted setup).
+Feature-gated (`#[cfg(feature = "cairo_m")]`). Uses the Cairo-M prover — a fork optimized for the M31 (Mersenne 31) prime field. STARK-based (no trusted setup).
 
 ```rust
 pub fn cairo_prove(program_json: String, inputs_json: String)
@@ -726,7 +696,7 @@ All communication (except IMP1) goes through a single Flutter `MethodChannel("mo
 **Dart side** (`mopro_flutter_method_channel.dart`):
 ```dart
 final methodChannel = const MethodChannel('mopro_flutter');
-await methodChannel.invokeMethod<Map>('generateCircomProof', {
+await methodChannel.invokeMethod<Map>('generateGroth16Proof', {
     'zkeyPath': path,
     'inputs': jsonString,
     'proofLib': 0,    // int, not enum
@@ -848,10 +818,50 @@ All `.zkey`, `.srs`, `.bin`, `.vk`, `.pkp`, `.pkv` files are **pre-generated off
 | `moPro/mopro-example-app/build.rs` | WASM→C++ transpilation, `cc` compilation of witnesses |
 | `moPro/mopro-example-app/Cargo.toml` | All Rust dependencies, feature flags (cairo, noir, provekit) |
 | `moPro/mopro-example-app/flutter/mopro_flutter_plugin/android/src/main/kotlin/uniffi/mopro/mopro.kt` | **Generated** UniFFI Kotlin bindings (JNA interface, FfiConverters, RustBuffer) |
-| `moPro/mopro-example-app/flutter/mopro_flutter_plugin/ios/Classes/MoproCircom.swift` | **Generated** UniFFI Swift bindings (Circom pass) |
+| `moPro/mopro-example-app/flutter/mopro_flutter_plugin/ios/Classes/MoproGroth16.swift` | **Generated** UniFFI Swift bindings (Groth16 pass) |
 | `moPro/mopro-example-app/flutter/mopro_flutter_plugin/android/src/main/kotlin/com/example/mopro_flutter/MoproFlutterPlugin.kt` | Hand-written Kotlin MethodChannel handler |
 | `moPro/mopro-example-app/flutter/mopro_flutter_plugin/ios/Classes/MoproFlutterPlugin.swift` | Hand-written Swift MethodChannel handler (adds async dispatch) |
 | `moPro/mopro-example-app/flutter/mopro_flutter_plugin/lib/mopro_flutter_method_channel.dart` | Dart MethodChannel API |
 | `moPro/mopro-example-app/flutter/mopro_flutter_plugin/lib/mopro_types.dart` | Dart type definitions for all proof results |
 | `moPro/mopro-example-app/flutter/lib/main.dart` | Flutter UI: framework/circuit/input selection |
 | `moPro/mopro-example-app/flutter/android/app/src/main/kotlin/.../IMP1ProverChannel.kt` | IMP1 separate MethodChannel (bypasses UniFFI entirely) |
+
+---
+
+## 9. Backend Naming Convention
+
+All backends in this workspace are named after their **proving system**, not the circuit language used to write the circuits:
+
+| Canonical name | Proving system | Circuit language | Rust source |
+|----------------|---------------|-----------------|-------------|
+| `groth16` | Groth16 (Arkworks) | Circom | `src/groth16.rs` |
+| `barretenberg` | UltraHonk (Barretenberg) | Noir | `src/barretenberg.rs` |
+| `cairo_m` | STARKs / Stwo | Cairo-M | `cairo-m-prover/src/lib.rs` |
+| `provekit` | ProveKit | Noir (accelerated) | `provekit-wrapper/src/lib.rs` |
+| `risc0` | RISC0 zkVM | RISC-V assembly | `risc0-circuit/src/main.rs` |
+
+**Rationale**: a circuit language can target multiple proving systems (e.g. Noir compiles to both Barretenberg UltraHonk and ProveKit). Naming by proving system makes the backend identity unambiguous.
+
+---
+
+## 10. Feature Flags
+
+Feature flags in `moPro/mopro-example-app/Cargo.toml` control which backends are compiled in:
+
+| Feature flag | Crates enabled | Proving system | Default |
+|---|---|---|---|
+| `groth16` | `circom-prover`, `rust-witness`, `num-bigint` | Groth16 via Arkworks | ✅ yes |
+| `barretenberg` | `noir_rs` | UltraHonk via Barretenberg | ✅ yes |
+| `cairo_m` | `cairo-m-prover` | STARKs via Stwo over M31 | ✅ yes |
+| `provekit` | `provekit-wrapper` | ProveKit accelerated Noir | ✅ yes |
+| _(always on)_ | `risc0-zkvm`, `methods` | RISC0 zkVM (STARK) | always |
+
+To build with only the Groth16 and RISC0 backends (e.g. for a smaller binary):
+```bash
+cargo build --no-default-features --features groth16
+```
+
+To build all backends (default):
+```bash
+cargo build
+```
