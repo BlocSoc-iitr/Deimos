@@ -25,10 +25,14 @@ pub fn prove(program_json: &str, inputs_json: &str) -> Result<Vec<u8>> {
         RunnerOptions::default(),
     ).context("Failed to run cairo program")?;
 
-    let mut prover_input = import_from_runner_output(
-        runner_output.vm.segments.into_iter().next().unwrap(),
-        runner_output.public_address_ranges,
-    ).context("Failed to import runner output")?;
+    let first_segment = runner_output
+        .vm
+        .segments
+        .into_iter()
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("Cairo runner produced no memory segments"))?;
+    let mut prover_input = import_from_runner_output(first_segment, runner_output.public_address_ranges)
+        .context("Failed to import runner output")?;
 
     let proof = prove_cairo_m::<Blake2sMerkleChannel>(&mut prover_input, None)
         .context("Failed to generate proof")?;
