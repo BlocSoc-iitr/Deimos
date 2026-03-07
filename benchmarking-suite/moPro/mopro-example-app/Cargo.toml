@@ -9,9 +9,10 @@ crate-type = ["lib", "cdylib", "staticlib"]
 
 # Adapters for different proof systems
 [features]
-default = ["cairo", "noir", "provekit"]
-cairo = ["dep:cairo-m-prover"]
-noir = ["dep:noir_rs"]
+default = ["groth16", "cairo_m", "barretenberg", "provekit"]
+groth16 = ["dep:circom-prover", "dep:rust-witness", "dep:num-bigint"]
+cairo_m = ["dep:cairo-m-prover"]
+barretenberg = ["dep:noir_rs"]
 provekit = ["dep:provekit-wrapper"]
 
 [dependencies]
@@ -30,22 +31,14 @@ provekit-wrapper = { path = "../provekit-wrapper", optional = true }
 
 
 # ==============================================================================
-# CIRCOM DEPENDENCIES
+# GROTH16 (CIRCOM) DEPENDENCIES
 # ==============================================================================
-circom-prover = "0.1"
-rust-witness = "0.1"
-num-bigint = "0.4.0"
-
-# HALO2_DEPENDENCIES
-
-plonk-fibonacci = { package = "plonk-fibonacci", git = "https://github.com/sifnoc/plonkish-fibonacci-sample.git" }
-hyperplonk-fibonacci = { package = "hyperplonk-fibonacci", git = "https://github.com/sifnoc/plonkish-fibonacci-sample.git" }
-gemini-fibonacci = { package = "gemini-fibonacci", git = "https://github.com/sifnoc/plonkish-fibonacci-sample.git" }
-
-# NOIR_DEPENDENCIES
+circom-prover = { version = "0.1", optional = true }
+rust-witness = { version = "0.1", optional = true }
+num-bigint = { version = "0.4.0", optional = true }
 
 # ==============================================================================
-# NOIR DEPENDENCIES
+# BARRETENBERG (NOIR) DEPENDENCIES
 # ==============================================================================
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.94"
@@ -58,20 +51,14 @@ noir_rs = { package = "noir", git = "https://github.com/zkmopro/noir-rs", featur
 
 [build-dependencies]
 # ==============================================================================
-# CIRCOM BUILD DEPENDENCIES
+# GROTH16 (CIRCOM) BUILD DEPENDENCIES
 # ==============================================================================
-witnesscalc-adapter = "0.1"
-rust-witness = "0.1"
+witnesscalc-adapter = { version = "0.1", optional = true }
+rust-witness = { version = "0.1", optional = true }
 cc = "1.0"
 
-# HALO2_BUILD_DEPENDENCIES
-
 # ==============================================================================
-# HALO2 BUILD DEPENDENCIES
-# ==============================================================================
-
-# ==============================================================================
-# NOIR BUILD DEPENDENCIES
+# BARRETENBERG (NOIR) BUILD DEPENDENCIES
 # ==============================================================================
 
 
@@ -79,18 +66,12 @@ cc = "1.0"
 mopro-ffi = { version = "0.3.1", features = ["uniffi-tests"] }
 
 # ==============================================================================
-# CIRCOM DEV DEPENDENCIES
+# GROTH16 (CIRCOM) DEV DEPENDENCIES
 # ==============================================================================
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.94"
 
-# HALO2_DEV_DEPENDENCIES
-
 # ==============================================================================
-# HALO2 DEV DEPENDENCIES
-# ==============================================================================
-
-# ==============================================================================
-# NOIR DEV DEPENDENCIES
+# BARRETENBERG (NOIR) DEV DEPENDENCIES
 # ==============================================================================
 serial_test = "3.0.0"

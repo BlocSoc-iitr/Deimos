@@ -61,13 +61,10 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/plonk_fibonacci_pk.bin
-    - assets/plonk_fibonacci_vk.bin
-    - assets/plonk_fibonacci_srs.bin
-    - assets/noir/
-    - assets/circom/zkey/
-    - assets/circom/vk/
-    - assets/circom/wtns/
+    - assets/barretenberg/
+    - assets/groth16/zkey/
+    - assets/groth16/vk/
+    - assets/groth16/wtns/
     - inputs/input_1.json
     - inputs/input_2.json
     - inputs/input_3.json

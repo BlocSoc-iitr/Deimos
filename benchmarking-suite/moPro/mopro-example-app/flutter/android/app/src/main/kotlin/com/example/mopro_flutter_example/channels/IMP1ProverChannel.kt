@@ -43,8 +43,8 @@ class IMP1ProverChannel(private val context: Context) : MethodChannel.MethodCall
             
             // Prepare file paths
             val cacheDir = context.cacheDir
-            val witnessFile = copyAssetToCache("circom/wtns/${circuitName}.wtns")
-            val zkeyFile = copyAssetToCache("circom/zkey/${circuitName}.zkey")
+            val witnessFile = copyAssetToCache("groth16/wtns/${circuitName}.wtns")
+            val zkeyFile = copyAssetToCache("groth16/zkey/${circuitName}.zkey")
             val proofFile = File(cacheDir, "proof_${circuitName}_${System.currentTimeMillis()}.proof")
             val publicFile = File(cacheDir, "public_${circuitName}_${System.currentTimeMillis()}.public")
             
@@ -113,7 +113,7 @@ class IMP1ProverChannel(private val context: Context) : MethodChannel.MethodCall
             }
             
             // Copy verification key from assets
-            val vkFile = copyAssetToCache("circom/vk/${circuitName}_vk.json")
+            val vkFile = copyAssetToCache("groth16/vk/${circuitName}_vk.json")
             
             // Verify with IMP1
             val startTime = System.currentTimeMillis()

@@ -11,10 +11,10 @@ class MethodChannelMoproFlutter extends MoproFlutterPlatform {
   final methodChannel = const MethodChannel('mopro_flutter');
 
   @override
-  Future<CircomProofResult?> generateCircomProof(
+  Future<Groth16ProofResult?> generateGroth16Proof(
       String zkeyPath, String inputs, ProofLib proofLib) async {
     final proofResult = await methodChannel
-        .invokeMethod<Map<Object?, Object?>>('generateCircomProof', {
+        .invokeMethod<Map<Object?, Object?>>('generateGroth16Proof', {
       'zkeyPath': zkeyPath,
       'inputs': inputs,
       'proofLib': proofLib.index,
@@ -24,15 +24,15 @@ class MethodChannelMoproFlutter extends MoproFlutterPlatform {
       return null;
     }
 
-    var circomProofResult = CircomProofResult.fromMap(proofResult);
+    var circomProofResult = Groth16ProofResult.fromMap(proofResult);
 
     return circomProofResult;
   }
 
   @override
-  Future<bool> verifyCircomProof(
-      String zkeyPath, CircomProofResult proof, ProofLib proofLib) async {
-    final result = await methodChannel.invokeMethod<bool>('verifyCircomProof', {
+  Future<bool> verifyGroth16Proof(
+      String zkeyPath, Groth16ProofResult proof, ProofLib proofLib) async {
+    final result = await methodChannel.invokeMethod<bool>('verifyGroth16Proof', {
       'zkeyPath': zkeyPath,
       'proof': proof.toMap(),
       'proofLib': proofLib.index,
@@ -41,42 +41,10 @@ class MethodChannelMoproFlutter extends MoproFlutterPlatform {
   }
 
   @override
-  Future<Halo2ProofResult?> generateHalo2Proof(
-      String srsPath, String pkPath, Map<String, List<String>> inputs) async {
-    final proofResult = await methodChannel
-        .invokeMethod<Map<Object?, Object?>>('generateHalo2Proof', {
-      'srsPath': srsPath,
-      'pkPath': pkPath,
-      'inputs': inputs,
-    });
-
-    if (proofResult == null) {
-      return null;
-    }
-
-    var halo2ProofResult = Halo2ProofResult.fromMap(proofResult);
-    return halo2ProofResult;
-  }
-
-  @override
-  Future<bool> verifyHalo2Proof(
-      String srsPath, String vkPath, Uint8List proof, Uint8List inputs) async {
-    print(
-        "verifyHalo2Proof: srsPath: $srsPath, vkPath: $vkPath, proof: ${proof.length}, inputs: ${inputs.length}");
-    final result = await methodChannel.invokeMethod<bool>('verifyHalo2Proof', {
-      'srsPath': srsPath,
-      'vkPath': vkPath,
-      'proof': proof,
-      'inputs': inputs,
-    });
-    return result ?? false;
-  }
-
-  @override
-  Future<Uint8List> generateNoirProof(
+  Future<Uint8List> generateBarretenbergProof(
       String circuitPath, String? srsPath, List<String> inputs, bool onChain, Uint8List vk, bool lowMemoryMode) async {
     final result =
-        await methodChannel.invokeMethod<Uint8List>('generateNoirProof', {
+        await methodChannel.invokeMethod<Uint8List>('generateBarretenbergProof', {
       'circuitPath': circuitPath,
       'srsPath': srsPath,
       'inputs': inputs,
@@ -88,8 +56,8 @@ class MethodChannelMoproFlutter extends MoproFlutterPlatform {
   }
 
   @override
-  Future<bool> verifyNoirProof(String circuitPath, Uint8List proof, bool onChain, Uint8List vk, bool lowMemoryMode) async {
-    final result = await methodChannel.invokeMethod<bool>('verifyNoirProof', {
+  Future<bool> verifyBarretenbergProof(String circuitPath, Uint8List proof, bool onChain, Uint8List vk, bool lowMemoryMode) async {
+    final result = await methodChannel.invokeMethod<bool>('verifyBarretenbergProof', {
       'circuitPath': circuitPath,
       'proof': proof,
       'onChain': onChain,
@@ -100,8 +68,8 @@ class MethodChannelMoproFlutter extends MoproFlutterPlatform {
   }
 
   @override
-  Future<Uint8List> getNoirVerificationKey(String circuitPath, String? srsPath, bool onChain, bool lowMemoryMode) async {
-    final result = await methodChannel.invokeMethod<Uint8List>('getNoirVerificationKey', {
+  Future<Uint8List> getBarretenbergVerificationKey(String circuitPath, String? srsPath, bool onChain, bool lowMemoryMode) async {
+    final result = await methodChannel.invokeMethod<Uint8List>('getBarretenbergVerificationKey', {
       'circuitPath': circuitPath,
       'srsPath': srsPath,
       'onChain': onChain,

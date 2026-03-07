@@ -26,37 +26,27 @@ abstract class MoproFlutterPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<CircomProofResult?> generateCircomProof(
+  Future<Groth16ProofResult?> generateGroth16Proof(
       String zkeyPath, String inputs, ProofLib proofLib) {
-    throw UnimplementedError('generateCircomProof() has not been implemented.');
+    throw UnimplementedError('generateGroth16Proof() has not been implemented.');
   }
 
-  Future<bool> verifyCircomProof(
-      String zkeyPath, CircomProofResult proof, ProofLib proofLib) {
-    throw UnimplementedError('verifyCircomProof() has not been implemented.');
+  Future<bool> verifyGroth16Proof(
+      String zkeyPath, Groth16ProofResult proof, ProofLib proofLib) {
+    throw UnimplementedError('verifyGroth16Proof() has not been implemented.');
   }
 
-  Future<Halo2ProofResult?> generateHalo2Proof(
-      String srsPath, String pkPath, Map<String, List<String>> inputs) {
-    throw UnimplementedError('generateHalo2Proof() has not been implemented.');
-  }
-
-  Future<bool> verifyHalo2Proof(
-      String srsPath, String vkPath, Uint8List proof, Uint8List inputs) {
-    throw UnimplementedError('verifyHalo2Proof() has not been implemented.');
-  }
-
-  Future<Uint8List> generateNoirProof(
+  Future<Uint8List> generateBarretenbergProof(
       String circuitPath, String? srsPath, List<String> inputs, bool onChain, Uint8List vk, bool lowMemoryMode) {
-    throw UnimplementedError('generateNoirProof() has not been implemented.');
+    throw UnimplementedError('generateBarretenbergProof() has not been implemented.');
   }
 
-  Future<bool> verifyNoirProof(String circuitPath, Uint8List proof, bool onChain, Uint8List vk, bool lowMemoryMode) {
-    throw UnimplementedError('verifyNoirProof() has not been implemented.');
+  Future<bool> verifyBarretenbergProof(String circuitPath, Uint8List proof, bool onChain, Uint8List vk, bool lowMemoryMode) {
+    throw UnimplementedError('verifyBarretenbergProof() has not been implemented.');
   }
 
-  Future<Uint8List> getNoirVerificationKey(String circuitPath, String? srsPath, bool onChain, bool lowMemoryMode) {
-    throw UnimplementedError('getNoirVerificationKey() has not been implemented.');
+  Future<Uint8List> getBarretenbergVerificationKey(String circuitPath, String? srsPath, bool onChain, bool lowMemoryMode) {
+    throw UnimplementedError('getBarretenbergVerificationKey() has not been implemented.');
   }
 
   Future<Risc0ProofOutput> generateRisc0Proof(int input) {

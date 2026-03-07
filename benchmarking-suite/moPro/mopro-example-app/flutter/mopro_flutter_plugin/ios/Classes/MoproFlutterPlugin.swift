@@ -26,7 +26,7 @@ class FlutterG2 {
   }
 }
 
-class FlutterCircomProof {
+class FlutterGroth16Proof {
   let a: FlutterG1
   let b: FlutterG2
   let c: FlutterG1
@@ -42,23 +42,23 @@ class FlutterCircomProof {
   }
 }
 
-class FlutterCircomProofResult {
-  let proof: FlutterCircomProof
+class FlutterGroth16ProofResult {
+  let proof: FlutterGroth16Proof
   let inputs: [String]
 
-  init(proof: FlutterCircomProof, inputs: [String]) {
+  init(proof: FlutterGroth16Proof, inputs: [String]) {
     self.proof = proof
     self.inputs = inputs
   }
 }
 
-func convertCircomProof(res: CircomProofResult) -> [String: Any] {
+func convertGroth16Proof(res: Groth16ProofResult) -> [String: Any] {
   let g1a = FlutterG1(x: res.proof.a.x, y: res.proof.a.y, z: res.proof.a.z)
   let g2b = FlutterG2(x: res.proof.b.x, y: res.proof.b.y, z: res.proof.b.z)
   let g1c = FlutterG1(x: res.proof.c.x, y: res.proof.c.y, z: res.proof.c.z)
-  let circomProof = FlutterCircomProof(
+  let circomProof = FlutterGroth16Proof(
     a: g1a, b: g2b, c: g1c, `protocol`: res.proof.protocol, curve: res.proof.curve)
-  let circomProofResult = FlutterCircomProofResult(proof: circomProof, inputs: res.inputs)
+  let circomProofResult = FlutterGroth16ProofResult(proof: circomProof, inputs: res.inputs)
   let resultMap: [String: Any] = [
     "proof": [
       "a": [
@@ -84,7 +84,7 @@ func convertCircomProof(res: CircomProofResult) -> [String: Any] {
   return resultMap
 }
 
-func convertCircomProofResult(proof: [String: Any]) -> CircomProofResult {
+func convertGroth16ProofResult(proof: [String: Any]) -> Groth16ProofResult {
   let proofMap = proof["proof"] as! [String: Any]
   let aMap = proofMap["a"] as! [String: String]
   let g1a = G1(x: aMap["x"] ?? "0", y: aMap["y"] ?? "0", z: aMap["z"] ?? "1")
@@ -96,7 +96,7 @@ func convertCircomProofResult(proof: [String: Any]) -> CircomProofResult {
   let circomProof = CircomProof(
     a: g1a, b: g2b, c: g1c, `protocol`: proofMap["protocol"] as! String,
     curve: proofMap["curve"] as! String)
-  let circomProofResult = CircomProofResult(
+  let circomProofResult = Groth16ProofResult(
     proof: circomProof, inputs: proof["inputs"] as! [String])
   return circomProofResult
 }
@@ -111,7 +111,7 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     switch call.method {
-    case "generateCircomProof":
+    case "generateGroth16Proof":
       guard let args = call.arguments as? [String: Any],
         let zkeyPath = args["zkeyPath"] as? String,
         let inputs = args["inputs"] as? String,
@@ -126,19 +126,19 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
       // Resolve Flutter asset path to real iOS bundle filesystem path
       let resolvedZkeyPath: String
       let key = FlutterDartProject.lookupKey(forAsset: zkeyPath)
-      NSLog("DEBUG CIRCOM: Original path: %@, Lookup key: %@", zkeyPath, key)
+      NSLog("DEBUG GROTH16: Original path: %@, Lookup key: %@", zkeyPath, key)
       if let bundlePath = Bundle.main.path(forResource: key, ofType: nil) {
         resolvedZkeyPath = bundlePath
-        NSLog("DEBUG CIRCOM: Resolved to bundle path: %@", bundlePath)
+        NSLog("DEBUG GROTH16: Resolved to bundle path: %@", bundlePath)
       } else {
         // Fallback: try using the path as-is (might be an absolute path already)
         resolvedZkeyPath = zkeyPath
-        NSLog("DEBUG CIRCOM: WARNING - Could not resolve bundle path, using as-is: %@", zkeyPath)
+        NSLog("DEBUG GROTH16: WARNING - Could not resolve bundle path, using as-is: %@", zkeyPath)
       }
       
       // Check if file exists at resolved path
       let fileExists = FileManager.default.fileExists(atPath: resolvedZkeyPath)
-      NSLog("DEBUG CIRCOM: File exists at resolved path: %@", fileExists ? "YES" : "NO")
+      NSLog("DEBUG GROTH16: File exists at resolved path: %@", fileExists ? "YES" : "NO")
 
       DispatchQueue.global(qos: .userInitiated).async {
         do {
@@ -148,19 +148,19 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
           } else {
             moproProofLib = CircomProofLib.rapidsnark
           }
-          NSLog("DEBUG CIRCOM: Starting proof generation with path: %@", resolvedZkeyPath)
+          NSLog("DEBUG GROTH16: Starting proof generation with path: %@", resolvedZkeyPath)
           // Call the function from mopro.swift with resolved bundle path
-          let proofResult = try generateCircomProof(
+          let proofResult = try generateGroth16Proof(
             zkeyPath: resolvedZkeyPath, circuitInputs: inputs, proofLib: moproProofLib)
-          NSLog("DEBUG CIRCOM: Proof generation succeeded!")
-          let resultMap = convertCircomProof(res: proofResult)
+          NSLog("DEBUG GROTH16: Proof generation succeeded!")
+          let resultMap = convertGroth16Proof(res: proofResult)
 
           // Return the proof and inputs as a map supported by the StandardMethodCodec
           DispatchQueue.main.async {
             result(resultMap)
           }
         } catch {
-          NSLog("DEBUG CIRCOM: Proof generation FAILED: %@", error.localizedDescription)
+          NSLog("DEBUG GROTH16: Proof generation FAILED: %@", error.localizedDescription)
           DispatchQueue.main.async {
             result(
               FlutterError(
@@ -170,7 +170,7 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
         }
       }
 
-    case "verifyCircomProof":
+    case "verifyGroth16Proof":
       guard let args = call.arguments as? [String: Any],
         let zkeyPath = args["zkeyPath"] as? String,
         let proof = args["proof"] as? [String: Any],
@@ -197,9 +197,9 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
           } else {
             moproProofLib = CircomProofLib.rapidsnark
           }
-          let circomProofResult = convertCircomProofResult(proof: proof)
+          let circomProofResult = convertGroth16ProofResult(proof: proof)
           // Call the function from mopro.swift with resolved bundle path
-          let valid = try verifyCircomProof(
+          let valid = try verifyGroth16Proof(
             zkeyPath: resolvedVerifyZkeyPath, proofResult: circomProofResult, proofLib: moproProofLib)
 
           // Return the proof and inputs as a map supported by the StandardMethodCodec
@@ -217,7 +217,7 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
       }
 
 
-    case "generateNoirProof":
+    case "generateBarretenbergProof":
       guard let args = call.arguments as? [String: Any],
         let circuitPath = args["circuitPath"] as? String,
         let inputs = args["inputs"] as? [String],
@@ -232,7 +232,7 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
       let srsPath = args["srsPath"] as? String
 
       do {
-        let proofResult = try generateNoirProof(
+        let proofResult = try generateBarretenbergProof(
           circuitPath: circuitPath, srsPath: srsPath, inputs: inputs, onChain: onChain, vk: vk.data, lowMemoryMode: lowMemoryMode)
         result(proofResult)
       } catch {
@@ -242,7 +242,7 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
             details: error.localizedDescription))
       }
 
-    case "verifyNoirProof":
+    case "verifyBarretenbergProof":
       guard let args = call.arguments as? [String: Any],
         let circuitPath = args["circuitPath"] as? String,
         let proof = args["proof"] as? FlutterStandardTypedData,
@@ -255,7 +255,7 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
       }
 
       do {
-        let valid = try verifyNoirProof(circuitPath: circuitPath, proof: proof.data, onChain: onChain, vk: vk.data, lowMemoryMode: lowMemoryMode)
+        let valid = try verifyBarretenbergProof(circuitPath: circuitPath, proof: proof.data, onChain: onChain, vk: vk.data, lowMemoryMode: lowMemoryMode)
         result(valid)
       } catch {
         result(
@@ -263,7 +263,7 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
             code: "PROOF_VERIFICATION_ERROR", message: "Failed to verify proof",
             details: error.localizedDescription))
       }
-    case "getNoirVerificationKey":
+    case "getBarretenbergVerificationKey":
       guard let args = call.arguments as? [String: Any],
         let circuitPath = args["circuitPath"] as? String,
         let onChain = args["onChain"] as? Bool,
@@ -276,7 +276,7 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
       let srsPath = args["srsPath"] as? String
 
       do {
-        let vkResult = try getNoirVerificationKey(circuitPath: circuitPath, srsPath: srsPath, onChain: onChain, lowMemoryMode: lowMemoryMode)
+        let vkResult = try getBarretenbergVerificationKey(circuitPath: circuitPath, srsPath: srsPath, onChain: onChain, lowMemoryMode: lowMemoryMode)
         result(vkResult)
       } catch {
         result(

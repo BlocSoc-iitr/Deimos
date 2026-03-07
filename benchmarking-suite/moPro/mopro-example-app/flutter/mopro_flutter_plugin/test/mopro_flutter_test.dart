@@ -9,13 +9,15 @@ class MockMoproFlutterPlatform
     with MockPlatformInterfaceMixin
     implements MoproFlutterPlatform {
   @override
-  Future<CircomProofResult?> generateCircomProof(
-          String zkeyPath, String inputs) =>
-      Future.value(CircomProofResult(
+  Future<Groth16ProofResult?> generateGroth16Proof(
+          String zkeyPath, String inputs, ProofLib proofLib) =>
+      Future.value(Groth16ProofResult(
         ProofCalldata(
-          G1Point("1", "2"),
-          G2Point(["1", "2"], ["3", "4"]),
-          G1Point("3", "4"),
+          G1Point("1", "2", "3"),
+          G2Point(["1", "2"], ["3", "4"], ["5", "6"]),
+          G1Point("3", "4", "5"),
+          "protocol",
+          "curve"
         ),
         ["3", "5"],
       ));
@@ -35,13 +37,15 @@ void main() {
 
     var inputs = "{\"a\":[\"3\"],\"b\":[\"5\"]}";
     expect(
-        await moproFlutterPlugin.generateCircomProof(
-            "multiplier2_final.zkey", inputs),
-        CircomProofResult(
+        await moproFlutterPlugin.generateGroth16Proof(
+            "multiplier2_final.zkey", inputs, ProofLib.arkworks),
+        Groth16ProofResult(
           ProofCalldata(
-            G1Point("1", "2"),
-            G2Point(["1", "2"], ["3", "4"]),
-            G1Point("3", "4"),
+            G1Point("1", "2", "3"),
+            G2Point(["1", "2"], ["3", "4"], ["5", "6"]),
+            G1Point("3", "4", "5"),
+            "protocol",
+            "curve"
           ),
           ["3", "5"],
         ));

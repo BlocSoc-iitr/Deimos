@@ -1,3 +1,9 @@
+//! ProveKit proving backend.
+//!
+//! Wraps the `provekit-core-prover` and `provekit-verifier` crates to provide
+//! proof generation and verification for circuits compiled with the ProveKit
+//! toolchain (an accelerated Noir backend). Enabled via the `provekit` feature flag.
+
 use anyhow::{Context, Result};
 use provekit_common::{file::read, Prover, Verifier};
 use provekit_core_prover::Prove;
@@ -5,6 +11,14 @@ use provekit_verifier::Verify;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
+/// Generates a ProveKit proof using a compiled prover key file.
+///
+/// # Arguments
+/// - `prover_path`: path to the `.pkp` prover key file produced during setup
+/// - `input_toml`: TOML-encoded circuit inputs
+///
+/// # Returns
+/// `Ok(Vec<u8>)` containing the serialized proof, or an `anyhow::Error`.
 pub fn prove(prover_path: &str, input_toml: &str) -> Result<Vec<u8>> {
     // Write input TOML to a temporary file because Prover::prove expects a path
     // Create temp file for input
@@ -27,6 +41,14 @@ pub fn prove(prover_path: &str, input_toml: &str) -> Result<Vec<u8>> {
     Ok(proof_bytes)
 }
 
+/// Verifies a ProveKit proof using a compiled verifier key file.
+///
+/// # Arguments
+/// - `verifier_path`: path to the `.pkv` verifier key file produced during setup
+/// - `proof_bytes`: serialized proof bytes produced by [`prove`]
+///
+/// # Returns
+/// `Ok(true)` if the proof is valid, or an `anyhow::Error` on failure.
 pub fn verify(verifier_path: &str, proof_bytes: &[u8]) -> Result<bool> {
     // Read the verified from the provided path
     let mut verifier: Verifier = read(std::path::Path::new(verifier_path)).context("Failed to read Verifier pkv")?;

@@ -43,13 +43,13 @@ class ProofCalldata {
 
 enum ProofLib { arkworks, rapidsnark }
 
-class CircomProofResult {
+class Groth16ProofResult {
   final ProofCalldata proof;
   final List<String> inputs;
 
-  CircomProofResult(this.proof, this.inputs);
+  Groth16ProofResult(this.proof, this.inputs);
 
-  factory CircomProofResult.fromMap(Map<Object?, Object?> proofResult) {
+  factory Groth16ProofResult.fromMap(Map<Object?, Object?> proofResult) {
     var proof = proofResult["proof"] as Map<Object?, Object?>;
     var inputs = proofResult["inputs"] as List;
     var a = proof["a"] as Map<Object?, Object?>;
@@ -60,7 +60,7 @@ class CircomProofResult {
     var g2b = G2Point((b["x"] as List).cast<String>(),
         (b["y"] as List).cast<String>(), (b["z"] as List).cast<String>());
     var g1c = G1Point(c["x"] as String, c["y"] as String, c["z"] as String);
-    return CircomProofResult(
+    return Groth16ProofResult(
         ProofCalldata(g1a, g2b, g1c, proof["protocol"] as String,
             proof["curve"] as String),
         inputs.cast<String>());
@@ -77,22 +77,6 @@ class CircomProofResult {
       },
       "inputs": inputs
     };
-  }
-}
-
-class Halo2ProofResult {
-  final Uint8List proof;
-  final Uint8List inputs;
-
-  Halo2ProofResult(this.proof, this.inputs);
-
-  factory Halo2ProofResult.fromMap(Map<Object?, Object?> proofResult) {
-    return Halo2ProofResult(
-        proofResult["proof"] as Uint8List, proofResult["inputs"] as Uint8List);
-  }
-
-  Map<String, dynamic> toMap() {
-    return {"proof": proof, "inputs": inputs};
   }
 }
 

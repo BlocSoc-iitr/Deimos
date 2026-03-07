@@ -16,10 +16,10 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   //TODO better test
-  testWidgets('Circom Proof Test', (WidgetTester tester) async {
+  testWidgets('Groth16 Proof Test', (WidgetTester tester) async {
     final MoproFlutter plugin = MoproFlutter();
     var inputs = "{\"a\":[\"3\"],\"b\":[\"5\"]}";
-    final CircomProofResult? proofResult = await plugin.generateCircomProof(
+    final Groth16ProofResult? proofResult = await plugin.generateGroth16Proof(
         "assets/multiplier2_final.zkey", inputs, ProofLib.arkworks);
     // The version string depends on the host platform running the test, so
     // just assert that some non-empty string is returned.
