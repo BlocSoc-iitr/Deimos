@@ -735,6 +735,10 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is 
 // rather `InterfaceTooLargeException`, caused by too many methods 
@@ -758,6 +762,8 @@ fun uniffi_mopro_example_app_checksum_func_generate_barretenberg_proof(
 ): Short
 fun uniffi_mopro_example_app_checksum_func_generate_groth16_proof(
 ): Short
+fun uniffi_mopro_example_app_checksum_func_generate_rapidsnark_proof(
+): Short
 fun uniffi_mopro_example_app_checksum_func_get_barretenberg_verification_key(
 ): Short
 fun uniffi_mopro_example_app_checksum_func_mopro_uniffi_hello_world(
@@ -773,6 +779,8 @@ fun uniffi_mopro_example_app_checksum_func_risc0_verify(
 fun uniffi_mopro_example_app_checksum_func_verify_barretenberg_proof(
 ): Short
 fun uniffi_mopro_example_app_checksum_func_verify_groth16_proof(
+): Short
+fun uniffi_mopro_example_app_checksum_func_verify_rapidsnark_proof(
 ): Short
 fun ffi_mopro_example_app_uniffi_contract_version(
 ): Int
@@ -827,6 +835,8 @@ fun uniffi_mopro_example_app_fn_func_generate_barretenberg_proof(`circuitPath`: 
 ): RustBuffer.ByValue
 fun uniffi_mopro_example_app_fn_func_generate_groth16_proof(`zkeyPath`: RustBuffer.ByValue,`circuitInputs`: RustBuffer.ByValue,`proofLib`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
+fun uniffi_mopro_example_app_fn_func_generate_rapidsnark_proof(`zkeyPath`: RustBuffer.ByValue,`circuitInputs`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
 fun uniffi_mopro_example_app_fn_func_get_barretenberg_verification_key(`circuitPath`: RustBuffer.ByValue,`srsPath`: RustBuffer.ByValue,`onChain`: Byte,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 fun uniffi_mopro_example_app_fn_func_mopro_uniffi_hello_world(uniffi_out_err: UniffiRustCallStatus, 
@@ -842,6 +852,8 @@ fun uniffi_mopro_example_app_fn_func_risc0_verify(`receiptBytes`: RustBuffer.ByV
 fun uniffi_mopro_example_app_fn_func_verify_barretenberg_proof(`circuitPath`: RustBuffer.ByValue,`proof`: RustBuffer.ByValue,`onChain`: Byte,`vk`: RustBuffer.ByValue,`lowMemoryMode`: Byte,uniffi_out_err: UniffiRustCallStatus, 
 ): Byte
 fun uniffi_mopro_example_app_fn_func_verify_groth16_proof(`zkeyPath`: RustBuffer.ByValue,`proofResult`: RustBuffer.ByValue,`proofLib`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): Byte
+fun uniffi_mopro_example_app_fn_func_verify_rapidsnark_proof(`zkeyPath`: RustBuffer.ByValue,`proofResult`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): Byte
 fun ffi_mopro_example_app_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
@@ -981,6 +993,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_mopro_example_app_checksum_func_generate_groth16_proof() != 60165.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_mopro_example_app_checksum_func_generate_rapidsnark_proof() != 16018.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_mopro_example_app_checksum_func_get_barretenberg_verification_key() != 58699.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1003,6 +1018,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_mopro_example_app_checksum_func_verify_groth16_proof() != 5366.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_mopro_example_app_checksum_func_verify_rapidsnark_proof() != 24143.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -2201,6 +2219,26 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.Str
     
 
         /**
+         * Generates a Groth16 proof using the **Rapidsnark** C++ backend.
+         *
+         * # Arguments
+         * - `zkey_path`: path to the `.zkey` proving key file (copied to device storage)
+         * - `circuit_inputs`: JSON-encoded circuit inputs
+         *
+         * # Returns
+         * `Ok(Groth16ProofResult)` containing the proof and public inputs, or a `MoproError`.
+         */
+    @Throws(MoproException::class) fun `generateRapidsnarkProof`(`zkeyPath`: kotlin.String, `circuitInputs`: kotlin.String): Groth16ProofResult {
+            return FfiConverterTypeGroth16ProofResult.lift(
+    uniffiRustCallWithError(MoproException) { _status ->
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_generate_rapidsnark_proof(
+        FfiConverterString.lower(`zkeyPath`),FfiConverterString.lower(`circuitInputs`),_status)
+}
+    )
+    }
+    
+
+        /**
          * Generates a verification key with automatic hash function selection.
          *
          * - `on_chain = true`: Uses Keccak hash for Solidity verifier compatibility
@@ -2339,6 +2377,26 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.Str
     uniffiRustCallWithError(MoproException) { _status ->
     UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_verify_groth16_proof(
         FfiConverterString.lower(`zkeyPath`),FfiConverterTypeGroth16ProofResult.lower(`proofResult`),FfiConverterTypeProofLib.lower(`proofLib`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Verifies a Groth16 proof using the **Rapidsnark** C++ backend.
+         *
+         * # Arguments
+         * - `zkey_path`: path to the `.zkey` proving key file
+         * - `proof_result`: the proof and public inputs produced by [`generate_rapidsnark_proof`]
+         *
+         * # Returns
+         * `Ok(true)` if the proof is valid, `Err(MoproError)` on failure.
+         */
+    @Throws(MoproException::class) fun `verifyRapidsnarkProof`(`zkeyPath`: kotlin.String, `proofResult`: Groth16ProofResult): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    uniffiRustCallWithError(MoproException) { _status ->
+    UniffiLib.INSTANCE.uniffi_mopro_example_app_fn_func_verify_rapidsnark_proof(
+        FfiConverterString.lower(`zkeyPath`),FfiConverterTypeGroth16ProofResult.lower(`proofResult`),_status)
 }
     )
     }

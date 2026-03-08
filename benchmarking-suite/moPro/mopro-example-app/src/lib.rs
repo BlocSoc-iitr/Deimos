@@ -40,6 +40,9 @@ pub use error::MoproError;
 #[macro_use]
 mod groth16;
 
+#[cfg(feature = "groth16")]
+mod rapidsnark;
+
 // Witness macro expects the file name without special characters.
 // Each call generates a `<name>_witness` function used in the circuit registry.
 #[cfg(feature = "groth16")]
