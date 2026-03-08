@@ -18,7 +18,6 @@ export const receiveBenchmarkResult = async (req, res) => {
     const circuit = data.circuit;
     const framework = data.framework;
     const language = data.language;
-    const proofBackend = data.proofBackend;
 
     if (androidId && circuit && framework && language) {
       // Query Firestore to check if this exact combination already exists
@@ -28,14 +27,10 @@ export const receiveBenchmarkResult = async (req, res) => {
         .where('framework', '==', framework)
         .where('language', '==', language);
 
-      if (proofBackend) {
-        query = query.where('proofBackend', '==', proofBackend);
-      }
-
       const existingSnapshot = await query.limit(1).get();
 
       if (!existingSnapshot.empty) {
-        logger.info(`Duplicate benchmark detected - Circuit: ${circuit}, Framework: ${framework}, Language: ${language}, Backend: ${proofBackend}, AndroidId: ${androidId}`);
+        logger.info(`Duplicate benchmark detected - Circuit: ${circuit}, Framework: ${framework}, Language: ${language}, AndroidId: ${androidId}`);
         return res.status(200).json({
           success: false,
           message: 'Benchmark data already exists for this combination',
@@ -43,8 +38,7 @@ export const receiveBenchmarkResult = async (req, res) => {
           androidId: androidId,
           circuit: circuit,
           framework: framework,
-          language: language,
-          proofBackend: proofBackend
+          language: language
         });
       }
     }

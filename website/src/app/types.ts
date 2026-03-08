@@ -39,7 +39,6 @@ export interface BenchmarkData {
   verificationTimeMiliSeconds: number;
   deviceInfo: DeviceInfo;
   proofSize: number;
-  proofBackend?: string;
   timestamp: string;
   createdAt?: string;
   customInputs?: { [key: string]: string };
