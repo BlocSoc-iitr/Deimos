@@ -9,6 +9,7 @@ export default function BenchmarksPage() {
   const [filterFramework, setFilterFramework] = useState<string>('all');
   const [filterLanguage, setFilterLanguage] = useState<string>('all');
   const [filterPlatform, setFilterPlatform] = useState<string>('all');
+  const [filterBackend, setFilterBackend] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
@@ -23,6 +24,7 @@ export default function BenchmarksPage() {
   const [frameworks, setFrameworks] = useState<string[]>(['all']);
   const [languages, setLanguages] = useState<string[]>(['all']);
   const [platforms, setPlatforms] = useState<string[]>(['all']);
+  const [backends, setBackends] = useState<string[]>(['all']);
 
   // Fetch filter options
   useEffect(() => {
@@ -37,6 +39,7 @@ export default function BenchmarksPage() {
         setFrameworks(data.frameworks);
         setLanguages(data.languages);
         setPlatforms(data.platforms);
+        setBackends(data.proofBackends || ['all']);
       } catch (err) {
         console.error('Error fetching filters:', err);
       }
@@ -56,6 +59,7 @@ export default function BenchmarksPage() {
           framework: filterFramework,
           language: filterLanguage,
           platform: filterPlatform,
+          proofBackend: filterBackend,
           page: currentPage.toString(),
           limit: itemsPerPage.toString()
         });
@@ -79,7 +83,7 @@ export default function BenchmarksPage() {
     };
 
     fetchData();
-  }, [filterCircuit, filterFramework, filterLanguage, filterPlatform, currentPage, itemsPerPage]);
+  }, [filterCircuit, filterFramework, filterLanguage, filterPlatform, filterBackend, currentPage, itemsPerPage]);
 
   // Reset to page 1 when filters change
   const handleFilterChange = (setter: (value: string) => void, value: string) => {
@@ -228,6 +232,20 @@ export default function BenchmarksPage() {
                 ))}
               </select>
             </div>
+
+            <div className="flex-1 min-w-[180px]">
+              <select
+                value={filterBackend}
+                onChange={(e) => handleFilterChange(setFilterBackend, e.target.value)}
+                className="w-full px-4 py-2 text-sm border border-[#E0DEDB] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white transition-all"
+              >
+                {backends.map(backend => (
+                  <option key={backend} value={backend}>
+                    {backend === 'all' ? 'All Backends' : backend}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -250,6 +268,7 @@ export default function BenchmarksPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Circuit</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Framework</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Language</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Backend</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Platform</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Device</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Proving Time (s)</th>
@@ -275,6 +294,11 @@ export default function BenchmarksPage() {
                           <td className="px-6 py-4">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                               {item.language}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                              {item.proofBackend || 'N/A'}
                             </span>
                           </td>
                           <td className="px-6 py-4">
@@ -324,6 +348,10 @@ export default function BenchmarksPage() {
                                         <span className="font-mono text-xs font-medium text-[#37322F] break-all">{item.deviceInfo.androidId}</span>
                                       </div>
                                     )}
+                                    <div className="flex justify-between">
+                                      <span className="text-[#605A57]">Backend:</span>
+                                      <span className="font-medium text-[#37322F] capitalize">{item.proofBackend || 'N/A'}</span>
+                                    </div>
                                     <div className="flex justify-between">
                                       <span className="text-[#605A57]">Proof Size:</span>
                                       <span className="font-medium text-[#37322F]">{formatBytes(item.proofSize)}</span>
@@ -404,7 +432,7 @@ export default function BenchmarksPage() {
                                     )}
                                   </div>
                                 </div>
-                                
+
                                 {/* Custom Inputs */}
                                 {item.customInputs && Object.keys(item.customInputs).length > 0 && (
                                   <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">

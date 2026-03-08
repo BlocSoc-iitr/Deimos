@@ -18,27 +18,33 @@ export const receiveBenchmarkResult = async (req, res) => {
     const circuit = data.circuit;
     const framework = data.framework;
     const language = data.language;
+    const proofBackend = data.proofBackend;
 
     if (androidId && circuit && framework && language) {
       // Query Firestore to check if this exact combination already exists
-      const existingSnapshot = await db.collection(COLLECTION_NAMES.BENCHMARKS)
+      let query = db.collection(COLLECTION_NAMES.BENCHMARKS)
         .where('deviceInfo.androidId', '==', androidId)
         .where('circuit', '==', circuit)
         .where('framework', '==', framework)
-        .where('language', '==', language)
-        .limit(1)
-        .get();
+        .where('language', '==', language);
+
+      if (proofBackend) {
+        query = query.where('proofBackend', '==', proofBackend);
+      }
+
+      const existingSnapshot = await query.limit(1).get();
 
       if (!existingSnapshot.empty) {
-        logger.info(`Duplicate benchmark detected - Circuit: ${circuit}, Framework: ${framework}, Language: ${language}, AndroidId: ${androidId}`);
+        logger.info(`Duplicate benchmark detected - Circuit: ${circuit}, Framework: ${framework}, Language: ${language}, Backend: ${proofBackend}, AndroidId: ${androidId}`);
         return res.status(200).json({
           success: false,
-          message: 'Benchmark data already exists for this circuit/framework/language/device combination',
+          message: 'Benchmark data already exists for this combination',
           duplicate: true,
           androidId: androidId,
           circuit: circuit,
           framework: framework,
-          language: language
+          language: language,
+          proofBackend: proofBackend
         });
       }
     }

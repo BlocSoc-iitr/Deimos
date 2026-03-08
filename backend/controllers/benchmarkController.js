@@ -12,6 +12,7 @@ export const getBenchmarks = async (req, res) => {
       framework = 'all',
       language = 'all',
       platform = 'all',
+      proofBackend = 'all',
       page = '1',
       limit = '10'
     } = req.query;
@@ -43,6 +44,9 @@ export const getBenchmarks = async (req, res) => {
     }
     if (platform !== 'all') {
       query = query.where('deviceInfo.platform', '==', platform);
+    }
+    if (proofBackend !== 'all') {
+      query = query.where('proofBackend', '==', proofBackend);
     }
 
     // Get all filtered data
@@ -105,6 +109,7 @@ export const getFilters = async (req, res) => {
     const frameworks = new Set();
     const languages = new Set();
     const platforms = new Set();
+    const proofBackends = new Set();
 
     snapshot.forEach(doc => {
       const data = doc.data();
@@ -112,13 +117,15 @@ export const getFilters = async (req, res) => {
       if (data.framework) frameworks.add(data.framework);
       if (data.language) languages.add(data.language);
       if (data.deviceInfo?.platform) platforms.add(data.deviceInfo.platform);
+      if (data.proofBackend) proofBackends.add(data.proofBackend);
     });
 
     res.json({
       circuits: ['all', ...Array.from(circuits).sort()],
       frameworks: ['all', ...Array.from(frameworks).sort()],
       languages: ['all', ...Array.from(languages).sort()],
-      platforms: ['all', ...Array.from(platforms).sort()]
+      platforms: ['all', ...Array.from(platforms).sort()],
+      proofBackends: ['all', ...Array.from(proofBackends).sort()]
     });
   } catch (error) {
     logger.error('Error fetching filters:', error);

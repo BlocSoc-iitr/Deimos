@@ -383,7 +383,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
 
   List<Widget> _buildBackendSelection() {
     final backends = [
-      {'name': 'Arkworks (default)', 'value': 'arkworks'},
+      {'name': 'Arkworks', 'value': 'arkworks'},
       {'name': 'Rapidsnark', 'value': 'rapidsnark'},
     ];
 
@@ -1295,6 +1295,17 @@ class _ProofResultPageState extends State<ProofResultPage> {
             ),
           ),
           const SizedBox(height: 8),
+          if (widget.framework == 'groth16') ...[
+            Text(
+              'Backend: ${widget.proofBackend[0].toUpperCase()}${widget.proofBackend.substring(1)}',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.text,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           Text(
             'Input: ${widget.selectedInputName}',
             style: const TextStyle(
@@ -2544,6 +2555,7 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       // Additional metadata
       'proofSize': _getProofSize(),
       'customInputs': customInputs, // Add custom inputs here
+      'proofBackend': widget.framework == 'groth16' ? widget.proofBackend : 'N/A',
 
       'timestamp': DateTime.now().toIso8601String(),
     };
