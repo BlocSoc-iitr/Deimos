@@ -1213,17 +1213,6 @@ class _ProofResultPageState extends State<ProofResultPage> {
             ),
           ),
           const SizedBox(height: 8),
-          if (widget.framework == 'arkworks' || widget.framework == 'rapidsnark') ...[
-            Text(
-              'Backend: ${widget.framework[0].toUpperCase()}${widget.framework.substring(1)}',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.text,
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
           Text(
             'Input: ${widget.selectedInputName}',
             style: const TextStyle(

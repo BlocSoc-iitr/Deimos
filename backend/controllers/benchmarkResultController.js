@@ -21,19 +21,17 @@ export const receiveBenchmarkResult = async (req, res) => {
 
     if (androidId && circuit && framework && language) {
       // Query Firestore to check if this exact combination already exists
-      let query = db.collection(COLLECTION_NAMES.BENCHMARKS)
+      const existingSnapshot = await db.collection(COLLECTION_NAMES.BENCHMARKS)
         .where('deviceInfo.androidId', '==', androidId)
         .where('circuit', '==', circuit)
         .where('framework', '==', framework)
-        .where('language', '==', language);
-
-      const existingSnapshot = await query.limit(1).get();
+        .where('language', '==', language).limit(1).get();
 
       if (!existingSnapshot.empty) {
         logger.info(`Duplicate benchmark detected - Circuit: ${circuit}, Framework: ${framework}, Language: ${language}, AndroidId: ${androidId}`);
         return res.status(200).json({
           success: false,
-          message: 'Benchmark data already exists for this combination',
+          message: 'Benchmark data already exists for this circuit/framework/language/device combination',
           duplicate: true,
           androidId: androidId,
           circuit: circuit,

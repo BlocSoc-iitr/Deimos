@@ -190,7 +190,7 @@ export default function BenchmarksPage() {
               >
                 {frameworks.map(framework => (
                   <option key={framework} value={framework}>
-                    {framework === 'all' ? 'All Frameworks' : framework === 'groth16' || framework === 'arkworks' ? 'Arkworks' : framework}
+                    {framework === 'all' ? 'All Frameworks' : framework}
                   </option>
                 ))}
               </select>
@@ -204,7 +204,7 @@ export default function BenchmarksPage() {
               >
                 {languages.map(language => (
                   <option key={language} value={language}>
-                    {language === 'all' ? 'All Languages' : language === 'groth16' || language === 'arkworks' ? 'Arkworks' : language === 'rapidsnark' ? 'Rapidsnark' : language}
+                    {language === 'all' ? 'All Languages' : language}
                   </option>
                 ))}
               </select>
@@ -269,7 +269,7 @@ export default function BenchmarksPage() {
                           </td>
                           <td className="px-6 py-4">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-900 border border-orange-200">
-                              {item.language === 'arkworks' || item.language === 'groth16' ? 'Arkworks' : item.language === 'rapidsnark' ? 'Rapidsnark' : item.language}
+                              {item.language}
                             </span>
                           </td>
                           <td className="px-6 py-4">
