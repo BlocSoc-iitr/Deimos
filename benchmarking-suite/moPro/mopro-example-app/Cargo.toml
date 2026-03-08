@@ -10,7 +10,7 @@ crate-type = ["lib", "cdylib", "staticlib"]
 # Adapters for different proof systems
 [features]
 default = ["groth16", "cairo_m", "barretenberg", "provekit"]
-groth16 = ["dep:circom-prover", "dep:rust-witness", "dep:num-bigint"]
+groth16 = ["dep:circom-prover", "circom-prover/rapidsnark", "dep:rust-witness", "dep:num-bigint", "dep:rust-rapidsnark"]
 cairo_m = ["dep:cairo-m-prover"]
 barretenberg = ["dep:noir_rs"]
 provekit = ["dep:provekit-wrapper"]
@@ -36,6 +36,7 @@ provekit-wrapper = { path = "../provekit-wrapper", optional = true }
 circom-prover = { version = "0.1", optional = true }
 rust-witness = { version = "0.1", optional = true }
 num-bigint = { version = "0.4.0", optional = true }
+rust-rapidsnark = { version = "0.1", optional = true }
 
 # ==============================================================================
 # BARRETENBERG (NOIR) DEPENDENCIES
@@ -56,6 +57,7 @@ noir_rs = { package = "noir", git = "https://github.com/zkmopro/noir-rs", featur
 witnesscalc-adapter = { version = "0.1", optional = true }
 rust-witness = { version = "0.1", optional = true }
 cc = "1.0"
+rust-rapidsnark = { version = "0.1", optional = true }
 
 # ==============================================================================
 # BARRETENBERG (NOIR) BUILD DEPENDENCIES

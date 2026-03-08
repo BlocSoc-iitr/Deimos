@@ -1545,6 +1545,7 @@ dependencies = [
  "num-traits",
  "rand 0.8.5",
  "rayon",
+ "rust-rapidsnark",
  "rust-witness",
  "serde",
  "serde_json",
@@ -3974,6 +3975,7 @@ dependencies = [
  "num-bigint 0.4.6",
  "provekit-wrapper",
  "risc0-zkvm",
+ "rust-rapidsnark",
  "rust-witness",
  "serde",
  "serde_json",
@@ -6380,6 +6382,19 @@ checksum = "5bcdef0be6fe7f6fa333b1073c949729274b05f123a0ad7efcb8efd878e5c3b1"
 dependencies = [
  "sha2",
  "walkdir",
+]
+
+[[package]]
+name = "rust-rapidsnark"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17fc46ed31873e6fbc16e2ca37f1b26458ef3f2e72fef8ddf6f166af889a5baa"
+dependencies = [
+ "anyhow",
+ "cc",
+ "chkstk_stub",
+ "num-bigint 0.4.6",
+ "num-traits",
 ]
 
 [[package]]
