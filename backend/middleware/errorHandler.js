@@ -1,6 +1,3 @@
-/**
- * Global error handling middleware
- */
 export const errorHandler = (err, req, res, next) => {
   console.error('Error:', err);
 
@@ -13,9 +10,6 @@ export const errorHandler = (err, req, res, next) => {
   });
 };
 
-/**
- * 404 Not Found handler
- */
 export const notFoundHandler = (req, res) => {
   res.status(404).json({
     error: 'Route not found',
