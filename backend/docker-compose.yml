@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: deimos
       POSTGRES_PASSWORD: deimos
     ports:
-      - "5433:5432"  # Use port 5433 on host, 5432 in container
+      - "5432:5432"  
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
