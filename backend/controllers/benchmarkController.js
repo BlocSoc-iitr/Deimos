@@ -5,6 +5,48 @@ import { logger } from '../utils/logger.js';
  * Convert a database row back to the original API response format
  */
 function rowToApiFormat(row) {
+  const toNumberOrNull = (value) => (value != null ? Number(value) : null);
+  const toFloatOrNull = (value) => (value != null ? parseFloat(value) : null);
+
+  const hasMemoryData = [
+    row.total_physical_memory,
+    row.memory_used_before_proof,
+    row.peak_memory_usage,
+    row.memory_consumed_by_proof,
+    row.peak_memory_load_percentage,
+    row.memory_consumed_percentage,
+  ].some((value) => value != null);
+
+  const hasBatteryData = [
+    row.battery_before_proof,
+    row.battery_after_proof,
+    row.battery_consumed,
+  ].some((value) => value != null);
+
+  const deviceInfo = {
+    platform: row.platform,
+    device: row.device,
+  };
+
+  if (hasMemoryData) {
+    deviceInfo.memory = {
+      totalPhysicalMemory: toNumberOrNull(row.total_physical_memory),
+      memoryUsedBeforeProof: toNumberOrNull(row.memory_used_before_proof),
+      peakMemoryUsage: toNumberOrNull(row.peak_memory_usage),
+      memoryConsumedByProof: toNumberOrNull(row.memory_consumed_by_proof),
+      peakMemoryLoadInPercentage: toFloatOrNull(row.peak_memory_load_percentage),
+      memoryConsumedInPercentage: toFloatOrNull(row.memory_consumed_percentage),
+    };
+  }
+
+  if (hasBatteryData) {
+    deviceInfo.battery = {
+      batteryBeforeProof: row.battery_before_proof,
+      batteryAfterProof: row.battery_after_proof,
+      batteryConsumed: row.battery_consumed,
+    };
+  }
+
   const result = {
     id: row.id.toString(),
     circuit: row.circuit,
@@ -16,23 +58,7 @@ function rowToApiFormat(row) {
     timestamp: row.timestamp?.toISOString(),
     createdAt: row.created_at?.toISOString(),
     customInputs: row.custom_inputs || undefined,
-    deviceInfo: {
-      platform: row.platform,
-      device: row.device,
-      memory: {
-        totalPhysicalMemory: Number(row.total_physical_memory),
-        memoryUsedBeforeProof: Number(row.memory_used_before_proof),
-        peakMemoryUsage: Number(row.peak_memory_usage),
-        memoryConsumedByProof: Number(row.memory_consumed_by_proof),
-        peakMemoryLoadInPercentage: parseFloat(row.peak_memory_load_percentage),
-        memoryConsumedInPercentage: parseFloat(row.memory_consumed_percentage),
-      },
-      battery: {
-        batteryBeforeProof: row.battery_before_proof,
-        batteryAfterProof: row.battery_after_proof,
-        batteryConsumed: row.battery_consumed,
-      },
-    },
+    deviceInfo,
   };
 
   // Add platform-specific device fields
