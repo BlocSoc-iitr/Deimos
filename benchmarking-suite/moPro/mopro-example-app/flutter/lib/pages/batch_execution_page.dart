@@ -3,6 +3,8 @@ import 'dart:async';
 import '../models/benchmark_item.dart';
 import '../services/benchmark_service.dart';
 import '../utils/circuit_registry.dart';
+import '../services/api_service.dart';
+import '../services/device_stats_service.dart';
 
 class BatchExecutionPage extends StatefulWidget {
   final List<InputData> allInputs;
@@ -19,6 +21,7 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
   bool _isExecuting = false;
   int _completedCount = 0;
   int _failedCount = 0;
+  bool _isPushing = false;
   Stopwatch _totalStopwatch = Stopwatch();
   ScrollController _scrollController = ScrollController();
 
@@ -231,8 +234,25 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          ElevatedButton(
+          if (_isPushing)
+             const CircularProgressIndicator()
+          else
+            ElevatedButton.icon(
+              onPressed: _completedCount > 0 ? _pushToDatabase : null,
+              icon: const Icon(Icons.cloud_upload),
+              label: const Text('Send Data to Database'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                 minimumSize: const Size(double.infinity, 50),
+              ),
+            ),
+          const SizedBox(height: 10),
+          OutlinedButton(
             onPressed: () => Navigator.pop(context),
+             style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 50),
+            ),
             child: const Text('Back to Home'),
           ),
         ],
@@ -240,7 +260,63 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
     );
   }
 
+  Future<void> _pushToDatabase() async {
+    setState(() {
+      _isPushing = true;
+    });
+
+    final deviceInfo = await DeviceStatsService.collectDeviceInfo({}); // We can pass a basic system info if needed, but it's handled inside device_stats_service now
+    
+    int pushSuccess = 0;
+    int pushFailed = 0;
+
+    for (final result in _results) {
+       if (result.status == BenchmarkStatus.completed) {
+         final inputData = _findInputForitem(result);
+         final customInputs = {
+           result.inputName: '[${inputData.values.join(', ')}]'
+         };
+
+         final benchmarkData = {
+          'circuit': result.algorithm,
+          'framework': 'MoPro',
+          'language': result.framework,
+          'provingTimeMiliSeconds': result.provingTime?.inMilliseconds ?? 0,
+          'verificationTimeMiliSeconds': result.verificationTime?.inMilliseconds ?? 0,
+          'deviceInfo': deviceInfo,
+          'memory': result.memoryInfo,
+          'battery': result.batteryInfo,
+          'proofSize': result.proofSize,
+          'customInputs': customInputs,
+          'proofBackend': (result.framework == 'arkworks' || result.framework == 'rapidsnark') ? result.framework : 'N/A',
+          'timestamp': DateTime.now().toIso8601String(),
+         };
+
+         final success = await ApiService.sendBenchmarkData(benchmarkData);
+         if (success) {
+           pushSuccess++;
+         } else {
+           pushFailed++;
+         }
+       }
+    }
+
+    setState(() {
+      _isPushing = false;
+    });
+
+    if (mounted) {
+       ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Database Push: $pushSuccess successful, $pushFailed failed.'),
+          backgroundColor: pushFailed > 0 ? Colors.orange : Colors.green,
+        ),
+      );
+    }
+  }
+
   Widget _buildStat(String label, String value, {Color? color}) {
+
     return Column(
       children: [
         Text(label, style: const TextStyle(color: Colors.grey)),

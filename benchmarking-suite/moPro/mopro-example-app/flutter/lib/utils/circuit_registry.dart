@@ -18,6 +18,19 @@ class CircuitRegistry {
       ));
     }
 
+    // Rapidsnark
+    for (var algo in groth16Algos) {
+      final inputName = algo.contains('MiMC') || algo.contains('Poseidon') || algo.contains('Rescue') 
+          ? 'Input 16f' 
+          : 'Input 16';
+      suite.add(BenchmarkResult(
+        framework: 'rapidsnark',
+        algorithm: algo,
+        inputName: inputName,
+        status: BenchmarkStatus.pending,
+      ));
+    }
+
     // Barretenberg
     final noirAlgos = ['SHA256', 'Keccak256', 'Poseidon', 'MiMC', 'Blake2', 'Blake3', 'RescuePrime', 'Anemoi'];
     for (var algo in noirAlgos) {
@@ -48,6 +61,19 @@ class CircuitRegistry {
       status: BenchmarkStatus.pending,
     ));
 
+    // IMP1
+    for (var algo in groth16Algos) {
+      final inputName = algo.contains('MiMC') || algo.contains('Poseidon') || algo.contains('Rescue') 
+          ? 'Input 16f' 
+          : 'Input 16';
+      suite.add(BenchmarkResult(
+        framework: 'imp1',
+        algorithm: algo,
+        inputName: inputName,
+        status: BenchmarkStatus.pending,
+      ));
+    }
+
     // ProveKit
     final proveKitAlgos = ['Anemoi', 'MiMC', 'Poseidon', 'RescuePrime'];
     for (var algo in proveKitAlgos) {
@@ -65,8 +91,9 @@ class CircuitRegistry {
   static String getFrameworkDisplayName(String framework) {
     switch (framework) {
       case 'arkworks':
+        return 'Arkworks';
       case 'rapidsnark':
-        return 'Groth16';
+        return 'Rapidsnark';
       case 'barretenberg':
         return 'Barretenberg';
       case 'risc0':
@@ -79,6 +106,26 @@ class CircuitRegistry {
         return 'ProveKit';
       default:
         return framework;
+    }
+  }
+
+  static List<String> getAlgorithmsForFramework(String framework) {
+    switch (framework) {
+      case 'arkworks':
+      case 'rapidsnark':
+        return ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'RescuePrime'];
+      case 'barretenberg':
+        return ['SHA256', 'Keccak256', 'Poseidon', 'MiMC', 'Blake2', 'Blake3', 'RescuePrime', 'Anemoi'];
+      case 'risc0':
+        return ['Factor'];
+      case 'cairo':
+        return ['SHA256'];
+      case 'imp1':
+        return ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'RescuePrime'];
+      case 'provekit':
+        return ['Anemoi', 'MiMC', 'Poseidon', 'RescuePrime'];
+      default:
+        return [];
     }
   }
 }
