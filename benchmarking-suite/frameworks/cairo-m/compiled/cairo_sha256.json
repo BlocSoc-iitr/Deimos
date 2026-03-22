@@ -5066,11 +5066,93 @@
         }
       ]
     },
+    "big_sigma0": {
+      "pc": 22,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": "U32"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": "U32"
+        }
+      ]
+    },
+    "big_sigma1": {
+      "pc": 37,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": "U32"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": "U32"
+        }
+      ]
+    },
     "small_sigma0": {
       "pc": 52,
       "params": [
         {
           "name": "arg0",
+          "ty": "U32"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": "U32"
+        }
+      ]
+    },
+    "sha256_hash": {
+      "pc": 327,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": {
+            "Pointer": {
+              "element": "U32",
+              "len": null
+            }
+          }
+        },
+        {
+          "name": "arg1",
+          "ty": "Felt"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": {
+            "FixedSizeArray": {
+              "element": "U32",
+              "size": 8
+            }
+          }
+        }
+      ]
+    },
+    "maj": {
+      "pc": 84,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": "U32"
+        },
+        {
+          "name": "arg1",
+          "ty": "U32"
+        },
+        {
+          "name": "arg2",
           "ty": "U32"
         }
       ],
@@ -5104,65 +5186,6 @@
         }
       ]
     },
-    "sha256_hash": {
-      "pc": 327,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": {
-            "Pointer": {
-              "element": "U32",
-              "len": null
-            }
-          }
-        },
-        {
-          "name": "arg1",
-          "ty": "Felt"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": {
-            "FixedSizeArray": {
-              "element": "U32",
-              "size": 8
-            }
-          }
-        }
-      ]
-    },
-    "big_sigma1": {
-      "pc": 37,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": "U32"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": "U32"
-        }
-      ]
-    },
-    "big_sigma0": {
-      "pc": 22,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": "U32"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": "U32"
-        }
-      ]
-    },
     "small_sigma1": {
       "pc": 65,
       "params": [
@@ -5177,33 +5200,10 @@
           "ty": "U32"
         }
       ]
-    },
-    "maj": {
-      "pc": 84,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": "U32"
-        },
-        {
-          "name": "arg1",
-          "ty": "U32"
-        },
-        {
-          "name": "arg2",
-          "ty": "U32"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": "U32"
-        }
-      ]
     }
   },
   "metadata": {
-    "compiled_at": "2025-12-27T14:04:19.351934850+00:00",
+    "compiled_at": "2026-03-22T07:07:06.264354668+00:00",
     "compiler_version": "0.1.0-alpha.1"
   }
 }

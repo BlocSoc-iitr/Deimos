@@ -822,7 +822,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
       case 'risc0':
         return ['Factor'];
       case 'cairo':
-        return ['SHA256'];
+        return ['SHA256', 'Blake2s256', 'Blake3', 'MiMC'];
       case 'imp1':
         return ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'RescuePrime'];
       case 'provekit':
@@ -844,7 +844,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
     final bytesAlgorithms = ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'Pedersen', 'Blake2'];
     
     if (bytesAlgorithms.contains(_selectedAlgorithm)) {
-      if (_selectedFramework == 'arkworks' || _selectedFramework == 'rapidsnark' || _selectedFramework == 'imp1') {
+      if (_selectedFramework == 'arkworks' || _selectedFramework == 'rapidsnark' || _selectedFramework == 'imp1' || _selectedFramework == 'cairo') {
         final allowed = ['Input 16', 'Input 32', 'Input 64', 'Input 128'];
         _availableInputs = _bytesInputs.where((input) => allowed.contains(input.name)).toList();
       } else {
@@ -2496,6 +2496,21 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       entrypoint = "sha256_hash";
       final inputData = _getInputDataForAlgorithm();
       inputsJson = _prepareCairoSha256Input(inputData);
+    } else if (widget.algorithm.toLowerCase() == "blake2s256" || widget.algorithm.toLowerCase() == "blake2s") {
+      entrypoint = "blake2s_hash";
+      programPath = "assets/cairo_blake2s.json";
+      final inputData = _getInputDataForAlgorithm();
+      inputsJson = _prepareCairoBlake2sInput(inputData);
+    } else if (widget.algorithm.toLowerCase() == "blake3") {
+      entrypoint = "blake3_hash";
+      programPath = "assets/cairo_blake3.json";
+      final inputData = _getInputDataForAlgorithm();
+      inputsJson = _prepareCairoBlake3Input(inputData);
+    } else if (widget.algorithm.toLowerCase() == "mimc") {
+      entrypoint = "multi_mimc7";
+      programPath = "assets/cairo_mimc.json";
+      final inputData = _getInputDataForAlgorithm();
+      inputsJson = _prepareCairoMiMCInput(inputData);
     } else {
       // Fallback
       inputsJson = await rootBundle.loadString('assets/cairo_input.json');
@@ -2565,6 +2580,56 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     
     // 7. Format to JSON string exactly as cairo-m expects: [[word1, word2, ...], numChunks]
     return '[${words.toString()}, $numChunks]';
+  }
+
+  String _prepareCairoBlake2sInput(List<String> inputData) {
+    // 1. Convert string list to byte list
+    List<int> bytes = inputData.map((s) => int.parse(s)).toList();
+    
+    // Blake2s and Blake3 Cairo-M circuits currently allocate a fixed 16-word (64 byte) block.
+    // If the input exceeds 64 bytes, we clip it to prevent out-of-bounds pointer crashes.
+    if (bytes.length > 64) {
+      bytes = bytes.sublist(0, 64);
+    }
+    final originalByteLen = bytes.length;
+    
+    // 2. Pad to 64 bytes total with 0s (for a single block benchmark)
+    while (bytes.length < 64) {
+      bytes.add(0);
+    }
+    
+    // 3. Convert to 32-bit words (little-endian), ensuring unsigned 32-bit wrap around
+    List<int> words = [];
+    for (int i = 0; i < 64; i += 4) {
+      int word = bytes[i] |
+                 (bytes[i + 1] << 8) |
+                 (bytes[i + 2] << 16) |
+                 (bytes[i + 3] << 24);
+      // Force unsigned 32-bit integer handling for JSON output
+      words.add(word.toUnsigned(32));
+    }
+    
+    // 4. Format to JSON string exactly as cairo-m expects: [[word1, word2, ...], lenBytes]
+    return '[${words.toString()}, $originalByteLen]';
+  }
+
+  String _prepareCairoBlake3Input(List<String> inputData) {
+    // Blake3 input formatting is identical to Blake2s in our Cairo-M implementation
+    return _prepareCairoBlake2sInput(inputData);
+  }
+
+  String _prepareCairoMiMCInput(List<String> inputData) {
+    // 1. Convert string list to ints within the M31 field limits (p = 2^31 - 1)
+    // The provided inputs may be 254-bit numbers (for Groth16/Noir), 
+    // so we parse as BigInt and safely modulo to fit the Stwo constraints.
+    final m31Prime = BigInt.from(2147483647);
+    List<String> felts = inputData.map((s) {
+      final bigVal = BigInt.parse(s);
+      return (bigVal % m31Prime).toString();
+    }).toList();
+    
+    // 2. Format to JSON string exactly as cairo-m expects: [[felt1, felt2, ...], numInputs, k]
+    return '[[${felts.join(', ')}], ${felts.length}, 0]';
   }
 
   // Helper to safely get current memory snapshot
