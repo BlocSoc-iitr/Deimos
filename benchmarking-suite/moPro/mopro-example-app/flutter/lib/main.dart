@@ -2497,36 +2497,37 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
 
     if (widget.algorithm.toLowerCase() == "sha256") {
       entrypoint = "sha256_hash";
+      programPath = "assets/cairo-m/cairo_sha256.json";
       final inputData = _getInputDataForAlgorithm();
       inputsJson = _prepareCairoSha256Input(inputData);
     } else if (widget.algorithm.toLowerCase() == "blake2s256" || widget.algorithm.toLowerCase() == "blake2s") {
       entrypoint = "blake2s_hash";
-      programPath = "assets/cairo_blake2s.json";
+      programPath = "assets/cairo-m/cairo_blake2s.json";
       final inputData = _getInputDataForAlgorithm();
       inputsJson = _prepareCairoBlake2sInput(inputData);
     } else if (widget.algorithm.toLowerCase() == "blake3") {
       entrypoint = "blake3_hash";
-      programPath = "assets/cairo_blake3.json";
+      programPath = "assets/cairo-m/cairo_blake3.json";
       final inputData = _getInputDataForAlgorithm();
       inputsJson = _prepareCairoBlake3Input(inputData);
     } else if (widget.algorithm.toLowerCase() == "mimc") {
       entrypoint = "multi_mimc7";
-      programPath = "assets/cairo_mimc.json";
+      programPath = "assets/cairo-m/cairo_mimc.json";
       final inputData = _getInputDataForAlgorithm();
       inputsJson = _prepareCairoMiMCInput(inputData);
     } else if (widget.algorithm.toLowerCase() == "poseidon2") {
       entrypoint = "poseidon2_hash";
-      programPath = "assets/cairo_poseidon2.json";
+      programPath = "assets/cairo-m/cairo_poseidon2.json";
       final inputData = _getInputDataForAlgorithm();
       inputsJson = _prepareCairoPoseidon2Input(inputData);
     } else if (widget.algorithm.toLowerCase() == "keccak256") {
       entrypoint = "keccak256_hash";
-      programPath = "assets/cairo_keccak256.json";
+      programPath = "assets/cairo-m/cairo_keccak256.json";
       final inputData = _getInputDataForAlgorithm();
       inputsJson = _prepareCairoBlake2sInput(inputData);
     } else if (widget.algorithm.toLowerCase() == "rescueprime") {
       entrypoint = "rescue_prime_hash";
-      programPath = "assets/cairo_rescue_prime.json";
+      programPath = "assets/cairo-m/cairo_rescue_prime.json";
       final inputData = _getInputDataForAlgorithm();
       inputsJson = _prepareCairoPoseidon2Input(inputData);
     } else {

@@ -71,13 +71,7 @@ flutter:
     - inputs/bytes/
     - inputs/field_elements/
     - inputs/cairo_input.json
-    - assets/cairo_sha256.json
-    - assets/cairo_blake2s.json
-    - assets/cairo_blake3.json
-    - assets/cairo_mimc.json
-    - assets/cairo_poseidon2.json
-    - assets/cairo_keccak256.json
-    - assets/cairo_rescue_prime.json
+    - assets/cairo-m/
     - assets/cairo_input.json
     - assets/provekit/
 

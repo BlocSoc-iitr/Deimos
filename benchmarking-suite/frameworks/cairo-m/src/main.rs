@@ -12,7 +12,7 @@ use cairo_m_runner::{run_cairo_program, RunnerOptions};
 use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleChannel;
 
 fn main() -> anyhow::Result<()> {
-    let output_dir = Path::new("compiled");
+    let output_dir = Path::new("../../moPro/mopro-example-app/flutter/assets/cairo-m");
     if !output_dir.exists() {
         fs::create_dir_all(output_dir)?;
     }
