@@ -3,10 +3,8 @@ services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
-    environment:
-      POSTGRES_DB: 
-      POSTGRES_USER: 
-      POSTGRES_PASSWORD: 
+    env_file:
+      - .env
     ports:
       - "5432:5432"  
     volumes:
@@ -26,15 +24,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      PORT: 5000
-      NODE_ENV: production
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: 
-      DB_USER: 
-      DB_PASSWORD: 
-      CORS_ORIGIN: "*"
+    env_file:
+      - .env
     ports:
       - "5000:5000"
 
