@@ -7,8 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "db:init": "node db/init.js",
-    "db:seed": "node db/seed.js"
+    "db:init": "node db/init.js"
   },
   "keywords": [
     "deimos",
@@ -16,7 +15,7 @@
     "postgresql",
     "api"
   ],
-  "author": "",
+  "author": "Deimos",
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",

@@ -18,12 +18,10 @@ CREATE TABLE IF NOT EXISTS benchmarks (
   platform VARCHAR(20) NOT NULL,
   device VARCHAR(100) NOT NULL,
   manufacturer VARCHAR(100),
-  android_version VARCHAR(20),
-  android_id VARCHAR(100),
+  device_version VARCHAR(20), -- basically model_code => Galaxy A52 → SM-A525F
+  device_id VARCHAR(100), -- the unique identifier
   system_name VARCHAR(50),
   system_version VARCHAR(20),
-  device_name VARCHAR(100),
-  identifier_for_vendor VARCHAR(100),
   is_physical_device BOOLEAN,
 
   -- Memory info
@@ -35,9 +33,9 @@ CREATE TABLE IF NOT EXISTS benchmarks (
   memory_consumed_percentage DECIMAL(5,2),
 
   -- Battery info
-  battery_before_proof INTEGER,
-  battery_after_proof INTEGER,
-  battery_consumed INTEGER
+  battery_before_proof SMALLINT,
+  battery_after_proof SMALLINT,
+  battery_consumed SMALLINT
 );
 
 -- Indexes for common filter queries
@@ -49,5 +47,5 @@ CREATE INDEX IF NOT EXISTS idx_benchmarks_timestamp ON benchmarks(timestamp DESC
 
 -- Composite index for duplicate detection
 CREATE INDEX IF NOT EXISTS idx_benchmarks_duplicate_check
-  ON benchmarks(android_id, circuit, framework, language)
-  WHERE android_id IS NOT NULL;
+  ON benchmarks(device_id, circuit, framework, language)
+  WHERE device_id IS NOT NULL;

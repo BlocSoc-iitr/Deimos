@@ -2329,8 +2329,10 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
           'platform': 'Android',
           'device': androidInfo.model,
           'manufacturer': androidInfo.manufacturer,
-          'androidVersion': androidInfo.version.release,
-          'androidId': androidInfo.id,
+          'deviceVersion': androidInfo.board,
+          'deviceId': androidInfo.id,
+          'systemName': 'Android',
+          'systemVersion': androidInfo.version.release,
           // Add system info
           ...systemInfo,
         };
@@ -2339,22 +2341,13 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
         final deviceName = _mapIOSDeviceName(iosInfo.utsname.machine);
         deviceData = {
           'platform': 'iOS',
-          'device': deviceName, 
+          'device': deviceName,
           'manufacturer': 'Apple',
-          'model': iosInfo.model,
+          'deviceVersion': iosInfo.utsname.machine,
           'systemName': iosInfo.systemName,
           'systemVersion': iosInfo.systemVersion,
-          'osVersion': iosInfo.systemVersion, // Alias for generic display
-          'androidVersion': iosInfo.systemVersion, // Fallback for dashboard compatibility
-          'name': iosInfo.name,
-          'identifierForVendor': iosInfo.identifierForVendor,
-          'deviceId': iosInfo.identifierForVendor, // Alias for generic ID
-          'androidId': iosInfo.identifierForVendor, // Fallback for dashboard compatibility
+          'deviceId': iosInfo.identifierForVendor,
           'isPhysicalDevice': iosInfo.isPhysicalDevice,
-          'utsname': {
-            'machine': iosInfo.utsname.machine,
-            'sysname': iosInfo.utsname.sysname,
-          },
           // Add system info
           ...systemInfo,
         };

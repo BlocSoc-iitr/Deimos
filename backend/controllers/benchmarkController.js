@@ -61,18 +61,14 @@ function rowToApiFormat(row) {
     deviceInfo,
   };
 
-  // Add platform-specific device fields
-  if (row.platform === 'Android') {
-    result.deviceInfo.manufacturer = row.manufacturer;
-    result.deviceInfo.androidVersion = row.android_version;
-    result.deviceInfo.androidId = row.android_id;
-  } else {
-    result.deviceInfo.systemName = row.system_name;
-    result.deviceInfo.systemVersion = row.system_version;
-    result.deviceInfo.name = row.device_name;
-    result.deviceInfo.identifierForVendor = row.identifier_for_vendor;
-    result.deviceInfo.isPhysicalDevice = row.is_physical_device;
-  }
+  
+  result.deviceInfo.manufacturer = row.manufacturer;
+  result.deviceInfo.deviceVersion = row.device_version;
+  result.deviceInfo.deviceId = row.device_id;
+  result.deviceInfo.systemName = row.system_name;
+  result.deviceInfo.systemVersion = row.system_version;
+  result.deviceInfo.isPhysicalDevice = row.is_physical_device;
+
 
   return result;
 }

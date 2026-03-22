@@ -4,9 +4,9 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: deimos
-      POSTGRES_USER: deimos
-      POSTGRES_PASSWORD: deimos
+      POSTGRES_DB: 
+      POSTGRES_USER: 
+      POSTGRES_PASSWORD: 
     ports:
       - "5432:5432"  
     volumes:
@@ -31,9 +31,9 @@ services:
       NODE_ENV: production
       DB_HOST: db
       DB_PORT: 5432
-      DB_NAME: deimos
-      DB_USER: deimos
-      DB_PASSWORD: deimos
+      DB_NAME: 
+      DB_USER: 
+      DB_PASSWORD: 
       CORS_ORIGIN: "*"
     ports:
       - "5000:5000"
