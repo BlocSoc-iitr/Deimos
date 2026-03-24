@@ -1,8 +1,5 @@
 import cors from 'cors';
 
-/**
- * CORS configuration
- */
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

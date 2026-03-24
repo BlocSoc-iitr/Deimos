@@ -19,12 +19,10 @@ export interface DeviceInfo {
   platform: string;
   device: string;
   manufacturer?: string;
-  androidVersion?: string;
-  androidId?: string;
+  deviceVersion?: string;
+  deviceId?: string;
   systemName?: string;
   systemVersion?: string;
-  name?: string;
-  identifierForVendor?: string;
   isPhysicalDevice?: boolean;
   memory: MemoryInfo;
   battery: BatteryInfo;

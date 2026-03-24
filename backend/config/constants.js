@@ -5,17 +5,16 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load environment variables
 dotenv.config({ path: join(__dirname, '../.env') });
 
-/**
- * Application constants and configuration
- */
 export const config = {
   port: process.env.PORT || 5000,
   nodeEnv: process.env.NODE_ENV || 'development',
-};
-
-export const COLLECTION_NAMES = {
-  BENCHMARKS: 'benchmarks'
+  db: {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT) || 5432,
+    database: process.env.DB_NAME || 'deimos',
+    user: process.env.DB_USER || 'deimos',
+    password: process.env.DB_PASSWORD || 'deimos',
+  },
 };
