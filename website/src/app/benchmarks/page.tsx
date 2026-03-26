@@ -299,7 +299,11 @@ export default function BenchmarksPage() {
                                   <div className="space-y-1.5 text-xs">
                                     <div className="flex justify-between">
                                       <span className="text-[#605A57]">Device:</span>
-                                      <span className="font-medium text-[#37322F]">{item.deviceInfo?.device || 'N/A'}</span>
+                                      <span className="font-medium text-[#37322F]">
+                                        {item.deviceInfo?.platform === 'Android'
+                                          ? item.deviceInfo.deviceVersion || 'N/A'
+                                          : item.deviceInfo?.device || 'N/A'}
+                                      </span>
                                     </div>
                                     {item.deviceInfo?.manufacturer && (
                                       <div className="flex justify-between">
@@ -307,16 +311,28 @@ export default function BenchmarksPage() {
                                         <span className="font-medium text-[#37322F]">{item.deviceInfo.manufacturer}</span>
                                       </div>
                                     )}
-                                    {item.deviceInfo?.androidVersion && (
+                                    {item.deviceInfo?.platform === 'Android' && item.deviceInfo?.systemVersion && (
                                       <div className="flex justify-between">
                                         <span className="text-[#605A57]">Android Version:</span>
-                                        <span className="font-medium text-[#37322F]">{item.deviceInfo.androidVersion}</span>
+                                        <span className="font-medium text-[#37322F]">{item.deviceInfo.systemVersion}</span>
                                       </div>
                                     )}
-                                    {item.deviceInfo?.androidId && (
+                                    {item.deviceInfo?.platform === 'iOS' && item.deviceInfo?.systemName && (
                                       <div className="flex justify-between">
-                                        <span className="text-[#605A57]">Android ID:</span>
-                                        <span className="font-mono text-xs font-medium text-[#37322F] break-all">{item.deviceInfo.androidId}</span>
+                                        <span className="text-[#605A57]">System Name:</span>
+                                        <span className="font-medium text-[#37322F]">{item.deviceInfo.systemName}</span>
+                                      </div>
+                                    )}
+                                    {item.deviceInfo?.platform === 'iOS' && item.deviceInfo?.systemVersion && (
+                                      <div className="flex justify-between">
+                                        <span className="text-[#605A57]">System Version:</span>
+                                        <span className="font-medium text-[#37322F]">{item.deviceInfo.systemVersion}</span>
+                                      </div>
+                                    )}
+                                    {item.deviceInfo?.deviceId && (
+                                      <div className="flex justify-between">
+                                        <span className="text-[#605A57]">Device ID:</span>
+                                        <span className="font-mono text-xs font-medium text-[#37322F] break-all">{item.deviceInfo.deviceId}</span>
                                       </div>
                                     )}
                                     <div className="flex justify-between">
