@@ -70,6 +70,7 @@ flutter:
     - inputs/input_3.json
     - inputs/bytes/
     - inputs/field_elements/
+    - inputs/m31_field/
     - inputs/cairo_input.json
     - assets/cairo-m/
     - assets/cairo_input.json

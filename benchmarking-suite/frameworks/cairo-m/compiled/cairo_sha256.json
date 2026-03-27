@@ -5024,38 +5024,37 @@
     }
   ],
   "entrypoints": {
-    "small_sigma0": {
-      "pc": 52,
+    "sha256_hash": {
+      "pc": 327,
       "params": [
         {
           "name": "arg0",
-          "ty": "U32"
+          "ty": {
+            "Pointer": {
+              "element": "U32",
+              "len": null
+            }
+          }
+        },
+        {
+          "name": "arg1",
+          "ty": "Felt"
         }
       ],
       "returns": [
         {
           "name": "ret0",
-          "ty": "U32"
+          "ty": {
+            "FixedSizeArray": {
+              "element": "U32",
+              "size": 8
+            }
+          }
         }
       ]
     },
-    "small_sigma1": {
-      "pc": 65,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": "U32"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": "U32"
-        }
-      ]
-    },
-    "maj": {
-      "pc": 84,
+    "ch": {
+      "pc": 78,
       "params": [
         {
           "name": "arg0",
@@ -5092,69 +5091,6 @@
         }
       ]
     },
-    "sha256_hash": {
-      "pc": 327,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": {
-            "Pointer": {
-              "element": "U32",
-              "len": null
-            }
-          }
-        },
-        {
-          "name": "arg1",
-          "ty": "Felt"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": {
-            "FixedSizeArray": {
-              "element": "U32",
-              "size": 8
-            }
-          }
-        }
-      ]
-    },
-    "rotr": {
-      "pc": 0,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": "U32"
-        },
-        {
-          "name": "arg1",
-          "ty": "Felt"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": "U32"
-        }
-      ]
-    },
-    "big_sigma0": {
-      "pc": 22,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": "U32"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": "U32"
-        }
-      ]
-    },
     "process_chunk": {
       "pc": 90,
       "params": [
@@ -5178,8 +5114,38 @@
         }
       ]
     },
-    "ch": {
-      "pc": 78,
+    "big_sigma0": {
+      "pc": 22,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": "U32"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": "U32"
+        }
+      ]
+    },
+    "small_sigma0": {
+      "pc": 52,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": "U32"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": "U32"
+        }
+      ]
+    },
+    "maj": {
+      "pc": 84,
       "params": [
         {
           "name": "arg0",
@@ -5200,10 +5166,44 @@
           "ty": "U32"
         }
       ]
+    },
+    "rotr": {
+      "pc": 0,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": "U32"
+        },
+        {
+          "name": "arg1",
+          "ty": "Felt"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": "U32"
+        }
+      ]
+    },
+    "small_sigma1": {
+      "pc": 65,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": "U32"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": "U32"
+        }
+      ]
     }
   },
   "metadata": {
-    "compiled_at": "2026-03-22T09:47:02.535014834+00:00",
+    "compiled_at": "2026-03-27T21:22:29.899154+00:00",
     "compiler_version": "0.1.0-alpha.1"
   }
 }

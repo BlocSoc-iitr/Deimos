@@ -3,7 +3,7 @@
 use std::fs;
 use std::path::Path;
 
-use cairo_m_common::{InputValue, Program};
+use cairo_m_common::InputValue;
 use cairo_m_compiler::{compile_cairo, CompilerOptions};
 use cairo_m_prover::adapter::import_from_runner_output;
 use cairo_m_prover::prover::prove_cairo_m;
@@ -17,12 +17,18 @@ fn main() -> anyhow::Result<()> {
         fs::create_dir_all(output_dir)?;
     }
 
+    let compiled_dir = Path::new("compiled");
+    if !compiled_dir.exists() {
+        fs::create_dir_all(compiled_dir)?;
+    }
+
     // --- SHA256 ---
     println!("--- SHA-256 ---");
     let sha256_src = fs::read_to_string("circuits/sha256.cm")?;
     let sha256_compiled = compile_cairo(sha256_src, "sha256.cm".to_string(), CompilerOptions::default())?;
     let sha256_json = serde_json::to_string_pretty(&sha256_compiled.program)?;
     fs::write(output_dir.join("cairo_sha256.json"), &sha256_json)?;
+    fs::write(compiled_dir.join("cairo_sha256.json"), &sha256_json)?;
     let sha256_args = vec![
         InputValue::List(vec![
             InputValue::Number(0x61626380), InputValue::Number(0), InputValue::Number(0), InputValue::Number(0),
@@ -41,6 +47,7 @@ fn main() -> anyhow::Result<()> {
     let blake2s_compiled = compile_cairo(blake2s_src, "blake2s.cm".to_string(), CompilerOptions::default())?;
     let blake2s_json = serde_json::to_string_pretty(&blake2s_compiled.program)?;
     fs::write(output_dir.join("cairo_blake2s.json"), &blake2s_json)?;
+    fs::write(compiled_dir.join("cairo_blake2s.json"), &blake2s_json)?;
     // Blake2s handles "abc" (3 bytes)
     // 0x61626300 in big-endian u32 is 1633837824
     let blake2s_args = vec![
@@ -68,6 +75,7 @@ fn main() -> anyhow::Result<()> {
     };
     let blake3_json = serde_json::to_string_pretty(&blake3_compiled.program)?;
     fs::write(output_dir.join("cairo_blake3.json"), &blake3_json)?;
+    fs::write(compiled_dir.join("cairo_blake3.json"), &blake3_json)?;
     // Blake3 test "abc"
     // "abc" in little-endian 32-bit word = 0x00636261 = 6513249
     let blake3_args = vec![
@@ -88,12 +96,14 @@ fn main() -> anyhow::Result<()> {
     let mimc_compiled = compile_cairo(mimc_src, "mimc.cm".to_string(), CompilerOptions::default())?;
     let mimc_json = serde_json::to_string_pretty(&mimc_compiled.program)?;
     fs::write(output_dir.join("cairo_mimc.json"), &mimc_json)?;
-    // MiMC testing "123", "456"
+    fs::write(compiled_dir.join("cairo_mimc.json"), &mimc_json)?;
+    // MiMC testing with 4 M31 field elements for multi-input absorption
     let mimc_args = vec![
         InputValue::List(vec![
-            InputValue::Number(123), InputValue::Number(456)
+            InputValue::Number(123456789), InputValue::Number(987654321),
+            InputValue::Number(1500000000), InputValue::Number(2000000000),
         ]),
-        InputValue::Number(2), // 2 inputs
+        InputValue::Number(4), // 4 inputs
         InputValue::Number(0), // k = 0
     ];
     let mimc_out = run_cairo_program(&mimc_compiled.program, "multi_mimc7", &mimc_args, RunnerOptions::default())?;
@@ -113,11 +123,20 @@ fn main() -> anyhow::Result<()> {
     };
     let p2_json = serde_json::to_string_pretty(&p2_compiled.program)?;
     fs::write(output_dir.join("cairo_poseidon2.json"), &p2_json)?;
+    fs::write(compiled_dir.join("cairo_poseidon2.json"), &p2_json)?;
+    // 16 M31 field elements — exercises 2 absorption rounds (rate=8)
     let p2_args = vec![
         InputValue::List(vec![
-            InputValue::Number(123), InputValue::Number(456)
+            InputValue::Number(123456789), InputValue::Number(987654321),
+            InputValue::Number(1500000000), InputValue::Number(2000000000),
+            InputValue::Number(750000000), InputValue::Number(1234567890),
+            InputValue::Number(2100000000), InputValue::Number(42),
+            InputValue::Number(314159265), InputValue::Number(271828182),
+            InputValue::Number(1618033988), InputValue::Number(1414213562),
+            InputValue::Number(1732050808), InputValue::Number(2000000),
+            InputValue::Number(999999999), InputValue::Number(1073741824),
         ]),
-        InputValue::Number(2), // 2 inputs
+        InputValue::Number(16), // 16 inputs — 2 sponge absorption rounds
     ];
     let p2_out = run_cairo_program(&p2_compiled.program, "poseidon2_hash", &p2_args, RunnerOptions::default())?;
     prove_and_verify(p2_out, "POSEIDON2")?;
@@ -136,6 +155,7 @@ fn main() -> anyhow::Result<()> {
     };
     let keccak_json = serde_json::to_string_pretty(&keccak_compiled.program)?;
     fs::write(output_dir.join("cairo_keccak256.json"), &keccak_json)?;
+    fs::write(compiled_dir.join("cairo_keccak256.json"), &keccak_json)?;
     // Test with 3-byte message packed into a single u32 word (little-endian)
     let keccak_args = vec![
         InputValue::List(vec![
@@ -163,11 +183,16 @@ fn main() -> anyhow::Result<()> {
     };
     let rp_json = serde_json::to_string_pretty(&rp_compiled.program)?;
     fs::write(output_dir.join("cairo_rescue_prime.json"), &rp_json)?;
+    fs::write(compiled_dir.join("cairo_rescue_prime.json"), &rp_json)?;
+    // 8 M31 field elements — exercises 1 full sponge absorption round (rate=8)
     let rp_args = vec![
         InputValue::List(vec![
-            InputValue::Number(123), InputValue::Number(456)
+            InputValue::Number(123456789), InputValue::Number(987654321),
+            InputValue::Number(1500000000), InputValue::Number(2000000000),
+            InputValue::Number(750000000), InputValue::Number(1234567890),
+            InputValue::Number(2100000000), InputValue::Number(42),
         ]),
-        InputValue::Number(2), // 2 inputs
+        InputValue::Number(8), // 8 inputs — 1 full sponge absorption round
     ];
     let rp_out = run_cairo_program(&rp_compiled.program, "rescue_prime_hash", &rp_args, RunnerOptions::default())?;
     prove_and_verify(rp_out, "RESCUE PRIME")?;

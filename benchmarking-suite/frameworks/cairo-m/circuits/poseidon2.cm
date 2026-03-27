@@ -199,15 +199,27 @@ fn poseidon2_permute(state: [felt; 16]) {
     return;
 }
 
-/// Poseidon2 hash: absorb inputs into state, permute, return digest.
+/// Poseidon2 hash: sponge-based absorption with rate=8 for multi-input support.
+/// Inputs are absorbed in chunks of 8 (rate portion), with a permutation
+/// between each chunk. This allows hashing arbitrary numbers of inputs.
 fn poseidon2_hash(inputs: felt*, num_inputs: felt) -> felt {
     let state: [felt; 16] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-    // Absorb inputs into the rate portion of the state
+    // Sponge absorption: rate = 8, capacity = 8
+    let absorbed = 0;
     for (let i: felt = 0; i != num_inputs; i = i + 1) {
-        state[i] = inputs[i];
+        let pos = absorbed;
+        state[pos] = state[pos] + inputs[i];
+        absorbed = absorbed + 1;
+
+        // When rate portion is full, permute and reset position
+        if absorbed == 8 {
+            poseidon2_permute(state);
+            absorbed = 0;
+        }
     }
 
+    // Final permutation for any remaining absorbed elements
     poseidon2_permute(state);
 
     // Return state[0] as the hash digest

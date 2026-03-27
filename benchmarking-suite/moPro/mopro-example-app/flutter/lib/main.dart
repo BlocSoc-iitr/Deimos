@@ -83,6 +83,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
   final List<InputData> _bytesInputs = [];
   final List<InputData> _fieldInputsNoir = [];
   final List<InputData> _fieldInputsCircom = [];
+  final List<InputData> _fieldInputsCairo = [];
 
   @override
   void initState() {
@@ -134,6 +135,21 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
           _fieldInputsCircom.add(inputData);
         } catch (e) {
           debugPrint('Error loading inputs/field_elements/input$size.json: $e');
+        }
+      }
+
+      // Load M31 Field inputs for Cairo-M algebraic hashes
+      final m31Sizes = ['2m', '4m', '8m', '16m'];
+      for (var size in m31Sizes) {
+        try {
+          final inputData = await _loadInputFromJson(
+            'inputs/m31_field/input$size.json',
+            name: 'Input $size',
+            description: '$size M31 field elements',
+          );
+          _fieldInputsCairo.add(inputData);
+        } catch (e) {
+          debugPrint('Error loading inputs/m31_field/input$size.json: $e');
         }
       }
       
@@ -844,7 +860,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
     final bytesAlgorithms = ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'Pedersen', 'Blake2'];
     
     if (bytesAlgorithms.contains(_selectedAlgorithm)) {
-      if (_selectedFramework == 'arkworks' || _selectedFramework == 'rapidsnark' || _selectedFramework == 'imp1' || _selectedFramework == 'cairo') {
+      if (_selectedFramework == 'arkworks' || _selectedFramework == 'rapidsnark' || _selectedFramework == 'imp1') {
         final allowed = ['Input 16', 'Input 32', 'Input 64', 'Input 128'];
         _availableInputs = _bytesInputs.where((input) => allowed.contains(input.name)).toList();
       } else {
@@ -859,8 +875,8 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
       } else if (_selectedFramework == 'provekit') {
         _availableInputs = _fieldInputsNoir;
       } else if (_selectedFramework == 'cairo') {
-        // Cairo-M uses M31 field — reuse Circom field inputs (truncated to M31 at runtime)
-        _availableInputs = _fieldInputsCircom;
+        // Cairo-M uses M31 field — dedicated M31 inputs (values in [0, 2^31-1])
+        _availableInputs = _fieldInputsCairo;
       } else {
         // For other frameworks, use Groth16 inputs as default
         _availableInputs = _fieldInputsCircom;
@@ -2604,22 +2620,16 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
   String _prepareCairoBlake2sInput(List<String> inputData) {
     // 1. Convert string list to byte list
     List<int> bytes = inputData.map((s) => int.parse(s)).toList();
-    
-    // Blake2s and Blake3 Cairo-M circuits currently allocate a fixed 16-word (64 byte) block.
-    // If the input exceeds 64 bytes, we clip it to prevent out-of-bounds pointer crashes.
-    if (bytes.length > 64) {
-      bytes = bytes.sublist(0, 64);
-    }
     final originalByteLen = bytes.length;
     
-    // 2. Pad to 64 bytes total with 0s (for a single block benchmark)
-    while (bytes.length < 64) {
+    // 2. Pad to next 4-byte boundary for word conversion
+    while (bytes.length % 4 != 0) {
       bytes.add(0);
     }
     
     // 3. Convert to 32-bit words (little-endian), ensuring unsigned 32-bit wrap around
     List<int> words = [];
-    for (int i = 0; i < 64; i += 4) {
+    for (int i = 0; i < bytes.length; i += 4) {
       int word = bytes[i] |
                  (bytes[i + 1] << 8) |
                  (bytes[i + 2] << 16) |
@@ -2638,36 +2648,17 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
   }
 
   String _prepareCairoMiMCInput(List<String> inputData) {
-    // 1. Convert string list to ints within the M31 field limits (p = 2^31 - 1)
-    // The provided inputs may be 254-bit numbers (for Groth16/Noir), 
-    // so we parse as BigInt and safely modulo to fit the Stwo constraints.
-    final m31Prime = BigInt.from(2147483647);
-    List<String> felts = inputData.map((s) {
-      final bigVal = BigInt.parse(s);
-      return (bigVal % m31Prime).toString();
-    }).toList();
-    
-    // 2. Format to JSON string exactly as cairo-m expects: [[felt1, felt2, ...], numInputs, k]
-    return '[[${felts.join(', ')}], ${felts.length}, 0]';
+    // M31 field inputs are already valid (values in [0, 2^31-1])
+    // Format to JSON string exactly as cairo-m expects: [[felt1, felt2, ...], numInputs, k]
+    return '[[${inputData.join(', ')}], ${inputData.length}, 0]';
   }
 
   String _prepareCairoPoseidon2Input(List<String> inputData) {
-    // Poseidon2 over M31: inputs are field elements truncated mod p = 2^31 - 1
-    // Circuit signature: poseidon2_hash(inputs: felt*, num_inputs: felt)
-    // Max 16 inputs (state width T=16), extras are ignored by the circuit.
-    final m31Prime = BigInt.from(2147483647);
-    List<String> felts = inputData.map((s) {
-      final bigVal = BigInt.parse(s);
-      return (bigVal % m31Prime).toString();
-    }).toList();
-    
-    // Clamp to max 16 field elements (state width)
-    if (felts.length > 16) {
-      felts = felts.sublist(0, 16);
-    }
-    
+    // Poseidon2/RescuePrime over M31 with sponge absorption (rate=8)
+    // M31 field inputs are already valid (values in [0, 2^31-1])
+    // Circuit handles multi-input absorption internally via sponge construction
     // Format: [[felt1, felt2, ...], numInputs]
-    return '[[${felts.join(', ')}], ${felts.length}]';
+    return '[[${inputData.join(', ')}], ${inputData.length}]';
   }
 
   // Helper to safely get current memory snapshot

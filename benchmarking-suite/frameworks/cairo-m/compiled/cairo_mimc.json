@@ -1451,6 +1451,25 @@
     }
   ],
   "entrypoints": {
+    "mimc7": {
+      "pc": 7,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": "Felt"
+        },
+        {
+          "name": "arg1",
+          "ty": "Felt"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": "Felt"
+        }
+      ]
+    },
     "pow7": {
       "pc": 0,
       "params": [
@@ -1493,29 +1512,10 @@
           "ty": "Felt"
         }
       ]
-    },
-    "mimc7": {
-      "pc": 7,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": "Felt"
-        },
-        {
-          "name": "arg1",
-          "ty": "Felt"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": "Felt"
-        }
-      ]
     }
   },
   "metadata": {
-    "compiled_at": "2026-03-22T09:45:55.992920762+00:00",
+    "compiled_at": "2026-03-27T21:22:32.620264+00:00",
     "compiler_version": "0.1.0-alpha.1"
   }
 }
