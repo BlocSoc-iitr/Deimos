@@ -2108,7 +2108,7 @@
     {
       "Instruction": [
         "0x9",
-        "0x141",
+        "0x14f",
         "0xa"
       ]
     },
@@ -2317,7 +2317,7 @@
     {
       "Instruction": [
         "0x9",
-        "0x141",
+        "0x14f",
         "0x16"
       ]
     },
@@ -2392,7 +2392,7 @@
     {
       "Instruction": [
         "0x2b",
-        "0x5",
+        "0xa",
         "0x0"
       ]
     },
@@ -2405,31 +2405,54 @@
     },
     {
       "Instruction": [
+        "0x9",
+        "0x0",
+        "0x2"
+      ]
+    },
+    {
+      "Instruction": [
         "0x1",
-        "0x1",
+        "0x2",
         "0x7ffffffb",
-        "0x15"
+        "0x1a"
       ]
     },
     {
       "Instruction": [
         "0xe",
-        "0x15",
+        "0x1a",
         "0x2"
       ]
     },
     {
       "Instruction": [
         "0xd",
-        "0x6"
+        "0xe"
+      ]
+    },
+    {
+      "Instruction": [
+        "0x2a",
+        "0x0",
+        "0x1",
+        "0x3"
       ]
     },
     {
       "Instruction": [
         "0x2a",
         "0x7ffffffa",
-        "0x1",
-        "0x2"
+        "0x2",
+        "0x4"
+      ]
+    },
+    {
+      "Instruction": [
+        "0x0",
+        "0x3",
+        "0x4",
+        "0x5"
       ]
     },
     {
@@ -2437,7 +2460,7 @@
         "0x2d",
         "0x0",
         "0x1",
-        "0x2"
+        "0x5"
       ]
     },
     {
@@ -2445,21 +2468,66 @@
         "0x4",
         "0x1",
         "0x1",
-        "0x3"
+        "0x6"
       ]
     },
     {
       "Instruction": [
         "0x4",
-        "0x3",
+        "0x6",
+        "0x0",
+        "0x7"
+      ]
+    },
+    {
+      "Instruction": [
+        "0x4",
+        "0x6",
+        "0x7ffffff7",
+        "0x1b"
+      ]
+    },
+    {
+      "Instruction": [
+        "0xe",
+        "0x1b",
+        "0xf"
+      ]
+    },
+    {
+      "Instruction": [
+        "0xd",
+        "0xa"
+      ]
+    },
+    {
+      "Instruction": [
+        "0x4",
+        "0x2",
+        "0x1",
+        "0x8"
+      ]
+    },
+    {
+      "Instruction": [
+        "0x4",
+        "0x7",
         "0x0",
         "0x1"
       ]
     },
     {
       "Instruction": [
+        "0x4",
+        "0x8",
+        "0x0",
+        "0x2"
+      ]
+    },
+    {
+      "Instruction": [
         "0xd",
-        "0x7ffffff8"
+        "0x7ffffff0"
       ]
     },
     {
@@ -2467,13 +2535,13 @@
         "0x4",
         "0x0",
         "0x0",
-        "0x16"
+        "0x1c"
       ]
     },
     {
       "Instruction": [
         "0xa",
-        "0x17",
+        "0x1d",
         "0xee"
       ]
     },
@@ -2482,13 +2550,13 @@
         "0x8",
         "0x0",
         "0x0",
-        "0x4"
+        "0x9"
       ]
     },
     {
       "Instruction": [
         "0x4",
-        "0x4",
+        "0x9",
         "0x0",
         "0x7ffffffc"
       ]
@@ -2496,6 +2564,40 @@
     {
       "Instruction": [
         "0xb"
+      ]
+    },
+    {
+      "Instruction": [
+        "0x4",
+        "0x0",
+        "0x0",
+        "0x1c"
+      ]
+    },
+    {
+      "Instruction": [
+        "0xa",
+        "0x1d",
+        "0xee"
+      ]
+    },
+    {
+      "Instruction": [
+        "0x9",
+        "0x0",
+        "0x7"
+      ]
+    },
+    {
+      "Instruction": [
+        "0xd",
+        "0x7ffffff3"
+      ]
+    },
+    {
+      "Instruction": [
+        "0xd",
+        "0x7ffffffe"
       ]
     },
     {
@@ -5188,25 +5290,35 @@
     }
   ],
   "entrypoints": {
-    "rescue_prime_permute": {
-      "pc": 238,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": {
-            "FixedSizeArray": {
-              "element": "Felt",
-              "size": 16
-            }
-          }
-        }
-      ]
-    },
     "pow_alpha_inv": {
       "pc": 6,
       "params": [
         {
           "name": "arg0",
+          "ty": "Felt"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": "Felt"
+        }
+      ]
+    },
+    "rescue_prime_hash": {
+      "pc": 306,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": {
+            "Pointer": {
+              "element": "Felt",
+              "len": null
+            }
+          }
+        },
+        {
+          "name": "arg1",
           "ty": "Felt"
         }
       ],
@@ -5246,33 +5358,23 @@
         }
       ]
     },
-    "rescue_prime_hash": {
-      "pc": 306,
+    "rescue_prime_permute": {
+      "pc": 238,
       "params": [
         {
           "name": "arg0",
           "ty": {
-            "Pointer": {
+            "FixedSizeArray": {
               "element": "Felt",
-              "len": null
+              "size": 16
             }
           }
-        },
-        {
-          "name": "arg1",
-          "ty": "Felt"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": "Felt"
         }
       ]
     }
   },
   "metadata": {
-    "compiled_at": "2026-03-22T13:17:20.604350606+00:00",
+    "compiled_at": "2026-03-27T21:22:35.304251+00:00",
     "compiler_version": "0.1.0-alpha.1"
   }
 }

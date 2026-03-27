@@ -136,12 +136,13 @@ fn compress(h: [u32; 8], m: [u32; 16], t: u32, f: u32) {
 
 /// Computes BLAKE2s-256 hash of a message.
 ///
-/// Handles arbitrary message lengths up to 64 bytes (single block).
-/// Properly zero-pads partial words and unused words per RFC 7693.
+/// Supports arbitrary message lengths via multi-block processing.
+/// Each block is 64 bytes (16 u32 words). Non-final blocks use f=0,
+/// the final block uses f=0xFFFFFFFF per RFC 7693.
 ///
 /// ## Arguments
 /// * `message` - Pointer to the message as u32 words (little-endian byte order)
-/// * `num_bytes` - Actual message length in bytes (0-64)
+/// * `num_bytes` - Actual message length in bytes
 ///
 /// ## Returns
 /// The BLAKE2s-256 hash as an array of 8 u32 words
@@ -161,25 +162,60 @@ fn blake2s_hash(message: u32*, num_bytes: u32) -> [u32; 8] {
         IV[7]
     ];
 
-    // Load the message block (16 u32 words = 64 bytes)
-    // Zero-pad words beyond the message, and mask the partial final word.
-    let m: [u32; 16] = [0u32; 16];
-    let num_full_words = num_bytes / 4u32;
-    let remaining_bytes = num_bytes - num_full_words * 4u32;
+    // Calculate number of full 64-byte blocks and remainder
+    let num_full_blocks = num_bytes / 64u32;
+    let remaining = num_bytes - num_full_blocks * 64u32;
 
-    // Copy full words from the message
-    for (let i: u32 = 0u32; i < num_full_words; i = i + 1u32) {
-        m[i as felt] = message[i as felt];
+    // Process all full 64-byte (non-final) blocks
+    let bytes_compressed: u32 = 0u32;
+    for (let block: u32 = 0u32; block < num_full_blocks; block = block + 1u32) {
+        let m: [u32; 16] = [0u32; 16];
+        let offset = block * 16u32;
+        for (let i: u32 = 0u32; i < 16u32; i = i + 1u32) {
+            m[i as felt] = message[(offset + i) as felt];
+        }
+        bytes_compressed = bytes_compressed + 64u32;
+
+        // Check if this is the final block (no remainder follows)
+        if remaining == 0u32 {
+            if block == num_full_blocks - 1u32 {
+                // This full block is the final block
+                compress(h, m, bytes_compressed, 4294967295u32);
+            } else {
+                compress(h, m, bytes_compressed, 0u32);
+            }
+        } else {
+            // More data follows, not final
+            compress(h, m, bytes_compressed, 0u32);
+        }
     }
 
-    // Handle partial final word: mask off garbage bytes beyond the message
-    if remaining_bytes != 0u32 {
-        m[num_full_words as felt] = message[num_full_words as felt] & BYTE_MASK[remaining_bytes as felt];
-    }
-    // Remaining words are already zero from initialization
+    // Process the final partial block (if any remaining bytes)
+    if remaining != 0u32 {
+        let m: [u32; 16] = [0u32; 16];
+        let offset = num_full_blocks * 16u32;
+        let num_full_words = remaining / 4u32;
+        let remaining_bytes = remaining - num_full_words * 4u32;
 
-    // Single-block compression with finalization
-    compress(h, m, num_bytes, 4294967295u32);
+        for (let i: u32 = 0u32; i < num_full_words; i = i + 1u32) {
+            m[i as felt] = message[(offset + i) as felt];
+        }
+
+        // Handle partial final word
+        if remaining_bytes != 0u32 {
+            m[num_full_words as felt] = message[(offset + num_full_words) as felt] & BYTE_MASK[remaining_bytes as felt];
+        }
+
+        bytes_compressed = bytes_compressed + remaining;
+        compress(h, m, bytes_compressed, 4294967295u32);
+    }
+
+    // Edge case: empty message (0 bytes)
+    if num_bytes == 0u32 {
+        let m: [u32; 16] = [0u32; 16];
+        compress(h, m, 0u32, 4294967295u32);
+    }
 
     return h;
 }
+

@@ -1,0 +1,5 @@
+{
+  "name": "Input 2m",
+  "description": "2 M31 field elements",
+  "in": ["123456789", "987654321"]
+}

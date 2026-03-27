@@ -1571,7 +1571,7 @@
     {
       "Instruction": [
         "0x9",
-        "0x145",
+        "0x153",
         "0x21"
       ]
     },
@@ -1788,7 +1788,7 @@
     {
       "Instruction": [
         "0x9",
-        "0x155",
+        "0x163",
         "0x8"
       ]
     },
@@ -1988,7 +1988,7 @@
     {
       "Instruction": [
         "0x9",
-        "0x155",
+        "0x163",
         "0x12"
       ]
     },
@@ -2224,7 +2224,7 @@
     {
       "Instruction": [
         "0x9",
-        "0x155",
+        "0x163",
         "0x1f"
       ]
     },
@@ -2395,7 +2395,7 @@
     {
       "Instruction": [
         "0x2b",
-        "0x5",
+        "0xa",
         "0x0"
       ]
     },
@@ -2408,31 +2408,54 @@
     },
     {
       "Instruction": [
+        "0x9",
+        "0x0",
+        "0x2"
+      ]
+    },
+    {
+      "Instruction": [
         "0x1",
-        "0x1",
+        "0x2",
         "0x7ffffffb",
-        "0x15"
+        "0x1a"
       ]
     },
     {
       "Instruction": [
         "0xe",
-        "0x15",
+        "0x1a",
         "0x2"
       ]
     },
     {
       "Instruction": [
         "0xd",
-        "0x6"
+        "0xe"
+      ]
+    },
+    {
+      "Instruction": [
+        "0x2a",
+        "0x0",
+        "0x1",
+        "0x3"
       ]
     },
     {
       "Instruction": [
         "0x2a",
         "0x7ffffffa",
-        "0x1",
-        "0x2"
+        "0x2",
+        "0x4"
+      ]
+    },
+    {
+      "Instruction": [
+        "0x0",
+        "0x3",
+        "0x4",
+        "0x5"
       ]
     },
     {
@@ -2440,7 +2463,7 @@
         "0x2d",
         "0x0",
         "0x1",
-        "0x2"
+        "0x5"
       ]
     },
     {
@@ -2448,21 +2471,66 @@
         "0x4",
         "0x1",
         "0x1",
-        "0x3"
+        "0x6"
       ]
     },
     {
       "Instruction": [
         "0x4",
-        "0x3",
+        "0x6",
+        "0x0",
+        "0x7"
+      ]
+    },
+    {
+      "Instruction": [
+        "0x4",
+        "0x6",
+        "0x7ffffff7",
+        "0x1b"
+      ]
+    },
+    {
+      "Instruction": [
+        "0xe",
+        "0x1b",
+        "0xf"
+      ]
+    },
+    {
+      "Instruction": [
+        "0xd",
+        "0xa"
+      ]
+    },
+    {
+      "Instruction": [
+        "0x4",
+        "0x2",
+        "0x1",
+        "0x8"
+      ]
+    },
+    {
+      "Instruction": [
+        "0x4",
+        "0x7",
         "0x0",
         "0x1"
       ]
     },
     {
       "Instruction": [
+        "0x4",
+        "0x8",
+        "0x0",
+        "0x2"
+      ]
+    },
+    {
+      "Instruction": [
         "0xd",
-        "0x7ffffff8"
+        "0x7ffffff0"
       ]
     },
     {
@@ -2470,13 +2538,13 @@
         "0x4",
         "0x0",
         "0x0",
-        "0x16"
+        "0x1c"
       ]
     },
     {
       "Instruction": [
         "0xa",
-        "0x17",
+        "0x1d",
         "0xcf"
       ]
     },
@@ -2485,13 +2553,13 @@
         "0x8",
         "0x0",
         "0x0",
-        "0x4"
+        "0x9"
       ]
     },
     {
       "Instruction": [
         "0x4",
-        "0x4",
+        "0x9",
         "0x0",
         "0x7ffffffc"
       ]
@@ -2499,6 +2567,40 @@
     {
       "Instruction": [
         "0xb"
+      ]
+    },
+    {
+      "Instruction": [
+        "0x4",
+        "0x0",
+        "0x0",
+        "0x1c"
+      ]
+    },
+    {
+      "Instruction": [
+        "0xa",
+        "0x1d",
+        "0xcf"
+      ]
+    },
+    {
+      "Instruction": [
+        "0x9",
+        "0x0",
+        "0x7"
+      ]
+    },
+    {
+      "Instruction": [
+        "0xd",
+        "0x7ffffff3"
+      ]
+    },
+    {
+      "Instruction": [
+        "0xd",
+        "0x7ffffffe"
       ]
     },
     {
@@ -6919,20 +7021,6 @@
     }
   ],
   "entrypoints": {
-    "poseidon2_permute": {
-      "pc": 207,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": {
-            "FixedSizeArray": {
-              "element": "Felt",
-              "size": 16
-            }
-          }
-        }
-      ]
-    },
     "apply_internal_round_matrix": {
       "pc": 162,
       "params": [
@@ -6976,6 +7064,20 @@
         }
       ]
     },
+    "poseidon2_permute": {
+      "pc": 207,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": {
+            "FixedSizeArray": {
+              "element": "Felt",
+              "size": 16
+            }
+          }
+        }
+      ]
+    },
     "poseidon2_hash": {
       "pc": 310,
       "params": [
@@ -7002,7 +7104,7 @@
     }
   },
   "metadata": {
-    "compiled_at": "2026-03-22T09:58:14.164774281+00:00",
+    "compiled_at": "2026-03-27T21:22:33.356663+00:00",
     "compiler_version": "0.1.0-alpha.1"
   }
 }

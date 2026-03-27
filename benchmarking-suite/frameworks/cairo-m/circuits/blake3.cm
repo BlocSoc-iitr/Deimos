@@ -135,21 +135,73 @@ fn blake3_compress(
 const BYTE_MASK = [0u32, 255u32, 65535u32, 16777215u32];
 
 fn blake3_hash(message: u32*, num_bytes: u32) -> [u32; 8] {
-    let m: [u32; 16] = [0u32; 16];
-
-    let num_full_words = num_bytes / 4u32;
-    let remaining_bytes = num_bytes % 4u32;
-
-    for (let i: u32 = 0u32; i < num_full_words; i = i + 1u32) {
-        m[i as felt] = message[i as felt];
-    }
-
-    if remaining_bytes != 0u32 {
-        m[num_full_words as felt] = message[num_full_words as felt] & BYTE_MASK[remaining_bytes as felt];
-    }
-
     let h: [u32; 8] = [IV0, IV1, IV2, IV3, IV4, IV5, IV6, IV7];
-    let flags = CHUNK_START | CHUNK_END | ROOT;
-    
-    return blake3_compress(h, m, 0u32, num_bytes, flags);
+
+    // Calculate number of full 64-byte blocks and remainder
+    let num_full_blocks = num_bytes / 64u32;
+    let remaining = num_bytes - num_full_blocks * 64u32;
+
+    // Total number of blocks (full + partial if any)
+    let total_blocks = num_full_blocks;
+    if remaining != 0u32 {
+        total_blocks = total_blocks + 1u32;
+    }
+    // Edge case: empty message still gets one block
+    if total_blocks == 0u32 {
+        total_blocks = 1u32;
+    }
+
+    let block_idx: u32 = 0u32;
+
+    // Process full 64-byte blocks
+    for (let b: u32 = 0u32; b < num_full_blocks; b = b + 1u32) {
+        let m: [u32; 16] = [0u32; 16];
+        let offset = b * 16u32;
+        for (let i: u32 = 0u32; i < 16u32; i = i + 1u32) {
+            m[i as felt] = message[(offset + i) as felt];
+        }
+
+        // Set flags: CHUNK_START for first, CHUNK_END|ROOT for last
+        let flags: u32 = 0u32;
+        if block_idx == 0u32 {
+            flags = flags | CHUNK_START;
+        }
+        if block_idx == total_blocks - 1u32 {
+            flags = flags | CHUNK_END | ROOT;
+        }
+
+        h = blake3_compress(h, m, 0u32, 64u32, flags);
+        block_idx = block_idx + 1u32;
+    }
+
+    // Process the final partial block (if any remaining bytes)
+    if remaining != 0u32 {
+        let m: [u32; 16] = [0u32; 16];
+        let offset = num_full_blocks * 16u32;
+        let num_full_words = remaining / 4u32;
+        let remaining_bytes = remaining - num_full_words * 4u32;
+
+        for (let i: u32 = 0u32; i < num_full_words; i = i + 1u32) {
+            m[i as felt] = message[(offset + i) as felt];
+        }
+
+        if remaining_bytes != 0u32 {
+            m[num_full_words as felt] = message[(offset + num_full_words) as felt] & BYTE_MASK[remaining_bytes as felt];
+        }
+
+        let flags: u32 = CHUNK_END | ROOT;
+        if block_idx == 0u32 {
+            flags = flags | CHUNK_START;
+        }
+
+        h = blake3_compress(h, m, 0u32, remaining, flags);
+    }
+
+    // Edge case: empty message
+    if num_bytes == 0u32 {
+        let m: [u32; 16] = [0u32; 16];
+        h = blake3_compress(h, m, 0u32, 0u32, CHUNK_START | CHUNK_END | ROOT);
+    }
+
+    return h;
 }

@@ -5024,8 +5024,37 @@
     }
   ],
   "entrypoints": {
-    "maj": {
-      "pc": 84,
+    "sha256_hash": {
+      "pc": 327,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": {
+            "Pointer": {
+              "element": "U32",
+              "len": null
+            }
+          }
+        },
+        {
+          "name": "arg1",
+          "ty": "Felt"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": {
+            "FixedSizeArray": {
+              "element": "U32",
+              "size": 8
+            }
+          }
+        }
+      ]
+    },
+    "ch": {
+      "pc": 78,
       "params": [
         {
           "name": "arg0",
@@ -5047,19 +5076,11 @@
         }
       ]
     },
-    "ch": {
-      "pc": 78,
+    "big_sigma1": {
+      "pc": 37,
       "params": [
         {
           "name": "arg0",
-          "ty": "U32"
-        },
-        {
-          "name": "arg1",
-          "ty": "U32"
-        },
-        {
-          "name": "arg2",
           "ty": "U32"
         }
       ],
@@ -5108,11 +5129,34 @@
         }
       ]
     },
-    "big_sigma1": {
-      "pc": 37,
+    "small_sigma0": {
+      "pc": 52,
       "params": [
         {
           "name": "arg0",
+          "ty": "U32"
+        }
+      ],
+      "returns": [
+        {
+          "name": "ret0",
+          "ty": "U32"
+        }
+      ]
+    },
+    "maj": {
+      "pc": 84,
+      "params": [
+        {
+          "name": "arg0",
+          "ty": "U32"
+        },
+        {
+          "name": "arg1",
+          "ty": "U32"
+        },
+        {
+          "name": "arg2",
           "ty": "U32"
         }
       ],
@@ -5156,54 +5200,10 @@
           "ty": "U32"
         }
       ]
-    },
-    "sha256_hash": {
-      "pc": 327,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": {
-            "Pointer": {
-              "element": "U32",
-              "len": null
-            }
-          }
-        },
-        {
-          "name": "arg1",
-          "ty": "Felt"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": {
-            "FixedSizeArray": {
-              "element": "U32",
-              "size": 8
-            }
-          }
-        }
-      ]
-    },
-    "small_sigma0": {
-      "pc": 52,
-      "params": [
-        {
-          "name": "arg0",
-          "ty": "U32"
-        }
-      ],
-      "returns": [
-        {
-          "name": "ret0",
-          "ty": "U32"
-        }
-      ]
     }
   },
   "metadata": {
-    "compiled_at": "2025-12-27T13:52:55.203588170+00:00",
+    "compiled_at": "2026-03-27T21:22:29.899154+00:00",
     "compiler_version": "0.1.0-alpha.1"
   }
 }
