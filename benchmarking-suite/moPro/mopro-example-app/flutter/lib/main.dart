@@ -1827,7 +1827,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
     final circuitName = _getImp1CircuitName();
     
     // Capture memory and battery BEFORE proof generation
-    _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
+    final memSnapshotBefore = await _getMemorySnapshot();
+    _freeMemoryBeforeProof = memSnapshotBefore.free;
     final battery = Battery();
     _batteryBeforeProof = await battery.batteryLevel;
     
@@ -1846,7 +1847,8 @@ class _ProofResultPageState extends State<ProofResultPage> {
     stopwatch.stop();
     
     // Capture memory and battery AFTER proof generation
-    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
+    final memSnapshotAfter = await _getMemorySnapshot();
+    _freeMemoryAfterProof = memSnapshotAfter.free;
     _batteryAfterProof = await battery.batteryLevel;
     
     // Store the proof result for verification
@@ -2480,7 +2482,8 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     final inputsJson = await rootBundle.loadString('assets/cairo_input.json');
     
     // Capture memory and battery BEFORE proof generation
-    _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
+    final memSnapshotBefore = await _getMemorySnapshot();
+    _freeMemoryBeforeProof = memSnapshotBefore.free;
     final battery = Battery();
     _batteryBeforeProof = await battery.batteryLevel;
 
@@ -2497,7 +2500,8 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
 
     stopwatch.stop();
     // Capture memory and battery AFTER proof generation
-    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
+    final memSnapshotAfter = await _getMemorySnapshot();
+    _freeMemoryAfterProof = memSnapshotAfter.free;
     _batteryAfterProof = await battery.batteryLevel;
 
     setState(() {
