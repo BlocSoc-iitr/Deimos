@@ -3,39 +3,24 @@
 # Usage: make full CIRCUIT=multiplier2 POT=12
 
 # Configuration - can be overridden
-HASH_NAME ?= rescue-prime
-CIRCUIT ?= rescue-prime_circom
-POT ?= 16
-INPUT_FILE ?= input_8.json
+HASH_NAME ?= poseidon2
+CIRCUIT ?= poseidon2_16f
+POT ?= 14
+INPUT_FILE ?= input16f.json
 
 # Derived file names
-# Derived file names
-INPUT_JSON ?= ../../inputs/$(INPUT_FILE)
+INPUT_JSON = ../../inputs/field_elements/$(INPUT_FILE)
 PTAU_0000 = pot$(POT)_0000.ptau
 PTAU_0001 = pot$(POT)_0001.ptau
 PTAU_FINAL = pot$(POT)_final.ptau
 R1CS_FILE = $(CIRCUIT).r1cs
 WASM_FILE = $(CIRCUIT).wasm
-WITNESS_FILE = $(CIRCUIT).wtns
+WITNESS_FILE = witness.wtns
 ZKEY_0000 = $(CIRCUIT)_0000.zkey
-ZKEY_FINAL = $(CIRCUIT).zkey
-VERIFICATION_KEY = $(CIRCUIT)_vk.json
+ZKEY_0001 = $(CIRCUIT)_0001.zkey
+VERIFICATION_KEY = verification_key.json
 PROOF_FILE = proof.json
 PUBLIC_FILE = public.json
-
-HASHES = mimc256 poseidon poseidon2 rescue-prime
-SIZES = 1 2 3 5 9 17 34
-
-.PHONY: all_field
-all_field:
-	@for hash in $(HASHES); do \
-		for size in $(SIZES); do \
-			echo "======================================================="; \
-			echo "Running $$hash with size $$size""f"; \
-			echo "======================================================="; \
-			$(MAKE) -C circuits/$$hash full CIRCUIT=$${hash}_$${size}f INPUT_JSON=../../inputs/field_elements/input$${size}f.json; \
-		done \
-	done
 
 # Main target - complete workflow
 .PHONY: full
@@ -44,13 +29,7 @@ full:
 	circom $(CIRCUIT).circom --r1cs --wasm --sym --c
 	
 	@echo "🧮 Step 2: Generating witness..."
-	# INPUT_JSON is passed as absolute or relative to Makefile, but node runs in subdir
-	# So we need to handle the path carefully. 
-	# If INPUT_JSON is passed from python as relative to Makefile location, 
-	# then inside $(CIRCUIT)_js/, it needs one more '../'.
-	# But easier: python passes relative path to the circuit dir.
 	cd $(CIRCUIT)_js && node generate_witness.js $(WASM_FILE) ../$(INPUT_JSON) $(WITNESS_FILE)
-	mv $(CIRCUIT)_js/$(WITNESS_FILE) .
 	
 	@echo "🌟 Step 3: Creating new powers of tau..."
 	snarkjs powersoftau new bn128 $(POT) $(PTAU_0000) -v
@@ -65,13 +44,13 @@ full:
 	snarkjs groth16 setup $(R1CS_FILE) $(PTAU_FINAL) $(ZKEY_0000)
 	
 	@echo "🤝 Step 7: Contributing to zkey..."
-	echo "random entropy" | snarkjs zkey contribute $(ZKEY_0000) $(ZKEY_FINAL) --name="1st Contributor Name" -v
+	echo "random entropy" | snarkjs zkey contribute $(ZKEY_0000) $(ZKEY_0001) --name="1st Contributor Name" -v
 	
 	@echo "📤 Step 8: Exporting verification key..."
-	snarkjs zkey export verificationkey $(ZKEY_FINAL) $(VERIFICATION_KEY)
+	snarkjs zkey export verificationkey $(ZKEY_0001) $(VERIFICATION_KEY)
 	
 	@echo "🔐 Step 9: Generating proof..."
-	snarkjs groth16 prove $(ZKEY_FINAL) $(CIRCUIT)_js/$(WITNESS_FILE) $(PROOF_FILE) $(PUBLIC_FILE)
+	snarkjs groth16 prove $(ZKEY_0001) $(CIRCUIT)_js/$(WITNESS_FILE) $(PROOF_FILE) $(PUBLIC_FILE)
 	
 	@echo "🔍 Step 10: Verifying proof..."
 	snarkjs groth16 verify $(VERIFICATION_KEY) $(PUBLIC_FILE) $(PROOF_FILE)
@@ -83,7 +62,7 @@ full:
 clean:
 	@echo "🧹 Cleaning generated files..."
 	rm -rf $(CIRCUIT)_js/ $(CIRCUIT)_cpp/
-	rm -f $(R1CS_FILE) $(ZKEY_0000) $(ZKEY_FINAL) $(VERIFICATION_KEY)
+	rm -f $(R1CS_FILE) $(ZKEY_0000) $(ZKEY_0001) $(VERIFICATION_KEY)
 	rm -f $(PROOF_FILE) $(PUBLIC_FILE) $(CIRCUIT).sym
 	rm -f $(PTAU_0000) $(PTAU_0001) $(PTAU_FINAL)
 	@echo "✅ Clean complete"

@@ -13,4 +13,4 @@ template RescuePrimeBench(nInputs) {
 }
 
 
-component main {public[in]} = RescuePrimeBench(1);
+component main {public[in]} = RescuePrimeBench(5);

@@ -16,4 +16,4 @@ template PoseidonBench(nInputs) {
 }
 
 
-component main {public[in]} = PoseidonBench(1);
+component main {public[in]} = PoseidonBench(5);

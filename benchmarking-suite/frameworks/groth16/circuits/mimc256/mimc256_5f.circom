@@ -24,4 +24,4 @@ template Main(N) {
 }
 
 
-component main {public[in]} = Main(1);
+component main {public[in]} = Main(5);
