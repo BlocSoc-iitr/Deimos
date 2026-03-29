@@ -1,0 +1,221 @@
+// BLAKE2s cryptographic hash function implementation in Cairo-M.
+// Follows RFC 7693 — BLAKE2s uses 32-bit words and produces a 256-bit (32-byte) digest.
+//
+// BLAKE2s is structurally similar to SHA-256: it operates on u32 words with
+// bitwise operations, rotations, and additions — all natively supported in Cairo-M.
+//
+// This implementation processes a single-block message (up to 64 bytes).
+// For benchmarking purposes, it takes a pre-padded array of u32 words.
+//
+// Language semantics notes:
+// - u32 arithmetic uses 32-bit wrapping (confirmed by Cairo-M docs §3.4).
+// - Fixed-size arrays are passed by pointer — mutations affect caller (§3.10).
+
+// BLAKE2s initialization vector (IV) — first 32 bits of fractional parts of
+// square roots of first 8 primes (same as SHA-256 H constants)
+const IV = [
+    1779033703u32, 3144134277, 1013904242, 2773480762,
+    1359893119, 2600822924, 528734635,  1541459225
+];
+
+// BLAKE2s sigma schedule — message permutations for each round
+// 10 rounds x 16 indices
+const SIGMA_0  = [0u32,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15];
+const SIGMA_1  = [14u32, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3];
+const SIGMA_2  = [11u32,  8, 12,  0,  5,  2, 15, 13, 10, 14,  3,  6,  7,  1,  9,  4];
+const SIGMA_3  = [7u32,   9,  3,  1, 13, 12, 11, 14,  2,  6,  5, 10,  4,  0, 15,  8];
+const SIGMA_4  = [9u32,   0,  5,  7,  2,  4, 10, 15, 14,  1, 11, 12,  6,  8,  3, 13];
+const SIGMA_5  = [2u32,  12,  6, 10,  0, 11,  8,  3,  4, 13,  7,  5, 15, 14,  1,  9];
+const SIGMA_6  = [12u32,  5,  1, 15, 14, 13,  4, 10,  0,  7,  6,  3,  9,  2,  8, 11];
+const SIGMA_7  = [13u32, 11,  7, 14, 12,  1,  3,  9,  5,  0, 15,  4,  8,  6,  2, 10];
+const SIGMA_8  = [6u32,  15, 14,  9, 11,  3,  0,  8, 12,  2, 13,  7,  1,  4, 10,  5];
+const SIGMA_9  = [10u32,  2,  8,  4,  7,  6,  1,  5, 15, 11,  9, 14,  3, 12, 13,  0];
+
+// Pre-computed powers of 2
+const POW2 = [1u32, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 33554432, 67108864, 134217728, 268435456, 536870912, 1073741824, 2147483648];
+
+// Byte masks for partial word handling: BYTE_MASK[k] = (1 << (k*8)) - 1
+// Used to zero out bytes beyond the message length in the final word.
+const BYTE_MASK = [0u32, 255, 65535, 16777215, 4294967295];
+
+/// Rotate right for u32: rotates bits of x right by n positions.
+/// Uses u32 wrapping multiplication for the left-shift portion.
+/// This is correct because Cairo-M u32 arithmetic wraps at 2^32 (§3.4).
+/// (Same pattern as sha256.cm rotr, verified correct against known SHA-256("abc") test vector.)
+fn rotr32(x: u32, n: felt) -> u32 {
+    if n == 0 {
+        return x;
+    }
+    let pow2_n = POW2[n];
+    let complement_n = 32 - n;
+    let pow2_complement = POW2[complement_n];
+    let shr_part = x / pow2_n;
+    let shl_part = x * pow2_complement;  // wraps at 2^32 — this IS the left-shift
+    return shl_part | shr_part;
+}
+
+/// BLAKE2s G mixing function.
+/// Mixes two message words into the working state.
+/// Arrays are passed by pointer in Cairo-M, so mutations to v affect the caller.
+fn g(v: [u32; 16], a: felt, b: felt, c: felt, d: felt, x: u32, y: u32) {
+    v[a] = v[a] + v[b] + x;
+    v[d] = rotr32(v[d] ^ v[a], 16);
+    v[c] = v[c] + v[d];
+    v[b] = rotr32(v[b] ^ v[c], 12);
+    v[a] = v[a] + v[b] + y;
+    v[d] = rotr32(v[d] ^ v[a], 8);
+    v[c] = v[c] + v[d];
+    v[b] = rotr32(v[b] ^ v[c], 7);
+    return ();
+}
+
+/// Retrieves the sigma permutation value for a given round and index.
+/// This avoids needing a 2D array which Cairo-M doesn't support directly.
+/// Rounds must be in [0, 9].
+fn get_sigma(round: felt, idx: felt) -> u32 {
+    if round == 0 { return SIGMA_0[idx]; }
+    if round == 1 { return SIGMA_1[idx]; }
+    if round == 2 { return SIGMA_2[idx]; }
+    if round == 3 { return SIGMA_3[idx]; }
+    if round == 4 { return SIGMA_4[idx]; }
+    if round == 5 { return SIGMA_5[idx]; }
+    if round == 6 { return SIGMA_6[idx]; }
+    if round == 7 { return SIGMA_7[idx]; }
+    if round == 8 { return SIGMA_8[idx]; }
+    if round == 9 { return SIGMA_9[idx]; }
+    // Should never reach here — rounds are always 0-9.
+    return SIGMA_0[idx];
+}
+
+/// Performs one round of BLAKE2s compression on the working vector v
+/// using message block m and sigma schedule for the given round number.
+fn blake2s_round(v: [u32; 16], m: [u32; 16], round: felt) {
+    // Column step
+    g(v, 0, 4,  8, 12, m[get_sigma(round, 0) as felt], m[get_sigma(round, 1) as felt]);
+    g(v, 1, 5,  9, 13, m[get_sigma(round, 2) as felt], m[get_sigma(round, 3) as felt]);
+    g(v, 2, 6, 10, 14, m[get_sigma(round, 4) as felt], m[get_sigma(round, 5) as felt]);
+    g(v, 3, 7, 11, 15, m[get_sigma(round, 6) as felt], m[get_sigma(round, 7) as felt]);
+    // Diagonal step
+    g(v, 0, 5, 10, 15, m[get_sigma(round, 8) as felt], m[get_sigma(round, 9) as felt]);
+    g(v, 1, 6, 11, 12, m[get_sigma(round, 10) as felt], m[get_sigma(round, 11) as felt]);
+    g(v, 2, 7,  8, 13, m[get_sigma(round, 12) as felt], m[get_sigma(round, 13) as felt]);
+    g(v, 3, 4,  9, 14, m[get_sigma(round, 14) as felt], m[get_sigma(round, 15) as felt]);
+    return ();
+}
+
+/// BLAKE2s compress function.
+/// Processes a single 64-byte (16-word) message block.
+///
+/// ## Arguments
+/// * `h` - 8-word chaining value (modified in-place via pass-by-pointer)
+/// * `m` - 16-word message block
+/// * `t` - Counter value (low 32 bits of bytes compressed so far)
+/// * `f` - Finalization flag (0xFFFFFFFF if final block, 0 otherwise)
+fn compress(h: [u32; 8], m: [u32; 16], t: u32, f: u32) {
+    // Initialize working vector v (RFC 7693 §3.2)
+    let v: [u32; 16] = [
+        h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7],
+        IV[0], IV[1], IV[2], IV[3],
+        IV[4] ^ t,       // v[12] = IV[4] ^ t0 (low 32 bits of byte counter)
+        IV[5],            // v[13] = IV[5] ^ t1 (high 32 bits; 0 for single-block)
+        IV[6] ^ f,        // v[14] = IV[6] ^ f0 (finalization flag)
+        IV[7]             // v[15] = IV[7] ^ f1 (0 for BLAKE2s)
+    ];
+
+    // 10 rounds of mixing
+    for (let round: felt = 0; round != 10; round = round + 1) {
+        blake2s_round(v, m, round);
+    }
+
+    // Finalize: h[i] = h[i] ^ v[i] ^ v[i+8]
+    for (let i: felt = 0; i != 8; i = i + 1) {
+        h[i] = h[i] ^ v[i] ^ v[i + 8];
+    }
+    return ();
+}
+
+/// Computes BLAKE2s-256 hash of a message.
+///
+/// Supports arbitrary message lengths via multi-block processing.
+/// Each block is 64 bytes (16 u32 words). Non-final blocks use f=0,
+/// the final block uses f=0xFFFFFFFF per RFC 7693.
+///
+/// ## Arguments
+/// * `message` - Pointer to the message as u32 words (little-endian byte order)
+/// * `num_bytes` - Actual message length in bytes
+///
+/// ## Returns
+/// The BLAKE2s-256 hash as an array of 8 u32 words
+fn blake2s_hash(message: u32*, num_bytes: u32) -> [u32; 8] {
+    // Initialize hash state with IV, XOR'd with parameter block (RFC 7693 §2.6)
+    // P[0] = digest_length | (key_length << 8) | (fanout << 16) | (depth << 24)
+    //      = 32 | (0 << 8) | (1 << 16) | (1 << 24)
+    //      = 0x01010020 = 16842784
+    let h: [u32; 8] = [
+        IV[0] ^ 16842784u32,
+        IV[1],
+        IV[2],
+        IV[3],
+        IV[4],
+        IV[5],
+        IV[6],
+        IV[7]
+    ];
+
+    // Calculate number of full 64-byte blocks and remainder
+    let num_full_blocks = num_bytes / 64u32;
+    let remaining = num_bytes - num_full_blocks * 64u32;
+
+    // Process all full 64-byte (non-final) blocks
+    let bytes_compressed: u32 = 0u32;
+    for (let block: u32 = 0u32; block < num_full_blocks; block = block + 1u32) {
+        let m: [u32; 16] = [0u32; 16];
+        let offset = block * 16u32;
+        for (let i: u32 = 0u32; i < 16u32; i = i + 1u32) {
+            m[i as felt] = message[(offset + i) as felt];
+        }
+        bytes_compressed = bytes_compressed + 64u32;
+
+        // Check if this is the final block (no remainder follows)
+        if remaining == 0u32 {
+            if block == num_full_blocks - 1u32 {
+                // This full block is the final block
+                compress(h, m, bytes_compressed, 4294967295u32);
+            } else {
+                compress(h, m, bytes_compressed, 0u32);
+            }
+        } else {
+            // More data follows, not final
+            compress(h, m, bytes_compressed, 0u32);
+        }
+    }
+
+    // Process the final partial block (if any remaining bytes)
+    if remaining != 0u32 {
+        let m: [u32; 16] = [0u32; 16];
+        let offset = num_full_blocks * 16u32;
+        let num_full_words = remaining / 4u32;
+        let remaining_bytes = remaining - num_full_words * 4u32;
+
+        for (let i: u32 = 0u32; i < num_full_words; i = i + 1u32) {
+            m[i as felt] = message[(offset + i) as felt];
+        }
+
+        // Handle partial final word
+        if remaining_bytes != 0u32 {
+            m[num_full_words as felt] = message[(offset + num_full_words) as felt] & BYTE_MASK[remaining_bytes as felt];
+        }
+
+        bytes_compressed = bytes_compressed + remaining;
+        compress(h, m, bytes_compressed, 4294967295u32);
+    }
+
+    // Edge case: empty message (0 bytes)
+    if num_bytes == 0u32 {
+        let m: [u32; 16] = [0u32; 16];
+        compress(h, m, 0u32, 4294967295u32);
+    }
+
+    return h;
+}
+

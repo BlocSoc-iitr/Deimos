@@ -1,0 +1,227 @@
+// Poseidon2 M31 hash function implementation in Cairo-M.
+// This implements the Poseidon2 permutation over the M31 field (p = 2^31 - 1).
+// Parameters: T=16 (state width), d=5 (S-Box exponent), 8 full rounds, 14 partial rounds.
+//
+// Round constants and internal diagonal matrix values are sourced from:
+//   https://github.com/AntoineFONDEUR/poseidon2 (branch: poseidon2-M31)
+//
+// The external round matrix is circ(2*M4, M4, M4, M4) where M4 is described
+// in https://eprint.iacr.org/2023/323.pdf Section 5.1.
+
+// Internal diagonal matrix minus identity (MAT_DIAG16_M_1)
+const MAT_DIAG = [
+    129501892, 1809435443, 1223573407, 1331944729,
+    415581875, 1526242955, 1341275624, 1333308150,
+    1404946132, 1549369918, 709303410, 1284988537,
+    1490838740, 115945821, 754131590, 800486749
+];
+
+// Round constants (RC16): 4 full + 14 partial + 4 full = 22 rounds total
+// Full rounds use all 16 constants; partial rounds use only RC[round*16]
+const RC = [
+    1988864850, 1893772157, 1025928330, 1839472709,
+    1611656994, 1104858731, 1694088660, 1564660990,
+    1991332205, 1875486487, 1890340790, 1658614,
+    582370530, 528029397, 1196956642, 655401251,
+    1652877415, 26032894, 1576640243, 1277052539,
+    1450142396, 697623591, 1401580866, 1568404175,
+    2145004971, 265835716, 1183985610, 1031234465,
+    436012490, 172735299, 352802897, 1032863094,
+    757665783, 1082171296, 1507509996, 309929890,
+    1807683232, 43258895, 611592566, 1854193793,
+    575164234, 894217817, 72613857, 1061659596,
+    8921166, 1617355017, 998001536, 1800758877,
+    1002748055, 1935405944, 1351462722, 411368491,
+    1913975372, 1956167178, 442558016, 855898408,
+    699687798, 1553382248, 1708169125, 490049183,
+    1251643415, 1193594742, 880473871, 511174042,
+    2139014335, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    69309039, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1368974953, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    886780232, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1130937085, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1718115455, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    2027103386, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1612216449, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1994053242, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    110146615, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    514413329, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1088763546, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    955319292, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    488794657, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1460209171, 530850056, 398192464, 536338716,
+    75179210, 1309934197, 1335920373, 127611036,
+    291093831, 1832379621, 123571662, 303176864,
+    2137685056, 1759609530, 1418928155, 71608334,
+    6616262, 1684515814, 1721194338, 720801691,
+    878392254, 460379263, 87930647, 940673483,
+    1136203256, 551499412, 256220454, 2007034235,
+    796124985, 410436345, 1705042586, 1286336446,
+    1522340456, 1295296352, 309794713, 1772145068,
+    956898901, 2137070800, 988829146, 2059451359,
+    1846491684, 1105442551, 1236497773, 1452000568,
+    549485016, 385992492, 1987107948, 1514377269,
+    2090065934, 1444920141, 293113979, 41120774,
+    855319793, 1663284746, 1789994008, 1120509162,
+    358222743, 1406256810, 735183687, 664485235,
+    1331641456, 38121324, 595810771, 1234594393
+];
+
+/// Compute x^5 in the M31 field (S-Box).
+fn pow5(x: felt) -> felt {
+    let x2 = x * x;
+    let x4 = x2 * x2;
+    return x4 * x;
+}
+
+/// Applies the external (full-round) MDS matrix.
+/// circ(2*M4, M4, M4, M4) as described in the Poseidon2 paper.
+fn apply_external_round_matrix(s: [felt; 16]) {
+    // Apply M4 to each 4-element group
+    // Group 0
+    let t0_0 = s[0] + s[1];
+    let t0_02 = t0_0 + t0_0;
+    let t0_1 = s[2] + s[3];
+    let t0_12 = t0_1 + t0_1;
+    let t0_2 = s[1] + s[1] + t0_1;
+    let t0_3 = s[3] + s[3] + t0_0;
+    let t0_4 = t0_12 + t0_12 + t0_3;
+    let t0_5 = t0_02 + t0_02 + t0_2;
+    s[0] = t0_3 + t0_5;
+    s[1] = t0_5;
+    s[2] = t0_2 + t0_4;
+    s[3] = t0_4;
+
+    // Group 1
+    let t1_0 = s[4] + s[5];
+    let t1_02 = t1_0 + t1_0;
+    let t1_1 = s[6] + s[7];
+    let t1_12 = t1_1 + t1_1;
+    let t1_2 = s[5] + s[5] + t1_1;
+    let t1_3 = s[7] + s[7] + t1_0;
+    let t1_4 = t1_12 + t1_12 + t1_3;
+    let t1_5 = t1_02 + t1_02 + t1_2;
+    s[4] = t1_3 + t1_5;
+    s[5] = t1_5;
+    s[6] = t1_2 + t1_4;
+    s[7] = t1_4;
+
+    // Group 2
+    let t2_0 = s[8] + s[9];
+    let t2_02 = t2_0 + t2_0;
+    let t2_1 = s[10] + s[11];
+    let t2_12 = t2_1 + t2_1;
+    let t2_2 = s[9] + s[9] + t2_1;
+    let t2_3 = s[11] + s[11] + t2_0;
+    let t2_4 = t2_12 + t2_12 + t2_3;
+    let t2_5 = t2_02 + t2_02 + t2_2;
+    s[8] = t2_3 + t2_5;
+    s[9] = t2_5;
+    s[10] = t2_2 + t2_4;
+    s[11] = t2_4;
+
+    // Group 3
+    let t3_0 = s[12] + s[13];
+    let t3_02 = t3_0 + t3_0;
+    let t3_1 = s[14] + s[15];
+    let t3_12 = t3_1 + t3_1;
+    let t3_2 = s[13] + s[13] + t3_1;
+    let t3_3 = s[15] + s[15] + t3_0;
+    let t3_4 = t3_12 + t3_12 + t3_3;
+    let t3_5 = t3_02 + t3_02 + t3_2;
+    s[12] = t3_3 + t3_5;
+    s[13] = t3_5;
+    s[14] = t3_2 + t3_4;
+    s[15] = t3_4;
+
+    // Now add column sums (circ step)
+    for (let j: felt = 0; j != 4; j = j + 1) {
+        let col_sum = s[j] + s[j + 4] + s[j + 8] + s[j + 12];
+        s[j] = s[j] + col_sum;
+        s[j + 4] = s[j + 4] + col_sum;
+        s[j + 8] = s[j + 8] + col_sum;
+        s[j + 12] = s[j + 12] + col_sum;
+    }
+    return;
+}
+
+/// Applies the internal (partial-round) matrix.
+/// M_int = diag(MAT_DIAG) + ones_matrix
+fn apply_internal_round_matrix(s: [felt; 16]) {
+    let sum = s[0] + s[1] + s[2] + s[3] + s[4] + s[5] + s[6] + s[7]
+            + s[8] + s[9] + s[10] + s[11] + s[12] + s[13] + s[14] + s[15];
+
+    for (let i: felt = 0; i != 16; i = i + 1) {
+        s[i] = s[i] * MAT_DIAG[i] + sum;
+    }
+    return;
+}
+
+/// Poseidon2 permutation: 4 full + 14 partial + 4 full rounds
+fn poseidon2_permute(state: [felt; 16]) {
+    // Initial linear layer
+    apply_external_round_matrix(state);
+
+    let rc_idx = 0;
+
+    // First half full rounds (4 rounds)
+    for (let r: felt = 0; r != 4; r = r + 1) {
+        // Add round constants + S-Box + MDS
+        for (let i: felt = 0; i != 16; i = i + 1) {
+            state[i] = state[i] + RC[rc_idx];
+            rc_idx = rc_idx + 1;
+        }
+        for (let i: felt = 0; i != 16; i = i + 1) {
+            state[i] = pow5(state[i]);
+        }
+        apply_external_round_matrix(state);
+    }
+
+    // Partial rounds (14 rounds) — S-Box only on state[0]
+    for (let r: felt = 0; r != 14; r = r + 1) {
+        state[0] = state[0] + RC[rc_idx];
+        rc_idx = rc_idx + 16;
+        state[0] = pow5(state[0]);
+        apply_internal_round_matrix(state);
+    }
+
+    // Second half full rounds (4 rounds)
+    for (let r: felt = 0; r != 4; r = r + 1) {
+        for (let i: felt = 0; i != 16; i = i + 1) {
+            state[i] = state[i] + RC[rc_idx];
+            rc_idx = rc_idx + 1;
+        }
+        for (let i: felt = 0; i != 16; i = i + 1) {
+            state[i] = pow5(state[i]);
+        }
+        apply_external_round_matrix(state);
+    }
+    return;
+}
+
+/// Poseidon2 hash: sponge-based absorption with rate=8 for multi-input support.
+/// Inputs are absorbed in chunks of 8 (rate portion), with a permutation
+/// between each chunk. This allows hashing arbitrary numbers of inputs.
+fn poseidon2_hash(inputs: felt*, num_inputs: felt) -> felt {
+    let state: [felt; 16] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+    // Sponge absorption: rate = 8, capacity = 8
+    let absorbed = 0;
+    for (let i: felt = 0; i != num_inputs; i = i + 1) {
+        let pos = absorbed;
+        state[pos] = state[pos] + inputs[i];
+        absorbed = absorbed + 1;
+
+        // When rate portion is full, permute and reset position
+        if absorbed == 8 {
+            poseidon2_permute(state);
+            absorbed = 0;
+        }
+    }
+
+    // Final permutation for any remaining absorbed elements
+    poseidon2_permute(state);
+
+    // Return state[0] as the hash digest
+    return state[0];
+}

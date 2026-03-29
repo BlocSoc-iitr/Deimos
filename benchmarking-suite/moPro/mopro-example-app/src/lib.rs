@@ -433,8 +433,8 @@ pub struct CairoVerifyOutput {
 /// `Ok(CairoProofOutput)` with serialized proof, or a `CairoError`.
 #[cfg(feature = "cairo_m")]
 #[uniffi::export]
-pub fn cairo_prove(program_json: String, inputs_json: String) -> Result<CairoProofOutput, CairoError> {
-    let proof = prove(&program_json, &inputs_json)
+pub fn cairo_prove(program_json: String, inputs_json: String, entrypoint: String) -> Result<CairoProofOutput, CairoError> {
+    let proof = prove(&program_json, &inputs_json, &entrypoint)
         .map_err(|e| CairoError::ProveError(e.to_string()))?;
     Ok(CairoProofOutput { proof })
 }
@@ -470,7 +470,7 @@ mod cairo_tests {
             .expect("Failed to read cairo_sha256.json");
 
         println!("Generating proof...");
-        let prove_result = cairo_prove(program_json, inputs_json);
+        let prove_result = cairo_prove(program_json, inputs_json, "sha256_hash".to_string());
         if let Err(e) = &prove_result {
             println!("Proving failed: {:?}", e);
         }

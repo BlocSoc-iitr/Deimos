@@ -107,11 +107,12 @@ class MethodChannelMoproFlutter extends MoproFlutterPlatform {
   }
 
   @override
-  Future<CairoProofOutput> generateCairoProof(String programJson, String inputsJson) async {
+  Future<CairoProofOutput> generateCairoProof(String programJson, String inputsJson, String entrypoint) async {
     final proofResult = await methodChannel
         .invokeMethod<Map<Object?, Object?>>('generateCairoProof', {
       'programJson': programJson,
       'inputsJson': inputsJson,
+      'entrypoint': entrypoint,
     });
 
     if (proofResult == null) {

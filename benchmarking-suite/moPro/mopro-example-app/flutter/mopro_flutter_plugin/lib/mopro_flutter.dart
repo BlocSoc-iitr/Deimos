@@ -76,7 +76,7 @@ class MoproFlutter {
     return await MoproFlutterPlatform.instance.verifyRisc0Proof(receiptBytes);
   }
 
-  Future<CairoProofOutput> generateCairoProof(String programJson, String inputsJson) async {
+  Future<CairoProofOutput> generateCairoProof(String programJson, String inputsJson, String entrypoint) async {
     return await copyAssetToFileSystem(programJson).then((path) async {
       final programJsonStr = await File(path).readAsString();
       
@@ -92,7 +92,7 @@ class MoproFlutter {
         }
       }
       
-      return await MoproFlutterPlatform.instance.generateCairoProof(programJsonStr, inputsJsonStr);
+      return await MoproFlutterPlatform.instance.generateCairoProof(programJsonStr, inputsJsonStr, entrypoint);
     });
   }
 

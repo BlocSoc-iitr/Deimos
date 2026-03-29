@@ -1,0 +1,88 @@
+// MiMC7 cryptographic hash function implementation in Cairo-M.
+// This is a MiMC permutation with exponent 7 (x^7) adapted for the M31 field.
+// Follows the same structure as the Circom MultiMiMC7 implementation.
+//
+// MiMC7 applies 91 rounds of the permutation: t = (x + k + c_i)^7
+// The multi-input variant uses a Miyaguchi-Preneel construction:
+//   r[i+1] = r[i] + in[i] + MiMC7(in[i], r[i])
+
+// MiMC7 round constants for M31 field (p = 2^31 - 1 = 2147483647).
+// These are derived from the standard MiMC round constants reduced mod p.
+// c[0] = 0 by convention (first round has no constant addition).
+const MIMC_C = [
+    0,
+    1340573338,  897461947,  1039068503, 1702287151, 285037463,
+    1190879858, 1893453622, 754165127,  398072577,  1029635012,
+    1668296451, 872390743,  1547829961, 341093819,  1240681406,
+    1958534720, 683219780,  492371236,  1104927483, 1745803614,
+    589741937,  1362486705, 2038891271, 130596458,  958236021,
+    1621375804, 812698790,  447851393,  1049645290, 1694189557,
+    258940100,  1163742185, 1871524099, 674287104,  378014863,
+    1083416736, 1716539241, 505601764,  1305189351, 1988107114,
+    154269311,  998685184,  1672903130, 842962443,  462208220,
+    1097989009, 1779927630, 618143853,  1368658319, 2051548142,
+    193869015,  1024950638, 1700434180, 868148096,  475951036,
+    1139532652, 1819685281, 651257910,  1389423962, 2077105385,
+    223612658,  1062849301, 1731198523, 921543749,  519706679,
+    1197326315, 1876992887, 714722053,  421634930,  1069502974,
+    1745016516, 594498294,  1314085881, 1996517587, 188389974,
+    968893297,  1632519137, 799727610,  412579049,  1047267627,
+    1692831514, 298483737,  1178099012, 1880367943, 723587114,
+    390327770,  1006583517, 1645717248, 831025873,  442794277
+];
+
+/// Computes x^7 in the M31 field.
+/// Used as the core permutation in each MiMC round.
+fn pow7(x: felt) -> felt {
+    let x2 = x * x;
+    let x4 = x2 * x2;
+    let x3 = x2 * x;
+    let x7 = x4 * x3;
+    return x7;
+}
+
+/// Single-input MiMC7 permutation with 91 rounds.
+///
+/// ## Arguments
+/// * `x_in` - The input field element
+/// * `k` - The key/state field element
+///
+/// ## Returns
+/// The MiMC7 permutation output
+fn mimc7(x_in: felt, k: felt) -> felt {
+    // First round: t = x_in + k (c[0] = 0)
+    let state = pow7(x_in + k);
+
+    // Rounds 1 through 89: t = state + k + c[i]
+    for (let i: felt = 1; i != 90; i = i + 1) {
+        state = pow7(state + k + MIMC_C[i]);
+    }
+
+    // Final round (round 90): output = (state + k + c[90])^7 + k
+    let final_t = pow7(state + k + MIMC_C[90]);
+    return final_t + k;
+}
+
+/// Multi-input MiMC7 hash using Miyaguchi-Preneel construction.
+/// This follows the Circom MultiMiMC7 pattern:
+///   r[0] = k
+///   r[i+1] = r[i] + in[i] + MiMC7(in[i], r[i])
+///   output = r[num_inputs]
+///
+/// ## Arguments
+/// * `inputs` - Pointer to array of input field elements
+/// * `num_inputs` - Number of inputs to hash
+/// * `k` - Initial key (typically 0)
+///
+/// ## Returns
+/// The hash output as a single field element
+fn multi_mimc7(inputs: felt*, num_inputs: felt, k: felt) -> felt {
+    let r = k;
+
+    for (let i: felt = 0; i != num_inputs; i = i + 1) {
+        let h = mimc7(inputs[i], r);
+        r = r + inputs[i] + h;
+    }
+
+    return r;
+}

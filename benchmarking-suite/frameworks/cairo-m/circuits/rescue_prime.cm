@@ -1,0 +1,278 @@
+// Rescue Prime cryptographic hash function implementation in Cairo-M.
+// Implements the Rescue permutation over the M31 field (p = 2^31 - 1).
+//
+// Rescue Prime is an Arithmetization-Oriented Hash that applies BOTH forward
+// and inverse S-Boxes in each round, unlike Poseidon which uses only x^alpha.
+//
+// Parameters:
+//   T = 16 (state width, same as our Poseidon2 for fair comparison)
+//   alpha = 5 (forward S-Box exponent, x^5)
+//   alpha_inv = 1717986917 (inverse S-Box exponent, x^(1/5) mod M31)
+//     Computed as: 5^(-1) mod (p-1) = 5^(-1) mod 2147483646 = 1717986917
+//   Rounds = 7 (sufficient security margin for M31 with T=16)
+//
+// Each round applies:
+//   1. Forward S-Box (x^5) to all state elements
+//   2. MDS matrix multiplication
+//   3. Round constant addition (first set)
+//   4. Inverse S-Box (x^alpha_inv) to all state elements
+//   5. MDS matrix multiplication
+//   6. Round constant addition (second set)
+//
+// The MDS matrix reuses the circ(2*M4, M4, M4, M4) construction from Poseidon2.
+
+// Round constants for 7 rounds, 2 layers, 16 elements = 224 constants total.
+// First 112 constants for forward S-Box layers, last 112 for inverse S-Box layers.
+const RC = [
+    1234567891, 321652135, 1556220026, 643304270, 1877872161, 964956405, 52040649, 1286608540,
+    373692784, 1608260675, 695344919, 1929912810, 1016997054, 104081298, 1338649189, 425733433,
+    1660301324, 747385568, 1981953459, 1069037703, 156121947, 1390689838, 477774082, 1712341973,
+    799426217, 2034010108, 1121078352, 208162596, 1442730487, 529814731, 1764382622, 851466866,
+    2086034757, 1173119001, 260203245, 1494771136, 581855380, 1816423271, 903507515, 2138075406,
+    1225159650, 312243894, 1546811785, 633896029, 1868463920, 955548164, 42632408, 1277200299,
+    364284543, 1598852434, 685936678, 1920504569, 1007588813, 94673057, 1329240948, 416325192,
+    1650893083, 737977327, 1972545218, 1059629462, 146713706, 1381281597, 468365841, 1702933732,
+    790017976, 2024585867, 1111670111, 198754355, 1433322246, 520406490, 1754974381, 842058625,
+    2076626516, 1163710760, 250795004, 1485362895, 572447139, 1807015030, 894099274, 2128667165,
+    1215751409, 302835653, 1537403544, 624487788, 1859055679, 946139923, 33224167, 1267792058,
+    354876302, 1589444193, 676528437, 1911096328, 998180572, 85264816, 1319832707, 406916951,
+    1641484842, 728569086, 1963136977, 1050221221, 137305465, 1371873356, 458957600, 1693525491,
+    780609735, 2015177626, 1102261870, 189346114, 1423914005, 510998249, 1745566140, 832650384,
+    2067218275, 1154302519, 241386763, 1475954654, 563038898, 1797606789, 884691033, 2119258924,
+    1206343168, 293427412, 1527995303, 615079547, 1849647438, 936731682, 23815926, 1258383817,
+    345468061, 1580035952, 667120196, 1901688087, 988772331, 75856575, 1310424466, 397508710,
+    1632076601, 719160845, 1953728736, 1040812980, 127897224, 1362465115, 449549359, 1684117250,
+    771201494, 2005769385, 1092853629, 179937873, 1414505764, 501590008, 1736157899, 823242143,
+    2057810034, 1144894278, 231978522, 1466546413, 553630657, 1788198548, 875282792, 2109850683,
+    1196934927, 284019171, 1518587062, 605671306, 1840239197, 927323441, 14407685, 1248975576,
+    336059820, 1570627711, 657711955, 1892279846, 979364090, 66448334, 1301016225, 388100469,
+    1622668360, 709752604, 1944320495, 1031404739, 118488983, 1353056874, 440141118, 1674709009,
+    761793253, 1996361144, 1083445388, 170529632, 1405097523, 492181767, 1726749658, 813833902,
+    2048401793, 1135486037, 222570281, 1457138172, 544222416, 1778790307, 865874551, 2100442442,
+    1187526686, 274610930, 1509178821, 596263065, 1830830956, 917915200, 4999444, 1239567335,
+    326651579, 1561219470, 648303714, 1882871605, 969955849, 57040093, 1291607984, 378692228,
+    1613260119, 700344363, 1934912254, 1021996498, 109080742, 1343648633, 430732877, 1665300768
+];
+
+/// Compute x^5 in the M31 field (forward S-Box).
+fn pow5(x: felt) -> felt {
+    let x2 = x * x;
+    let x4 = x2 * x2;
+    return x4 * x;
+}
+
+/// Compute x^1717986917 in the M31 field (inverse S-Box).
+/// Uses square-and-multiply chain for the exponent.
+/// Binary of 1717986917 = 0x66666665 = 0110_0110_0110_0110_0110_0110_0110_0101
+/// This is 30 squarings + 15 multiplications = 45 field operations.
+fn pow_alpha_inv(x: felt) -> felt {
+    let acc = x;
+    // bit 29: 1
+    acc = acc * acc;
+    acc = acc * x;
+    // bit 28: 0
+    acc = acc * acc;
+    // bit 27: 0
+    acc = acc * acc;
+    // bit 26: 1
+    acc = acc * acc;
+    acc = acc * x;
+    // bit 25: 1
+    acc = acc * acc;
+    acc = acc * x;
+    // bit 24: 0
+    acc = acc * acc;
+    // bit 23: 0
+    acc = acc * acc;
+    // bit 22: 1
+    acc = acc * acc;
+    acc = acc * x;
+    // bit 21: 1
+    acc = acc * acc;
+    acc = acc * x;
+    // bit 20: 0
+    acc = acc * acc;
+    // bit 19: 0
+    acc = acc * acc;
+    // bit 18: 1
+    acc = acc * acc;
+    acc = acc * x;
+    // bit 17: 1
+    acc = acc * acc;
+    acc = acc * x;
+    // bit 16: 0
+    acc = acc * acc;
+    // bit 15: 0
+    acc = acc * acc;
+    // bit 14: 1
+    acc = acc * acc;
+    acc = acc * x;
+    // bit 13: 1
+    acc = acc * acc;
+    acc = acc * x;
+    // bit 12: 0
+    acc = acc * acc;
+    // bit 11: 0
+    acc = acc * acc;
+    // bit 10: 1
+    acc = acc * acc;
+    acc = acc * x;
+    // bit 9: 1
+    acc = acc * acc;
+    acc = acc * x;
+    // bit 8: 0
+    acc = acc * acc;
+    // bit 7: 0
+    acc = acc * acc;
+    // bit 6: 1
+    acc = acc * acc;
+    acc = acc * x;
+    // bit 5: 1
+    acc = acc * acc;
+    acc = acc * x;
+    // bit 4: 0
+    acc = acc * acc;
+    // bit 3: 0
+    acc = acc * acc;
+    // bit 2: 1
+    acc = acc * acc;
+    acc = acc * x;
+    // bit 1: 0
+    acc = acc * acc;
+    // bit 0: 1
+    acc = acc * acc;
+    acc = acc * x;
+    return acc;
+}
+
+/// Applies the MDS matrix (same as Poseidon2 external round matrix).
+/// circ(2*M4, M4, M4, M4) where M4 is the 4x4 Hadamard-like matrix.
+fn apply_mds(s: [felt; 16]) {
+    // Apply M4 to each 4-element group
+    // Group 0
+    let t0_0 = s[0] + s[1];
+    let t0_02 = t0_0 + t0_0;
+    let t0_1 = s[2] + s[3];
+    let t0_12 = t0_1 + t0_1;
+    let t0_2 = s[1] + s[1] + t0_1;
+    let t0_3 = s[3] + s[3] + t0_0;
+    let t0_4 = t0_12 + t0_12 + t0_3;
+    let t0_5 = t0_02 + t0_02 + t0_2;
+    s[0] = t0_3 + t0_5;
+    s[1] = t0_5;
+    s[2] = t0_2 + t0_4;
+    s[3] = t0_4;
+
+    // Group 1
+    let t1_0 = s[4] + s[5];
+    let t1_02 = t1_0 + t1_0;
+    let t1_1 = s[6] + s[7];
+    let t1_12 = t1_1 + t1_1;
+    let t1_2 = s[5] + s[5] + t1_1;
+    let t1_3 = s[7] + s[7] + t1_0;
+    let t1_4 = t1_12 + t1_12 + t1_3;
+    let t1_5 = t1_02 + t1_02 + t1_2;
+    s[4] = t1_3 + t1_5;
+    s[5] = t1_5;
+    s[6] = t1_2 + t1_4;
+    s[7] = t1_4;
+
+    // Group 2
+    let t2_0 = s[8] + s[9];
+    let t2_02 = t2_0 + t2_0;
+    let t2_1 = s[10] + s[11];
+    let t2_12 = t2_1 + t2_1;
+    let t2_2 = s[9] + s[9] + t2_1;
+    let t2_3 = s[11] + s[11] + t2_0;
+    let t2_4 = t2_12 + t2_12 + t2_3;
+    let t2_5 = t2_02 + t2_02 + t2_2;
+    s[8] = t2_3 + t2_5;
+    s[9] = t2_5;
+    s[10] = t2_2 + t2_4;
+    s[11] = t2_4;
+
+    // Group 3
+    let t3_0 = s[12] + s[13];
+    let t3_02 = t3_0 + t3_0;
+    let t3_1 = s[14] + s[15];
+    let t3_12 = t3_1 + t3_1;
+    let t3_2 = s[13] + s[13] + t3_1;
+    let t3_3 = s[15] + s[15] + t3_0;
+    let t3_4 = t3_12 + t3_12 + t3_3;
+    let t3_5 = t3_02 + t3_02 + t3_2;
+    s[12] = t3_3 + t3_5;
+    s[13] = t3_5;
+    s[14] = t3_2 + t3_4;
+    s[15] = t3_4;
+
+    // Column sums (circ step)
+    for (let j: felt = 0; j != 4; j = j + 1) {
+        let col_sum = s[j] + s[j + 4] + s[j + 8] + s[j + 12];
+        s[j] = s[j] + col_sum;
+        s[j + 4] = s[j + 4] + col_sum;
+        s[j + 8] = s[j + 8] + col_sum;
+        s[j + 12] = s[j + 12] + col_sum;
+    }
+    return;
+}
+
+/// Rescue Prime permutation: 7 rounds with alternating S-Boxes.
+fn rescue_prime_permute(state: [felt; 16]) {
+    let rc_idx = 0;
+
+    for (let r: felt = 0; r != 7; r = r + 1) {
+        // --- Forward half-round ---
+        // 1. S-Box: x^5
+        for (let i: felt = 0; i != 16; i = i + 1) {
+            state[i] = pow5(state[i]);
+        }
+        // 2. MDS matrix
+        apply_mds(state);
+        // 3. Add round constants (first set)
+        for (let i: felt = 0; i != 16; i = i + 1) {
+            state[i] = state[i] + RC[rc_idx];
+            rc_idx = rc_idx + 1;
+        }
+
+        // --- Inverse half-round ---
+        // 4. Inverse S-Box: x^alpha_inv
+        for (let i: felt = 0; i != 16; i = i + 1) {
+            state[i] = pow_alpha_inv(state[i]);
+        }
+        // 5. MDS matrix
+        apply_mds(state);
+        // 6. Add round constants (second set)
+        for (let i: felt = 0; i != 16; i = i + 1) {
+            state[i] = state[i] + RC[rc_idx];
+            rc_idx = rc_idx + 1;
+        }
+    }
+    return;
+}
+
+/// Rescue Prime hash: sponge-based absorption with rate=8 for multi-input support.
+/// Inputs are absorbed in chunks of 8 (rate portion), with a permutation
+/// between each chunk. This allows hashing arbitrary numbers of inputs.
+fn rescue_prime_hash(inputs: felt*, num_inputs: felt) -> felt {
+    let state: [felt; 16] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+    // Sponge absorption: rate = 8, capacity = 8
+    let absorbed = 0;
+    for (let i: felt = 0; i != num_inputs; i = i + 1) {
+        let pos = absorbed;
+        state[pos] = state[pos] + inputs[i];
+        absorbed = absorbed + 1;
+
+        // When rate portion is full, permute and reset position
+        if absorbed == 8 {
+            rescue_prime_permute(state);
+            absorbed = 0;
+        }
+    }
+
+    // Final permutation for any remaining absorbed elements
+    rescue_prime_permute(state);
+
+    // Return state[0] as the hash digest
+    return state[0];
+}

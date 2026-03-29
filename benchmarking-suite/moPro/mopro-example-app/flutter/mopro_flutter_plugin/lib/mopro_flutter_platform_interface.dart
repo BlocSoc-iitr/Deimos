@@ -57,7 +57,7 @@ abstract class MoproFlutterPlatform extends PlatformInterface {
     throw UnimplementedError('verifyRisc0Proof() has not been implemented.');
   }
 
-  Future<CairoProofOutput> generateCairoProof(String programJson, String inputsJson) {
+  Future<CairoProofOutput> generateCairoProof(String programJson, String inputsJson, String entrypoint) {
     throw UnimplementedError('generateCairoProof() has not been implemented.');
   }
 

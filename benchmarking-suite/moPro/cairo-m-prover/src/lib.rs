@@ -21,7 +21,7 @@ use anyhow::{Context, Result};
 ///
 /// # Returns
 /// `Ok(Vec<u8>)` containing the serialized proof, or an `anyhow::Error`.
-pub fn prove(program_json: &str, inputs_json: &str) -> Result<Vec<u8>> {
+pub fn prove(program_json: &str, inputs_json: &str, entrypoint: &str) -> Result<Vec<u8>> {
     // Deserialize Program
     let program: Program = serde_json::from_str(program_json)
         .context("Failed to parse program JSON")?;
@@ -31,10 +31,9 @@ pub fn prove(program_json: &str, inputs_json: &str) -> Result<Vec<u8>> {
         .context("Failed to parse inputs JSON")?;
 
     // Run Cairo Program
-    // Entrypoint hardcoded to "sha256_hash" as per cairo-test reference for this demo.
     let runner_output = run_cairo_program(
         &program,
-        "sha256_hash", 
+        entrypoint, 
         &args,
         RunnerOptions::default(),
     ).context("Failed to run cairo program")?;

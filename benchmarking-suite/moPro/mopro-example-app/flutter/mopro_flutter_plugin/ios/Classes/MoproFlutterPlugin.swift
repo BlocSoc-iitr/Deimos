@@ -287,14 +287,15 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
     // case "generateCairoProof":
     //   guard let args = call.arguments as? [String: Any],
     //     let programJson = args["programJson"] as? String,
-    //     let inputsJson = args["inputsJson"] as? String
+    //     let inputsJson = args["inputsJson"] as? String,
+    //     let entrypoint = args["entrypoint"] as? String
     //   else {
     //     result(FlutterError(code: "ARGUMENT_ERROR", message: "Missing arguments", details: nil))
     //     return
     //   }
     //
     //   do {
-    //     let proofOutput = try cairoProve(programJson: programJson, inputsJson: inputsJson)
+    //     let proofOutput = try cairoProve(programJson: programJson, inputsJson: inputsJson, entrypoint: entrypoint)
     //     // Convert to map for Flutter
     //     let resultMap: [String: Any] = [
     //         "proof": proofOutput.proof

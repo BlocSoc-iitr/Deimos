@@ -1279,9 +1279,54 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
   }
 
   Future<String> _generateCairoProof(MoproFlutter plugin) async {
-    // Load the dedicated input file for Cairo
-    // This ensures we match the exact format expected by the cairo-m prover (Vec<u32> + len)
-    final inputsJson = await rootBundle.loadString('assets/cairo_input.json');
+    // Generate inputs dynamically based on the algorithm
+    String inputsJson;
+    String entrypoint = "main";
+    String programPath = "assets/cairo-m/cairo_sha256.json"; // default
+
+    final inputData = _getInputDataForAlgorithm();
+    final algorithmLower = widget.algorithm.toLowerCase();
+
+    if (algorithmLower == "sha256") {
+      entrypoint = "sha256_hash";
+      programPath = "assets/cairo-m/cairo_sha256.json";
+      List<String> words = List.from(inputData);
+      while (words.length % 16 != 0 || words.isEmpty) {
+        words.add("0");
+      }
+      int numChunks = words.length ~/ 16;
+      inputsJson = '[[${words.join(', ')}], $numChunks]';
+    } else if (algorithmLower == "blake2s256" || algorithmLower == "blake2s") {
+      entrypoint = "blake2s_hash";
+      programPath = "assets/cairo-m/cairo_blake2s.json";
+      int numBytes = inputData.length * 4;
+      inputsJson = '[[${inputData.join(', ')}], $numBytes]';
+    } else if (algorithmLower == "blake3") {
+      entrypoint = "blake3_hash";
+      programPath = "assets/cairo-m/cairo_blake3.json";
+      int numBytes = inputData.length * 4;
+      inputsJson = '[[${inputData.join(', ')}], $numBytes]';
+    } else if (algorithmLower == "keccak256") {
+      entrypoint = "keccak256_hash";
+      programPath = "assets/cairo-m/cairo_keccak256.json";
+      int numBytes = inputData.length * 4;
+      inputsJson = '[[${inputData.join(', ')}], $numBytes]';
+    } else if (algorithmLower == "mimc") {
+      entrypoint = "multi_mimc7";
+      programPath = "assets/cairo-m/cairo_mimc.json";
+      inputsJson = '[[${inputData.join(', ')}], ${inputData.length}, 0]';
+    } else if (algorithmLower == "poseidon2" || algorithmLower == "poseidon") {
+      entrypoint = "poseidon2_hash";
+      programPath = "assets/cairo-m/cairo_poseidon2.json";
+      inputsJson = '[[${inputData.join(', ')}], ${inputData.length}]';
+    } else if (algorithmLower == "rescueprime") {
+      entrypoint = "rescue_prime_hash";
+      programPath = "assets/cairo-m/cairo_rescue_prime.json";
+      inputsJson = '[[${inputData.join(', ')}], ${inputData.length}]';
+    } else {
+      // Fallback
+      inputsJson = '[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 1]'; 
+    }
     
     // Capture memory and battery BEFORE proof generation
     _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
@@ -1295,8 +1340,9 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     _startMemoryMonitoring();
 
     final proofResult = await plugin.generateCairoProof(
-      "assets/cairo_sha256.json",
-      inputsJson
+      programPath,
+      inputsJson,
+      entrypoint
     );
 
     stopwatch.stop();
@@ -1311,7 +1357,6 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
 
     return _formatCairoProofOutput(proofResult);
   }
-
 
   Future<bool> _verifyCairoProof(MoproFlutter plugin) async {
     if (_cairoProofResult == null) {

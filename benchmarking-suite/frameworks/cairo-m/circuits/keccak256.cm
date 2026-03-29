@@ -1,0 +1,259 @@
+// Keccak-256 cryptographic hash function implementation in Cairo-M.
+// Implements the Keccak-f[1600] permutation using 64-bit emulation via u32 pairs.
+//
+// Keccak uses a 1600-bit state (25 × 64-bit words). Since Cairo-M only has u32,
+// every 64-bit word is stored as two u32 values: state[2*i] = lo, state[2*i+1] = hi.
+// Total state array: [u32; 50].
+//
+// The permutation has 24 rounds, each applying: θ, ρ, π, χ, ι.
+
+// Powers of 2 (for shift emulation)
+const POW2 = [1u32, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 33554432, 67108864, 134217728, 268435456, 536870912, 1073741824, 2147483648];
+
+// Keccak round constants (RC) as (lo, hi) u32 pairs — 24 rounds
+// RC[2*r] = lo word, RC[2*r+1] = hi word
+// From NIST FIPS 202 / Keccak reference
+const KECCAK_RC = [
+    1u32,          0,
+    32898u32,      0,
+    32906u32,      2147483648u32,
+    2147516416u32, 2147483648u32,
+    32898u32,      0,
+    1u32,          0,
+    2147516545u32, 2147483648u32,
+    32769u32,      2147483648u32,
+    138u32,        0,
+    136u32,        0,
+    32777u32,      2147483648u32,
+    2147483658u32, 0,
+    2147516555u32, 0,
+    139u32,        2147483648u32,
+    32905u32,      2147483648u32,
+    32771u32,      2147483648u32,
+    32770u32,      2147483648u32,
+    128u32,        2147483648u32,
+    32778u32,      0,
+    2147483658u32, 2147483648u32,
+    2147516545u32, 2147483648u32,
+    32896u32,      2147483648u32,
+    2147483649u32, 0,
+    2147516546u32, 2147483648u32
+];
+
+// Rotation offsets for rho step (per lane index 0..24)
+const RHO_OFFSETS = [
+     0,  1, 62, 28, 27,
+    36, 44,  6, 55, 20,
+     3, 10, 43, 25, 39,
+    41, 45, 15, 21,  8,
+    18,  2, 61, 56, 14
+];
+
+// Pi permutation: lane index mapping
+const PI_MAP = [
+     0, 10, 20,  5, 15,
+    16,  1, 11, 21,  6,
+     7, 17,  2, 12, 22,
+    23,  8, 18,  3, 13,
+    14, 24,  9, 19,  4
+];
+
+// Lookup table for (x+1) mod 5 — avoids using % operator on felt
+const MOD5_PLUS1 = [1, 2, 3, 4, 0];
+// Lookup table for (x+2) mod 5
+const MOD5_PLUS2 = [2, 3, 4, 0, 1];
+// Lookup table for (x+4) mod 5 == (x-1) mod 5
+const MOD5_MINUS1 = [4, 0, 1, 2, 3];
+
+// Lookup: is n < 32? Stored as 0 or 1 for n in [0..63]
+// LESS_THAN_32[n] = 1 if n < 32, else 0
+const LT32 = [
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+];
+
+/// Shift right a u32 by n bits (0 <= n <= 31)
+fn shr32(x: u32, n: felt) -> u32 {
+    if n == 0 {
+        return x;
+    }
+    return x / POW2[n];
+}
+
+/// Shift left a u32 by n bits (0 <= n <= 31), wrapping at 2^32
+fn shl32(x: u32, n: felt) -> u32 {
+    if n == 0 {
+        return x;
+    }
+    return x * POW2[n];
+}
+
+/// Rotate a 64-bit value left by `n` bits (0 <= n < 64).
+/// Returns results in out[0] = new_lo, out[1] = new_hi.
+fn rotl64(lo: u32, hi: u32, n: felt, out: [u32; 2]) {
+    if n == 0 {
+        out[0] = lo;
+        out[1] = hi;
+        return;
+    }
+    if n == 32 {
+        out[0] = hi;
+        out[1] = lo;
+        return;
+    }
+    if LT32[n] == 1 {
+        // n < 32
+        let cn = 32 - n;
+        out[1] = shl32(hi, n) | shr32(lo, cn);
+        out[0] = shl32(lo, n) | shr32(hi, cn);
+        return;
+    }
+    // n > 32: swap + rotate by (n-32)
+    let m = n - 32;
+    let cm = 32 - m;
+    out[1] = shl32(lo, m) | shr32(hi, cm);
+    out[0] = shl32(hi, m) | shr32(lo, cm);
+    return;
+}
+
+/// NOT a u32 value (bitwise complement)
+fn not32(x: u32) -> u32 {
+    return x ^ 4294967295u32;
+}
+
+/// Keccak-f[1600] permutation on a state of 50 u32 values.
+/// State layout: lane[i] = (state[2*i], state[2*i+1]) = (lo, hi)
+fn keccak_f(state: [u32; 50]) {
+    // Temporary arrays
+    let c_lo: [u32; 5] = [0u32, 0, 0, 0, 0];
+    let c_hi: [u32; 5] = [0u32, 0, 0, 0, 0];
+    let d_lo: [u32; 5] = [0u32, 0, 0, 0, 0];
+    let d_hi: [u32; 5] = [0u32, 0, 0, 0, 0];
+    let b_state: [u32; 50] = [
+        0u32, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ];
+    let rot_tmp: [u32; 2] = [0u32, 0];
+
+    for (let round: felt = 0; round != 24; round = round + 1) {
+        // === THETA ===
+        for (let x: felt = 0; x != 5; x = x + 1) {
+            c_lo[x] = state[x * 2] ^ state[(x + 5) * 2] ^ state[(x + 10) * 2] ^ state[(x + 15) * 2] ^ state[(x + 20) * 2];
+            c_hi[x] = state[x * 2 + 1] ^ state[(x + 5) * 2 + 1] ^ state[(x + 10) * 2 + 1] ^ state[(x + 15) * 2 + 1] ^ state[(x + 20) * 2 + 1];
+        }
+
+        // D[x] = C[(x-1)%5] ^ rotl64(C[(x+1)%5], 1)
+        for (let x: felt = 0; x != 5; x = x + 1) {
+            let xm1 = MOD5_MINUS1[x];
+            let xp1 = MOD5_PLUS1[x];
+            rotl64(c_lo[xp1], c_hi[xp1], 1, rot_tmp);
+            d_lo[x] = c_lo[xm1] ^ rot_tmp[0];
+            d_hi[x] = c_hi[xm1] ^ rot_tmp[1];
+        }
+
+        // Apply D to state
+        for (let x: felt = 0; x != 5; x = x + 1) {
+            for (let y: felt = 0; y != 5; y = y + 1) {
+                let idx = (x + y * 5) * 2;
+                state[idx] = state[idx] ^ d_lo[x];
+                state[idx + 1] = state[idx + 1] ^ d_hi[x];
+            }
+        }
+
+        // === RHO + PI (combined) ===
+        for (let i: felt = 0; i != 25; i = i + 1) {
+            let src = PI_MAP[i];
+            let rot_n = RHO_OFFSETS[src];
+            rotl64(state[src * 2], state[src * 2 + 1], rot_n, rot_tmp);
+            b_state[i * 2] = rot_tmp[0];
+            b_state[i * 2 + 1] = rot_tmp[1];
+        }
+
+        // === CHI ===
+        for (let y: felt = 0; y != 5; y = y + 1) {
+            for (let x: felt = 0; x != 5; x = x + 1) {
+                let i0 = (x + y * 5) * 2;
+                let i1 = (MOD5_PLUS1[x] + y * 5) * 2;
+                let i2 = (MOD5_PLUS2[x] + y * 5) * 2;
+                state[i0] = b_state[i0] ^ (not32(b_state[i1]) & b_state[i2]);
+                state[i0 + 1] = b_state[i0 + 1] ^ (not32(b_state[i1 + 1]) & b_state[i2 + 1]);
+            }
+        }
+
+        // === IOTA ===
+        state[0] = state[0] ^ KECCAK_RC[round * 2];
+        state[1] = state[1] ^ KECCAK_RC[round * 2 + 1];
+    }
+    return;
+}
+
+/// Keccak-256 hash function with multi-block sponge absorption.
+/// Takes input as u32 words (little-endian byte order) and the byte length.
+/// Absorbs rate-sized blocks (136 bytes = 34 u32 words), permuting after each.
+/// Applies Keccak padding (pad10*1) and returns 256 bits of squeezed state.
+fn keccak256_hash(message: u32*, num_bytes: u32) -> [u32; 8] {
+    // Initialize 1600-bit state to zero
+    let state: [u32; 50] = [
+        0u32, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ];
+
+    // Rate for Keccak-256 = 1088 bits = 136 bytes = 34 u32 words
+    // Process full rate blocks (136 bytes each)
+    let num_full_blocks = num_bytes / 136u32;
+    let msg_word_offset: u32 = 0u32;
+
+    for (let block: u32 = 0u32; block < num_full_blocks; block = block + 1u32) {
+        // XOR 34 u32 words into the rate portion of state
+        for (let i: u32 = 0u32; i < 34u32; i = i + 1u32) {
+            state[i as felt] = state[i as felt] ^ message[(msg_word_offset + i) as felt];
+        }
+        keccak_f(state);
+        msg_word_offset = msg_word_offset + 34u32;
+    }
+
+    // Process remaining bytes (partial final block)
+    let remaining = num_bytes - num_full_blocks * 136u32;
+    let remaining_full_words = remaining / 4u32;
+    let remaining_bytes = remaining - remaining_full_words * 4u32;
+
+    // XOR remaining full words
+    for (let i: u32 = 0u32; i < remaining_full_words; i = i + 1u32) {
+        state[i as felt] = state[i as felt] ^ message[(msg_word_offset + i) as felt];
+    }
+
+    // Handle partial final word
+    if remaining_bytes != 0u32 {
+        let byte_mask = POW2[remaining_bytes as felt * 8] - 1u32;
+        state[remaining_full_words as felt] = state[remaining_full_words as felt] ^ (message[(msg_word_offset + remaining_full_words) as felt] & byte_mask);
+    }
+
+    // Keccak padding (pad10*1 for Keccak-256):
+    // XOR 0x01 at byte position (remaining) within the rate block
+    let pad_word_idx = remaining / 4u32;
+    let pad_byte_pos = remaining - pad_word_idx * 4u32;
+    let pad_val = 1u32 * POW2[pad_byte_pos as felt * 8];
+    state[pad_word_idx as felt] = state[pad_word_idx as felt] ^ pad_val;
+
+    // Final bit at rate boundary: byte 135 = word 33, byte 3 => 0x80 << 24
+    state[33] = state[33] ^ 2147483648u32;
+
+    // Permute
+    keccak_f(state);
+
+    // Squeeze: return first 256 bits = first 8 u32 words (4 lanes)
+    let out: [u32; 8] = [
+        state[0], state[1], state[2], state[3],
+        state[4], state[5], state[6], state[7]
+    ];
+    return out;
+}
+

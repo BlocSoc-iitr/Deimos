@@ -17,3 +17,9 @@ anyhow = "1.0"
 # Patch zkhash to use the fork with M31 field support (same as cairo-m)
 [patch."https://github.com/HorizenLabs/poseidon2.git"]
 zkhash = { git = "https://github.com/AntoineFONDEUR/poseidon2.git", branch = "poseidon2-M31" }
+
+# Fix macOS ld64 linker assertion (symbol name length)
+[profile.dev]
+opt-level = 1
+codegen-units = 1
+split-debuginfo = "off"

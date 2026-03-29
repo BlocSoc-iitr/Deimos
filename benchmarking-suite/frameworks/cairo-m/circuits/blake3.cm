@@ -1,0 +1,207 @@
+const IV0: u32 = 1779033703u32;
+const IV1: u32 = 3144134277u32;
+const IV2: u32 = 1013904242u32;
+const IV3: u32 = 2773480762u32;
+const IV4: u32 = 1359893119u32;
+const IV5: u32 = 2600822924u32;
+const IV6: u32 = 528734635u32;
+const IV7: u32 = 1541459225u32;
+
+const CHUNK_START: u32 = 1u32;
+const CHUNK_END: u32   = 2u32;
+const ROOT: u32        = 8u32;
+
+const POW2 = [1u32, 2u32, 4u32, 8u32, 16u32, 32u32, 64u32, 128u32, 256u32, 512u32, 1024u32, 2048u32, 4096u32, 8192u32, 16384u32, 32768u32, 65536u32, 131072u32, 262144u32, 524288u32, 1048576u32, 2097152u32, 4194304u32, 8388608u32, 16777216u32, 33554432u32, 67108864u32, 134217728u32, 268435456u32, 536870912u32, 1073741824u32, 2147483648u32];
+
+fn rotr32(x: u32, n: felt) -> u32 {
+    if n == 0 {
+        return x;
+    }
+    let shr_part = x / POW2[n];
+    let shl_part = x * POW2[32 - n];
+    return shl_part | shr_part;
+}
+
+fn add32(a: u32, b: u32) -> u32 {
+    return a + b;
+}
+
+fn blake3_permute(m: [u32; 16]) {
+    let m0 = m[0];
+    let m1 = m[1];
+    let m2 = m[2];
+    let m3 = m[3];
+    let m4 = m[4];
+    let m5 = m[5];
+    let m6 = m[6];
+    let m7 = m[7];
+    let m8 = m[8];
+    let m9 = m[9];
+    let m10 = m[10];
+    let m11 = m[11];
+    let m12 = m[12];
+    let m13 = m[13];
+    let m14 = m[14];
+    let m15 = m[15];
+
+    m[0] = m2; 
+    m[1] = m6; 
+    m[2] = m3; 
+    m[3] = m10;
+    m[4] = m7; 
+    m[5] = m0; 
+    m[6] = m4; 
+    m[7] = m13;
+    m[8] = m1; 
+    m[9] = m11; 
+    m[10] = m12; 
+    m[11] = m5;
+    m[12] = m9; 
+    m[13] = m14; 
+    m[14] = m15; 
+    m[15] = m8;
+    return;
+}
+
+fn blake3_g(
+    v: [u32; 16],
+    a: felt, b: felt, c: felt, d: felt,
+    x: u32, y: u32
+) {
+    let a1 = add32(add32(v[a], v[b]), x);
+    let d1 = rotr32(v[d] ^ a1, 16);
+    let c1 = add32(v[c], d1);
+    let b1 = rotr32(v[b] ^ c1, 12);
+
+    let a2 = add32(add32(a1, b1), y);
+    let d2 = rotr32(d1 ^ a2, 8);
+    let c2 = add32(c1, d2);
+    let b2 = rotr32(b1 ^ c2, 7);
+
+    v[a] = a2;
+    v[b] = b2;
+    v[c] = c2;
+    v[d] = d2;
+    return;
+}
+
+// Applies G to the current message words, then permutes m for the next round.
+fn blake3_round(v: [u32; 16], m: [u32; 16]) {
+    // Column step
+    blake3_g(v, 0, 4,  8, 12, m[0],  m[1]);
+    blake3_g(v, 1, 5,  9, 13, m[2],  m[3]);
+    blake3_g(v, 2, 6, 10, 14, m[4],  m[5]);
+    blake3_g(v, 3, 7, 11, 15, m[6],  m[7]);
+
+    // Diagonal step
+    blake3_g(v, 0, 5, 10, 15, m[8],  m[9]);
+    blake3_g(v, 1, 6, 11, 12, m[10], m[11]);
+    blake3_g(v, 2, 7,  8, 13, m[12], m[13]);
+    blake3_g(v, 3, 4,  9, 14, m[14], m[15]);
+
+    blake3_permute(m);
+    return;
+}
+
+fn blake3_compress(
+    h: [u32; 8],
+    m: [u32; 16],
+    counter: u32,
+    block_len: u32,
+    flags: u32
+) -> [u32; 8] {
+    let v: [u32; 16] = [
+        h[0], h[1], h[2], h[3],
+        h[4], h[5], h[6], h[7],
+        IV0,  IV1,  IV2,  IV3,
+        counter,
+        0u32,
+        block_len,
+        flags
+    ];
+
+    let cur_m = m;
+    for (let i: u32 = 0u32; i < 7u32; i = i + 1u32) {
+        blake3_round(v, cur_m);
+    }
+
+    let out: [u32; 8] = [0u32; 8];
+    for (let j: u32 = 0u32; j < 8u32; j = j + 1u32) {
+        out[j as felt] = v[j as felt] ^ v[(j + 8u32) as felt];
+    }
+    return out;
+}
+
+const BYTE_MASK = [0u32, 255u32, 65535u32, 16777215u32];
+
+fn blake3_hash(message: u32*, num_bytes: u32) -> [u32; 8] {
+    let h: [u32; 8] = [IV0, IV1, IV2, IV3, IV4, IV5, IV6, IV7];
+
+    // Calculate number of full 64-byte blocks and remainder
+    let num_full_blocks = num_bytes / 64u32;
+    let remaining = num_bytes - num_full_blocks * 64u32;
+
+    // Total number of blocks (full + partial if any)
+    let total_blocks = num_full_blocks;
+    if remaining != 0u32 {
+        total_blocks = total_blocks + 1u32;
+    }
+    // Edge case: empty message still gets one block
+    if total_blocks == 0u32 {
+        total_blocks = 1u32;
+    }
+
+    let block_idx: u32 = 0u32;
+
+    // Process full 64-byte blocks
+    for (let b: u32 = 0u32; b < num_full_blocks; b = b + 1u32) {
+        let m: [u32; 16] = [0u32; 16];
+        let offset = b * 16u32;
+        for (let i: u32 = 0u32; i < 16u32; i = i + 1u32) {
+            m[i as felt] = message[(offset + i) as felt];
+        }
+
+        // Set flags: CHUNK_START for first, CHUNK_END|ROOT for last
+        let flags: u32 = 0u32;
+        if block_idx == 0u32 {
+            flags = flags | CHUNK_START;
+        }
+        if block_idx == total_blocks - 1u32 {
+            flags = flags | CHUNK_END | ROOT;
+        }
+
+        h = blake3_compress(h, m, 0u32, 64u32, flags);
+        block_idx = block_idx + 1u32;
+    }
+
+    // Process the final partial block (if any remaining bytes)
+    if remaining != 0u32 {
+        let m: [u32; 16] = [0u32; 16];
+        let offset = num_full_blocks * 16u32;
+        let num_full_words = remaining / 4u32;
+        let remaining_bytes = remaining - num_full_words * 4u32;
+
+        for (let i: u32 = 0u32; i < num_full_words; i = i + 1u32) {
+            m[i as felt] = message[(offset + i) as felt];
+        }
+
+        if remaining_bytes != 0u32 {
+            m[num_full_words as felt] = message[(offset + num_full_words) as felt] & BYTE_MASK[remaining_bytes as felt];
+        }
+
+        let flags: u32 = CHUNK_END | ROOT;
+        if block_idx == 0u32 {
+            flags = flags | CHUNK_START;
+        }
+
+        h = blake3_compress(h, m, 0u32, remaining, flags);
+    }
+
+    // Edge case: empty message
+    if num_bytes == 0u32 {
+        let m: [u32; 16] = [0u32; 16];
+        h = blake3_compress(h, m, 0u32, 0u32, CHUNK_START | CHUNK_END | ROOT);
+    }
+
+    return h;
+}

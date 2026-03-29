@@ -100,7 +100,7 @@ class BenchmarkService {
       case 'risc0':
         return await _generateRisc0Proof(inputData);
       case 'cairo':
-        return await _generateCairoProof();
+        return await _generateCairoProof(algorithm, inputData);
       case 'imp1':
         return await _generateIMP1Proof(algorithm, inputName);
       case 'provekit':
@@ -165,9 +165,54 @@ class BenchmarkService {
     return result;
   }
 
-  Future<CairoProofOutput> _generateCairoProof() async {
-    final inputsJson = await rootBundle.loadString('assets/cairo_input.json');
-    final result = await _moproFlutter.generateCairoProof("assets/cairo_sha256.json", inputsJson);
+  Future<CairoProofOutput> _generateCairoProof(String algorithm, InputData inputData) async {
+    String inputsJson;
+    String entrypoint = "main";
+    String programPath = "assets/cairo-m/cairo_sha256.json";
+
+    final values = inputData.values;
+
+    if (algorithm.toLowerCase() == "sha256") {
+      entrypoint = "sha256_hash";
+      programPath = "assets/cairo-m/cairo_sha256.json";
+      List<String> words = List.from(values);
+      while (words.length % 16 != 0 || words.isEmpty) {
+        words.add("0");
+      }
+      int numChunks = words.length ~/ 16;
+      inputsJson = '[[${words.join(', ')}], $numChunks]';
+    } else if (algorithm.toLowerCase() == "blake2s256" || algorithm.toLowerCase() == "blake2s") {
+      entrypoint = "blake2s_hash";
+      programPath = "assets/cairo-m/cairo_blake2s.json";
+      int numBytes = values.length * 4;
+      inputsJson = '[[${values.join(', ')}], $numBytes]';
+    } else if (algorithm.toLowerCase() == "blake3") {
+      entrypoint = "blake3_hash";
+      programPath = "assets/cairo-m/cairo_blake3.json";
+      int numBytes = values.length * 4;
+      inputsJson = '[[${values.join(', ')}], $numBytes]';
+    } else if (algorithm.toLowerCase() == "keccak256") {
+      entrypoint = "keccak256_hash";
+      programPath = "assets/cairo-m/cairo_keccak256.json";
+      int numBytes = values.length * 4;
+      inputsJson = '[[${values.join(', ')}], $numBytes]';
+    } else if (algorithm.toLowerCase() == "mimc") {
+      entrypoint = "multi_mimc7";
+      programPath = "assets/cairo-m/cairo_mimc.json";
+      inputsJson = '[[${values.join(', ')}], ${values.length}, 0]';
+    } else if (algorithm.toLowerCase() == "poseidon2" || algorithm.toLowerCase() == "poseidon") {
+      entrypoint = "poseidon2_hash";
+      programPath = "assets/cairo-m/cairo_poseidon2.json";
+      inputsJson = '[[${values.join(', ')}], ${values.length}]';
+    } else if (algorithm.toLowerCase() == "rescueprime") {
+      entrypoint = "rescue_prime_hash";
+      programPath = "assets/cairo-m/cairo_rescue_prime.json";
+      inputsJson = '[[${values.join(', ')}], ${values.length}]';
+    } else {
+      inputsJson = await rootBundle.loadString('assets/cairo_input.json');
+    }
+    
+    final result = await _moproFlutter.generateCairoProof(programPath, inputsJson, entrypoint);
     if (result == null) throw Exception('Failed to generate Cairo proof');
     return result;
   }

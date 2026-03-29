@@ -313,9 +313,14 @@ class MoproFlutterPlugin : FlutterPlugin, MethodCallHandler {
                 "Missing inputsJson",
                 null
             )
+            val entrypoint = call.argument<String>("entrypoint") ?: return result.error(
+                "ARGUMENT_ERROR",
+                "Missing entrypoint",
+                null
+            )
 
             try {
-                val res = cairoProve(programJson, inputsJson)
+                val res = cairoProve(programJson, inputsJson, entrypoint)
                 val resultMap = mapOf(
                     "proof" to res.proof
                 )
