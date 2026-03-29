@@ -26,6 +26,8 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
   final List<InputData> _bytesInputs = [];
   final List<InputData> _fieldInputsNoir = [];
   final List<InputData> _fieldInputsCircom = [];
+  final List<InputData> _fieldInputsCairo = [];
+  final List<InputData> _u32InputsCairo = [];
 
   @override
   void initState() {
@@ -79,7 +81,36 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
           debugPrint('Error loading inputs/field_elements/input$size.json: $e');
         }
       }
-      
+      // Load M31 Field inputs for Cairo-M algebraic hashes
+      final m31Sizes = ['5m', '9m', '17m', '34m', '67m', '133m', '265m'];
+      for (var size in m31Sizes) {
+        try {
+          final inputData = await _loadInputFromJson(
+            'inputs/m31_field/input$size.json',
+            name: 'Input $size',
+            description: '$size M31 field elements',
+          );
+          _fieldInputsCairo.add(inputData);
+        } catch (e) {
+          debugPrint('Error loading inputs/m31_field/input$size.json: $e');
+        }
+      }
+
+      // Load U32 Field inputs for Cairo-M byte hashes
+      final u32Sizes = ['4u', '8u', '16u', '32u', '64u', '128u', '256u'];
+      for (var size in u32Sizes) {
+        try {
+          final inputData = await _loadInputFromJson(
+            'inputs/u32/input$size.json',
+            name: 'Input $size',
+            description: '$size U32 integers',
+          );
+          _u32InputsCairo.add(inputData);
+        } catch (e) {
+          debugPrint('Error loading inputs/u32/input$size.json: $e');
+        }
+      }
+
       setState(() {
         _isLoadingInputs = false;
         // Don't set _availableInputs here, it depends on selection
@@ -789,6 +820,8 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
       if (_selectedFramework == 'arkworks' || _selectedFramework == 'rapidsnark' || _selectedFramework == 'imp1') {
         final allowed = ['Input 16', 'Input 32', 'Input 64', 'Input 128'];
         _availableInputs = _bytesInputs.where((input) => allowed.contains(input.name)).toList();
+      } else if (_selectedFramework == 'cairo') {
+        _availableInputs = _u32InputsCairo;
       } else {
         _availableInputs = _bytesInputs;
       }
@@ -800,6 +833,9 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
         _availableInputs = _fieldInputsCircom;
       } else if (_selectedFramework == 'provekit') {
         _availableInputs = _fieldInputsNoir;
+      } else if (_selectedFramework == 'cairo') {
+        // Cairo-M uses M31 field — dedicated M31 inputs (values in [0, 2^31-1])
+        _availableInputs = _fieldInputsCairo;
       } else {
         // For other frameworks, use Groth16 inputs as default
         _availableInputs = _fieldInputsCircom;

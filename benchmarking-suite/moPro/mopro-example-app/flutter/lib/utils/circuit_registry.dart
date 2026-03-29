@@ -119,7 +119,7 @@ class CircuitRegistry {
       case 'risc0':
         return ['Factor'];
       case 'cairo':
-        return ['SHA256'];
+        return ['SHA256', 'Blake2s256', 'Blake3', 'Keccak256', 'MiMC', 'Poseidon2', 'RescuePrime'];
       case 'imp1':
         return ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'RescuePrime'];
       case 'provekit':

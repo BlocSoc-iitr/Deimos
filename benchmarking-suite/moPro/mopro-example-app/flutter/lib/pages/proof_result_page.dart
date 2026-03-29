@@ -1279,9 +1279,50 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
   }
 
   Future<String> _generateCairoProof(MoproFlutter plugin) async {
-    // Load the dedicated input file for Cairo
-    // This ensures we match the exact format expected by the cairo-m prover (Vec<u32> + len)
-    final inputsJson = await rootBundle.loadString('assets/cairo_input.json');
+    // Generate inputs dynamically based on the algorithm
+    String inputsJson;
+    String entrypoint = "main";
+    String programPath = "assets/cairo_sha256.json"; // default
+
+    if (widget.algorithm.toLowerCase() == "sha256") {
+      entrypoint = "sha256_hash";
+      programPath = "assets/cairo-m/cairo_sha256.json";
+      final inputData = _getInputDataForAlgorithm();
+      inputsJson = _prepareCairoSha256Input(inputData);
+    } else if (widget.algorithm.toLowerCase() == "blake2s256" || widget.algorithm.toLowerCase() == "blake2s") {
+      entrypoint = "blake2s_hash";
+      programPath = "assets/cairo-m/cairo_blake2s.json";
+      final inputData = _getInputDataForAlgorithm();
+      inputsJson = _prepareCairoBlake2sInput(inputData);
+    } else if (widget.algorithm.toLowerCase() == "blake3") {
+      entrypoint = "blake3_hash";
+      programPath = "assets/cairo-m/cairo_blake3.json";
+      final inputData = _getInputDataForAlgorithm();
+      inputsJson = _prepareCairoBlake3Input(inputData);
+    } else if (widget.algorithm.toLowerCase() == "mimc") {
+      entrypoint = "multi_mimc7";
+      programPath = "assets/cairo-m/cairo_mimc.json";
+      final inputData = _getInputDataForAlgorithm();
+      inputsJson = _prepareCairoMiMCInput(inputData);
+    } else if (widget.algorithm.toLowerCase() == "poseidon2") {
+      entrypoint = "poseidon2_hash";
+      programPath = "assets/cairo-m/cairo_poseidon2.json";
+      final inputData = _getInputDataForAlgorithm();
+      inputsJson = _prepareCairoPoseidon2Input(inputData);
+    } else if (widget.algorithm.toLowerCase() == "keccak256") {
+      entrypoint = "keccak256_hash";
+      programPath = "assets/cairo-m/cairo_keccak256.json";
+      final inputData = _getInputDataForAlgorithm();
+      inputsJson = _prepareCairoBlake2sInput(inputData);
+    } else if (widget.algorithm.toLowerCase() == "rescueprime") {
+      entrypoint = "rescue_prime_hash";
+      programPath = "assets/cairo-m/cairo_rescue_prime.json";
+      final inputData = _getInputDataForAlgorithm();
+      inputsJson = _prepareCairoPoseidon2Input(inputData);
+    } else {
+      // Fallback
+      inputsJson = await rootBundle.loadString('assets/cairo_input.json');
+    }
     
     // Capture memory and battery BEFORE proof generation
     _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
@@ -1295,8 +1336,9 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     _startMemoryMonitoring();
 
     final proofResult = await plugin.generateCairoProof(
-      "assets/cairo_sha256.json",
-      inputsJson
+      programPath,
+      inputsJson,
+      entrypoint
     );
 
     stopwatch.stop();
@@ -1311,7 +1353,85 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
 
     return _formatCairoProofOutput(proofResult);
   }
+  String _prepareCairoSha256Input(List<String> inputData) {
+    // 1. Convert string list to byte list
+    List<int> bytes = inputData.map((s) => int.parse(s)).toList();
+    final originalBitLen = bytes.length * 8;
+    
+    // 2. Append the 0x80 byte
+    bytes.add(0x80);
+    
+    // 3. Pad with 0s until length % 64 == 56
+    while (bytes.length % 64 != 56) {
+      bytes.add(0);
+    }
+    
+    // 4. Append 8-byte length in bits (big-endian)
+    for (int i = 7; i >= 0; i--) {
+      bytes.add((originalBitLen >> (i * 8)) & 0xff);
+    }
+    
+    // 5. Convert to 32-bit words (big-endian), ensuring unsigned 32-bit wrap around
+    List<int> words = [];
+    for (int i = 0; i < bytes.length; i += 4) {
+      int word = (bytes[i] << 24) |
+                 (bytes[i + 1] << 16) |
+                 (bytes[i + 2] << 8) |
+                 bytes[i + 3];
+      // Force unsigned 32-bit integer handling for JSON output
+      words.add(word.toUnsigned(32));
+    }
+    
+    // 6. Calculate chunks
+    int numChunks = bytes.length ~/ 64;
+    
+    // 7. Format to JSON string exactly as cairo-m expects: [[word1, word2, ...], numChunks]
+    return '[${words.toString()}, $numChunks]';
+  }
 
+  String _prepareCairoBlake2sInput(List<String> inputData) {
+    // 1. Convert string list to byte list
+    List<int> bytes = inputData.map((s) => int.parse(s)).toList();
+    final originalByteLen = bytes.length;
+    
+    // 2. Pad to next 4-byte boundary for word conversion
+    while (bytes.length % 4 != 0) {
+      bytes.add(0);
+    }
+    
+    // 3. Convert to 32-bit words (little-endian), ensuring unsigned 32-bit wrap around
+    List<int> words = [];
+    for (int i = 0; i < bytes.length; i += 4) {
+      int word = bytes[i] |
+                 (bytes[i + 1] << 8) |
+                 (bytes[i + 2] << 16) |
+                 (bytes[i + 3] << 24);
+      // Force unsigned 32-bit integer handling for JSON output
+      words.add(word.toUnsigned(32));
+    }
+    
+    // 4. Format to JSON string exactly as cairo-m expects: [[word1, word2, ...], lenBytes]
+    return '[${words.toString()}, $originalByteLen]';
+  }
+
+  String _prepareCairoBlake3Input(List<String> inputData) {
+    // Blake3 input formatting is identical to Blake2s in our Cairo-M implementation
+    return _prepareCairoBlake2sInput(inputData);
+  }
+
+  String _prepareCairoMiMCInput(List<String> inputData) {
+    // M31 field inputs are already valid (values in [0, 2^31-1])
+    // Format to JSON string exactly as cairo-m expects: [[felt1, felt2, ...], numInputs, k]
+    return '[[${inputData.join(', ')}], ${inputData.length}, 0]';
+  }
+
+  String _prepareCairoPoseidon2Input(List<String> inputData) {
+    // Poseidon2/RescuePrime over M31 with sponge absorption (rate=8)
+    // M31 field inputs are already valid (values in [0, 2^31-1])
+    // Circuit handles multi-input absorption internally via sponge construction
+    // Format: [[felt1, felt2, ...], numInputs]
+    return '[[${inputData.join(', ')}], ${inputData.length}]';
+  }
 
   Future<bool> _verifyCairoProof(MoproFlutter plugin) async {
     if (_cairoProofResult == null) {
