@@ -65,7 +65,7 @@ class CircuitUtils {
       targetInputSize = rawInputSize <= 1 ? 1 : (rawInputSize <= 2 ? 2 : (rawInputSize <= 3 ? 3 : (rawInputSize <= 5 ? 5 : (rawInputSize <= 9 ? 9 : (rawInputSize <= 17 ? 17 : 34)))));
       assetPath = 'assets/barretenberg/${algorithmKey}_field_$targetInputSize.json';
       srsPath = 'assets/barretenberg/${algorithmKey}_field_$targetInputSize.srs';
-      onChain = algorithm != 'Poseidon';
+      onChain = algorithm != 'Poseidon' && algorithm != 'Poseidon2';
     }
 
     final cacheKey = '$assetPath|$srsPath|$onChain';
