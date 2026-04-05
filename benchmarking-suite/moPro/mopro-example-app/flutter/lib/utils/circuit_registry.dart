@@ -32,7 +32,7 @@ class CircuitRegistry {
     }
 
     // Barretenberg
-    final noirAlgos = ['SHA256', 'Keccak256', 'Poseidon', 'MiMC', 'Blake2', 'Blake3', 'RescuePrime', 'Anemoi'];
+    final noirAlgos = ['SHA256', 'Keccak256', 'Poseidon', 'Poseidon2', 'MiMC', 'Blake2', 'Blake3', 'RescuePrime', 'Anemoi'];
     for (var algo in noirAlgos) {
       final inputName = algo.contains('MiMC') || algo.contains('Poseidon') || algo.contains('Rescue') || algo.contains('Anemoi')
           ? 'Input 1f' 
@@ -115,7 +115,7 @@ class CircuitRegistry {
       case 'rapidsnark':
         return ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'RescuePrime'];
       case 'barretenberg':
-        return ['SHA256', 'Keccak256', 'Poseidon', 'MiMC', 'Blake2', 'Blake3', 'RescuePrime', 'Anemoi'];
+        return ['SHA256', 'Keccak256', 'Poseidon', 'Poseidon2', 'MiMC', 'Blake2', 'Blake3', 'RescuePrime', 'Anemoi'];
       case 'risc0':
         return ['Factor'];
       case 'cairo':
