@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS benchmarks (
   circuit VARCHAR(100) NOT NULL,
   framework VARCHAR(100) NOT NULL,
   language VARCHAR(100) NOT NULL,
+  input_size INTEGER,
   proving_time_ms INTEGER NOT NULL,
   verification_time_ms INTEGER NOT NULL,
   proof_size INTEGER NOT NULL,

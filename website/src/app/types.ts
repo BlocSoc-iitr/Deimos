@@ -33,6 +33,7 @@ export interface BenchmarkData {
   circuit: string;
   framework: string;
   language: string;
+  inputSize?: number;
   provingTimeMiliSeconds: number;
   verificationTimeMiliSeconds: number;
   deviceInfo: DeviceInfo;

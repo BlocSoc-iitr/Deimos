@@ -1,10 +1,19 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { BenchmarkData } from '../types';
+import {
+  getProverKey,
+  buildProverColorMap,
+} from '@/components/benchmarks/metrics';
+import { CircuitTabs } from '@/components/benchmarks/circuit-tabs';
+import { SeriesToggleLegend } from '@/components/benchmarks/shared';
+import { BarCharts } from '@/components/benchmarks/bar-charts';
+import { LineCharts } from '@/components/benchmarks/line-charts';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function BenchmarksPage() {
+  // ─── Table filters & pagination ─────────────────────────────────────────
   const [filterCircuit, setFilterCircuit] = useState<string>('all');
   const [filterFramework, setFilterFramework] = useState<string>('all');
   const [filterLanguage, setFilterLanguage] = useState<string>('all');
@@ -19,24 +28,69 @@ export default function BenchmarksPage() {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  const [circuits, setCircuits] = useState<string[]>(['all']);
+  const [circuits, setCircuits] = useState<string[]>([]);
   const [frameworks, setFrameworks] = useState<string[]>(['all']);
   const [languages, setLanguages] = useState<string[]>(['all']);
   const [platforms, setPlatforms] = useState<string[]>(['all']);
 
-  // Fetch filter options
+  // ─── Chart state ─────────────────────────────────────────────────────────
+  const [selectedFamily, setSelectedFamily] = useState<string>('');
+  const [selectedInputSize, setSelectedInputSize] = useState<number>(0);
+  const [hiddenProvers, setHiddenProvers] = useState<Set<string>>(new Set());
+  const [chartData, setChartData] = useState<BenchmarkData[]>([]);
+  const [chartLoading, setChartLoading] = useState<boolean>(false);
+
+  // ─── Derived chart values ─────────────────────────────────────────────────
+  // circuits from /api/filters ARE the family names (e.g. "sha256", "poseidon2")
+  const families = useMemo<string[]>(
+    () => [...circuits].sort(),
+    [circuits],
+  );
+
+  // Input sizes available for the selected family — derived from loaded chart data
+  const inputSizesForFamily = useMemo<number[]>(
+    () =>
+      [
+        ...new Set(
+          chartData
+            .filter((b) => b.circuit === selectedFamily && b.inputSize != null)
+            .map((b) => b.inputSize as number),
+        ),
+      ].sort((a, b) => a - b),
+    [chartData, selectedFamily],
+  );
+
+  const allProvers = useMemo<string[]>(
+    () => [...new Set(chartData.map(getProverKey))].sort(),
+    [chartData],
+  );
+
+  const colorMap = useMemo(() => buildProverColorMap(allProvers), [allProvers]);
+
+  const chartDataAtSelectedSize = useMemo<BenchmarkData[]>(
+    () => chartData.filter((b) => b.inputSize === selectedInputSize),
+    [chartData, selectedInputSize],
+  );
+
+  const toggleProver = useCallback((prover: string) => {
+    setHiddenProvers((prev) => {
+      const next = new Set(prev);
+      if (next.has(prover)) { next.delete(prover); } else { next.add(prover); }
+      return next;
+    });
+  }, []);
+
+  // ─── Fetch filter options ─────────────────────────────────────────────────
   useEffect(() => {
     const fetchFilters = async () => {
       try {
         const response = await fetch(`${API_URL}/api/filters`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch filters');
-        }
+        if (!response.ok) throw new Error('Failed to fetch filters');
         const data = await response.json();
-        setCircuits(data.circuits);
-        setFrameworks(data.frameworks);
-        setLanguages(data.languages);
-        setPlatforms(data.platforms);
+        setCircuits(data.circuits ?? []);
+        setFrameworks(['all', ...(data.frameworks ?? [])]);
+        setLanguages(['all', ...(data.languages ?? [])]);
+        setPlatforms(['all', ...(data.platforms ?? [])]);
       } catch (err) {
         console.error('Error fetching filters:', err);
       }
@@ -44,7 +98,43 @@ export default function BenchmarksPage() {
     fetchFilters();
   }, []);
 
-  // Fetch benchmark data
+  // ─── Auto-select first family ─────────────────────────────────────────────
+  useEffect(() => {
+    if (families.length > 0 && !selectedFamily) {
+      setSelectedFamily(families[0]);
+    }
+  }, [families, selectedFamily]);
+
+  // ─── Auto-select median input size when family changes ────────────────────
+  useEffect(() => {
+    if (inputSizesForFamily.length > 0) {
+      const medianIdx = Math.floor(inputSizesForFamily.length / 2);
+      setSelectedInputSize(inputSizesForFamily[medianIdx]);
+    }
+  }, [inputSizesForFamily]);
+
+  // ─── Fetch chart data for selected family ─────────────────────────────────
+  useEffect(() => {
+    if (!selectedFamily) return;
+
+    let cancelled = false;
+    setChartLoading(true);
+    setChartData([]);
+
+    fetch(`${API_URL}/api/benchmarks?circuit=${encodeURIComponent(selectedFamily)}&limit=500`)
+      .then((r) => r.json())
+      .then((r) => {
+        if (!cancelled) {
+          setChartData(Array.isArray(r.data) ? r.data as BenchmarkData[] : []);
+          setChartLoading(false);
+        }
+      })
+      .catch(() => { if (!cancelled) setChartLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [selectedFamily]);
+
+  // ─── Fetch table data ─────────────────────────────────────────────────────
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -81,19 +171,16 @@ export default function BenchmarksPage() {
     fetchData();
   }, [filterCircuit, filterFramework, filterLanguage, filterPlatform, currentPage, itemsPerPage]);
 
-  // Reset to page 1 when filters change
   const handleFilterChange = (setter: (value: string) => void, value: string) => {
     setter(value);
     setCurrentPage(1);
   };
 
-  // Reset to page 1 when items per page changes
   const handleItemsPerPageChange = (value: number) => {
     setItemsPerPage(value);
     setCurrentPage(1);
   };
 
-  // Generate page numbers to display
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
     const maxPagesToShow = 5;
@@ -161,11 +248,9 @@ export default function BenchmarksPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F5F3]">
-      {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 pt-4">
 
-
-        {/* Filters */}
+        {/* ── Filters ───────────────────────────────────────────────────── */}
         <div className="mb-4 bg-white rounded-lg shadow-sm p-4 border border-[#E0DEDB]">
           <div className="flex flex-wrap gap-3">
             <div className="flex-1 min-w-[180px]">
@@ -174,10 +259,9 @@ export default function BenchmarksPage() {
                 onChange={(e) => handleFilterChange(setFilterCircuit, e.target.value)}
                 className="w-full px-4 py-2 text-sm border border-[#E0DEDB] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white transition-all"
               >
+                <option value="all">All Circuits</option>
                 {circuits.map(circuit => (
-                  <option key={circuit} value={circuit}>
-                    {circuit === 'all' ? 'All Circuits' : circuit}
-                  </option>
+                  <option key={circuit} value={circuit}>{circuit}</option>
                 ))}
               </select>
             </div>
@@ -226,7 +310,78 @@ export default function BenchmarksPage() {
           </div>
         </div>
 
-        {/* Benchmark Table */}
+        {/* ── Chart Section ─────────────────────────────────────────────── */}
+        {families.length > 0 && (
+          <div className="mb-6 rounded-lg border border-[#E0DEDB] bg-white p-5 shadow-sm space-y-5">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#37322F]">Performance Charts</h2>
+              {chartLoading && (
+                <span className="text-xs text-[#605A57]">Loading chart data…</span>
+              )}
+            </div>
+
+            {/* Circuit family + input size selector */}
+            <CircuitTabs
+              families={families}
+              selectedFamily={selectedFamily}
+              onFamilyChange={(f) => {
+                setSelectedFamily(f);
+                setHiddenProvers(new Set());
+              }}
+              inputSizes={inputSizesForFamily}
+              selectedInputSize={selectedInputSize}
+              onInputSizeChange={setSelectedInputSize}
+              unit={''}
+            />
+
+            {/* Framework visibility legend */}
+            {allProvers.length > 0 && (
+              <SeriesToggleLegend
+                provers={allProvers}
+                hidden={hiddenProvers}
+                colorMap={colorMap}
+                onToggle={toggleProver}
+              />
+            )}
+
+            {!chartLoading && (
+              <>
+                {/* Bar charts — at selected input size */}
+                {selectedInputSize > 0 && (
+                  <div>
+                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#605A57]">
+                      At {selectedInputSize} {''}
+                    </h3>
+                    <BarCharts
+                      data={chartDataAtSelectedSize}
+                      hiddenProvers={hiddenProvers}
+                      colorMap={colorMap}
+                    />
+                  </div>
+                )}
+
+                {/* Line charts — trends across all input sizes */}
+                {inputSizesForFamily.length > 1 && (
+                  <div>
+                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#605A57]">
+                      Trends Across Input Sizes
+                    </h3>
+                    <LineCharts
+                      data={chartData}
+                      hiddenProvers={hiddenProvers}
+                      colorMap={colorMap}
+                      onToggle={toggleProver}
+                      unit={''}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── Benchmark Table ───────────────────────────────────────────── */}
         <div className="bg-white rounded-lg shadow-sm border border-[#E0DEDB] overflow-hidden">
           {loading ? (
             <div className="p-8 text-center">
@@ -256,7 +411,6 @@ export default function BenchmarksPage() {
                     const isExpanded = expandedRows.has(item.id || index.toString());
                     return (
                       <React.Fragment key={item.id || index}>
-                        {/* Main Row */}
                         <tr
                           className="hover:bg-[#F7F5F3] cursor-pointer transition-colors"
                           onClick={() => toggleRow(item.id || index.toString())}
@@ -273,8 +427,7 @@ export default function BenchmarksPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.deviceInfo?.platform === 'Android' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                              }`}>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.deviceInfo?.platform === 'Android' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
                               {item.deviceInfo?.platform || 'Unknown'}
                             </span>
                           </td>
@@ -283,12 +436,10 @@ export default function BenchmarksPage() {
                           <td className="px-6 py-4 text-sm font-semibold text-[#37322F]">{(item.verificationTimeMiliSeconds / 1000).toFixed(2)}</td>
                         </tr>
 
-                        {/* Expanded Details Row */}
                         {isExpanded && (
                           <tr>
                             <td colSpan={7} className="px-6 py-4 bg-[#F7F5F3]">
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {/* Device Info */}
                                 <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
                                   <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
                                     <svg className="w-4 h-4 mr-1.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -342,7 +493,6 @@ export default function BenchmarksPage() {
                                   </div>
                                 </div>
 
-                                {/* Memory Info */}
                                 {item.deviceInfo?.memory && (
                                   <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
                                     <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
@@ -376,7 +526,6 @@ export default function BenchmarksPage() {
                                   </div>
                                 )}
 
-                                {/* Battery & Timing Info */}
                                 <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
                                   <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
                                     <svg className="w-4 h-4 mr-1.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -416,7 +565,6 @@ export default function BenchmarksPage() {
                                   </div>
                                 </div>
 
-                                {/* Custom Inputs */}
                                 {item.customInputs && Object.keys(item.customInputs).length > 0 && (
                                   <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
                                     <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
@@ -436,7 +584,6 @@ export default function BenchmarksPage() {
                                   </div>
                                 )}
 
-                                {/* Timestamp */}
                                 <div className="bg-white rounded-lg p-3 shadow-sm md:col-span-2 lg:col-span-3">
                                   <div className="flex items-center justify-between text-xs">
                                     <div className="flex items-center text-[#605A57]">
@@ -461,15 +608,13 @@ export default function BenchmarksPage() {
             <div className="p-8 text-center">
               <p className="text-sm text-[#605A57]">No benchmark data matches the selected filters</p>
             </div>
-          )
-          }
+          )}
         </div>
 
-        {/* Pagination Controls */}
+        {/* ── Pagination ────────────────────────────────────────────────── */}
         {!loading && !error && totalCount > 0 && (
           <div className="mt-4 bg-white rounded-lg shadow-sm p-4 border border-[#E0DEDB]">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-              {/* Items per page selector */}
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-[#37322F]">Show</span>
                 <select
@@ -486,16 +631,13 @@ export default function BenchmarksPage() {
                 <span className="text-xs font-medium text-[#37322F]">per page</span>
               </div>
 
-              {/* Page info */}
               <div className="text-xs text-[#605A57]">
                 Showing <span className="font-bold text-[#37322F]">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
                 <span className="font-bold text-[#37322F]">{Math.min(currentPage * itemsPerPage, totalCount)}</span> of{' '}
                 <span className="font-bold text-[#37322F]">{totalCount}</span> results
               </div>
 
-              {/* Page numbers */}
               <div className="flex items-center gap-1">
-                {/* Previous button */}
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
@@ -507,7 +649,6 @@ export default function BenchmarksPage() {
                   Previous
                 </button>
 
-                {/* Page numbers */}
                 {getPageNumbers().map((page, index) => (
                   <button
                     key={index}
@@ -524,7 +665,6 @@ export default function BenchmarksPage() {
                   </button>
                 ))}
 
-                {/* Next button */}
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
@@ -540,7 +680,7 @@ export default function BenchmarksPage() {
           </div>
         )}
 
-        {/* Summary Stats */}
+        {/* ── Summary Stats ─────────────────────────────────────────────── */}
         {!loading && !error && benchmarkData.length > 0 && (
           <div className="my-6 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white rounded-lg p-5 shadow-sm border border-[#E0DEDB]">

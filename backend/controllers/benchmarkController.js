@@ -52,6 +52,7 @@ function rowToApiFormat(row) {
     circuit: row.circuit,
     framework: row.framework,
     language: row.language,
+    inputSize: row.input_size != null ? Number(row.input_size) : undefined,
     provingTimeMiliSeconds: row.proving_time_ms,
     verificationTimeMiliSeconds: row.verification_time_ms,
     proofSize: row.proof_size,

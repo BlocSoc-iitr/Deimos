@@ -42,7 +42,7 @@ export const receiveBenchmarkResult = async (req, res) => {
 
     const result = await query(
       `INSERT INTO benchmarks (
-        circuit, framework, language, proving_time_ms, verification_time_ms,
+        circuit, framework, language, input_size, proving_time_ms, verification_time_ms,
         proof_size, timestamp, created_at, custom_inputs,
         platform, device, manufacturer, device_version, device_id,
         system_name, system_version, is_physical_device,
@@ -51,17 +51,18 @@ export const receiveBenchmarkResult = async (req, res) => {
         battery_before_proof, battery_after_proof, battery_consumed
       ) VALUES (
         $1, $2, $3, $4, $5,
-        $6, $7, $8, $9,
-        $10, $11, $12, $13, $14,
-        $15, $16, $17, $18, $19,
-        $20, $21, $22,
-        $23, $24, $25,
-        $26
+        $6, $7, $8, $9, $10,
+        $11, $12, $13, $14, $15,
+        $16, $17, $18, $19, $20,
+        $21, $22, $23,
+        $24, $25, $26,
+        $27
       ) RETURNING id`,
       [
         circuit,
         framework,
         language,
+        data.inputSize ?? null,
         data.provingTimeMiliSeconds,
         data.verificationTimeMiliSeconds,
         data.proofSize,
