@@ -38,7 +38,7 @@ class _MainSelectionPageState extends State<MainSelectionPage> {
   Future<void> _loadInputs() async {
     try {
       // Load Bytes inputs - all available sizes
-      final byteSizes = ['16', '32', '64', '128', '256', '512', '1028'];
+      final byteSizes = ['16', '32', '64', '128', '256', '512', '1024'];
       for (var size in byteSizes) {
         try {
           final inputData = await _loadInputFromJson(
