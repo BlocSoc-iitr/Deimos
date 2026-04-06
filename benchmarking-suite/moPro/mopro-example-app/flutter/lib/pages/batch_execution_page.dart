@@ -287,6 +287,7 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
           'memory': result.memoryInfo,
           'battery': result.batteryInfo,
           'proofSize': result.proofSize,
+          'inputSize': inputData.values.length,
           'customInputs': customInputs,
           'proofBackend': (result.framework == 'arkworks' || result.framework == 'rapidsnark') ? result.framework : 'N/A',
           'timestamp': DateTime.now().toIso8601String(),

@@ -7,7 +7,7 @@ import type { ChartConfig } from '@/components/ui/chart'
 import { ChartContainer } from '@/components/ui/chart'
 import type { BenchmarkData } from '@/app/types'
 
-import { getProverKey, METRICS, type MetricConfig } from './metrics'
+import { METRICS, type MetricConfig } from './metrics'
 import { ChartCard, ChartTooltipBody, EmptyState } from './shared'
 
 const BAR_HEIGHT = 48
@@ -141,9 +141,11 @@ interface BarChartsProps {
   data: BenchmarkData[]
   hiddenProvers: Set<string>
   colorMap: Record<string, string>
+  /** How to derive the series key from a data point (default: backend label) */
+  seriesKeyFn: (b: BenchmarkData) => string
 }
 
-export function BarCharts({ data, hiddenProvers, colorMap }: BarChartsProps) {
+export function BarCharts({ data, hiddenProvers, colorMap, seriesKeyFn }: BarChartsProps) {
   const chartConfig = useMemo<ChartConfig>(() => {
     return Object.fromEntries(
       Object.entries(colorMap).map(([key, color]) => [key, { label: key, color }]),
@@ -157,10 +159,9 @@ export function BarCharts({ data, hiddenProvers, colorMap }: BarChartsProps) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {METRICS.map((metric) => {
-        // Aggregate: average metric value per prover (there may be multiple runs)
         const byProver = new Map<string, number[]>()
         for (const b of data) {
-          const key = getProverKey(b)
+          const key = seriesKeyFn(b)
           if (hiddenProvers.has(key)) continue
           const val = metric.getValue(b)
           if (val === null || val <= 0) continue

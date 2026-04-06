@@ -1255,7 +1255,8 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       
       // Additional metadata
       'proofSize': _getProofSize(),
-      'customInputs': customInputs, // Add custom inputs here
+      'inputSize': widget.selectedInputData.values.length,
+      'customInputs': customInputs,
       'proofBackend': (widget.framework == 'arkworks' || widget.framework == 'rapidsnark') ? widget.framework : 'N/A',
 
       'timestamp': DateTime.now().toIso8601String(),

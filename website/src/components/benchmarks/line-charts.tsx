@@ -7,7 +7,7 @@ import type { ChartConfig } from '@/components/ui/chart'
 import { ChartContainer } from '@/components/ui/chart'
 import type { BenchmarkData } from '@/app/types'
 
-import { getProverKey, METRICS, type MetricConfig } from './metrics'
+import { METRICS, type MetricConfig } from './metrics'
 import { ChartCard, ChartTooltipBody, EmptyState, SeriesToggleLegend } from './shared'
 
 const LINE_MARGIN = { top: 20, right: 20, left: 20, bottom: 20 }
@@ -167,12 +167,14 @@ interface LineChartsProps {
   colorMap: Record<string, string>
   onToggle: (prover: string) => void
   unit: string
+  /** How to derive the series key from a data point */
+  seriesKeyFn: (b: BenchmarkData) => string
 }
 
-export function LineCharts({ data, hiddenProvers, colorMap, onToggle, unit }: LineChartsProps) {
+export function LineCharts({ data, hiddenProvers, colorMap, onToggle, unit, seriesKeyFn }: LineChartsProps) {
   const seriesKeys = useMemo(
-    () => [...new Set(data.map(getProverKey))].sort(),
-    [data],
+    () => [...new Set(data.map(seriesKeyFn))].sort(),
+    [data, seriesKeyFn],
   )
 
   const chartConfig = useMemo<ChartConfig>(
@@ -186,11 +188,11 @@ export function LineCharts({ data, hiddenProvers, colorMap, onToggle, unit }: Li
   // Build one data array per metric, indexed by inputSize
   const metricsData = useMemo(() => {
     return METRICS.map((metric) => {
-      // group by inputSize → proverKey → values[]
+      // group by inputSize → seriesKey → values[]
       const grouped = new Map<number, Map<string, number[]>>()
       for (const b of data) {
         if (b.inputSize == null) continue
-        const key = getProverKey(b)
+        const key = seriesKeyFn(b)
         const val = metric.getValue(b)
         if (val === null || val <= 0) continue
 
@@ -220,7 +222,7 @@ export function LineCharts({ data, hiddenProvers, colorMap, onToggle, unit }: Li
 
       return { metric, points }
     })
-  }, [data, seriesKeys])
+  }, [data, seriesKeys, seriesKeyFn])
 
   if (data.length === 0) {
     return <EmptyState message="No data available for this circuit family." />

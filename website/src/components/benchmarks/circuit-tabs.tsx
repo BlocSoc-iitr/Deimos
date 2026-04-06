@@ -7,6 +7,9 @@ interface CircuitTabsProps {
   families: string[]
   selectedFamily: string
   onFamilyChange: (family: string) => void
+  languages: string[]
+  selectedLanguage: string
+  onLanguageChange: (language: string) => void
   inputSizes: number[]
   selectedInputSize: number
   onInputSizeChange: (size: number) => void
@@ -35,6 +38,9 @@ export function CircuitTabs({
   families,
   selectedFamily,
   onFamilyChange,
+  languages,
+  selectedLanguage,
+  onLanguageChange,
   inputSizes,
   selectedInputSize,
   onInputSizeChange,
@@ -59,8 +65,29 @@ export function CircuitTabs({
         </TabsList>
       </Tabs>
 
-      {/* Input size picker — only when there are multiple sizes */}
-      {inputSizes.length > 1 && (
+      {/* Framework (proving backend) selector */}
+      {languages.length > 1 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-[#605A57]">Framework:</span>
+          {languages.map((lang) => (
+            <button
+              key={lang}
+              onClick={() => onLanguageChange(lang)}
+              className={cn(
+                'rounded border px-2.5 py-0.5 text-xs font-medium transition-colors',
+                selectedLanguage === lang
+                  ? 'border-[#37322F] bg-[#37322F] text-white'
+                  : 'border-[#E0DEDB] bg-white text-[#37322F] hover:bg-[#F7F5F3]',
+              )}
+            >
+              {lang}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Input size picker — shown when at least one size is available */}
+      {inputSizes.length >= 1 && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-[#605A57]">Input size:</span>
           {inputSizes.map((size) => (

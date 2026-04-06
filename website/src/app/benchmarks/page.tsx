@@ -1,14 +1,6 @@
 'use client';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { BenchmarkData } from '../types';
-import {
-  getProverKey,
-  buildProverColorMap,
-} from '@/components/benchmarks/metrics';
-import { CircuitTabs } from '@/components/benchmarks/circuit-tabs';
-import { SeriesToggleLegend } from '@/components/benchmarks/shared';
-import { BarCharts } from '@/components/benchmarks/bar-charts';
-import { LineCharts } from '@/components/benchmarks/line-charts';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -33,53 +25,6 @@ export default function BenchmarksPage() {
   const [languages, setLanguages] = useState<string[]>(['all']);
   const [platforms, setPlatforms] = useState<string[]>(['all']);
 
-  // ─── Chart state ─────────────────────────────────────────────────────────
-  const [selectedFamily, setSelectedFamily] = useState<string>('');
-  const [selectedInputSize, setSelectedInputSize] = useState<number>(0);
-  const [hiddenProvers, setHiddenProvers] = useState<Set<string>>(new Set());
-  const [chartData, setChartData] = useState<BenchmarkData[]>([]);
-  const [chartLoading, setChartLoading] = useState<boolean>(false);
-
-  // ─── Derived chart values ─────────────────────────────────────────────────
-  // circuits from /api/filters ARE the family names (e.g. "sha256", "poseidon2")
-  const families = useMemo<string[]>(
-    () => [...circuits].sort(),
-    [circuits],
-  );
-
-  // Input sizes available for the selected family — derived from loaded chart data
-  const inputSizesForFamily = useMemo<number[]>(
-    () =>
-      [
-        ...new Set(
-          chartData
-            .filter((b) => b.circuit === selectedFamily && b.inputSize != null)
-            .map((b) => b.inputSize as number),
-        ),
-      ].sort((a, b) => a - b),
-    [chartData, selectedFamily],
-  );
-
-  const allProvers = useMemo<string[]>(
-    () => [...new Set(chartData.map(getProverKey))].sort(),
-    [chartData],
-  );
-
-  const colorMap = useMemo(() => buildProverColorMap(allProvers), [allProvers]);
-
-  const chartDataAtSelectedSize = useMemo<BenchmarkData[]>(
-    () => chartData.filter((b) => b.inputSize === selectedInputSize),
-    [chartData, selectedInputSize],
-  );
-
-  const toggleProver = useCallback((prover: string) => {
-    setHiddenProvers((prev) => {
-      const next = new Set(prev);
-      if (next.has(prover)) { next.delete(prover); } else { next.add(prover); }
-      return next;
-    });
-  }, []);
-
   // ─── Fetch filter options ─────────────────────────────────────────────────
   useEffect(() => {
     const fetchFilters = async () => {
@@ -87,52 +32,16 @@ export default function BenchmarksPage() {
         const response = await fetch(`${API_URL}/api/filters`);
         if (!response.ok) throw new Error('Failed to fetch filters');
         const data = await response.json();
-        setCircuits(data.circuits ?? []);
-        setFrameworks(['all', ...(data.frameworks ?? [])]);
-        setLanguages(['all', ...(data.languages ?? [])]);
-        setPlatforms(['all', ...(data.platforms ?? [])]);
+        setCircuits((data.circuits ?? []).filter((c: string) => c !== 'all'));
+        setFrameworks(data.frameworks ?? ['all']);
+        setLanguages(data.languages ?? ['all']);
+        setPlatforms(data.platforms ?? ['all']);
       } catch (err) {
         console.error('Error fetching filters:', err);
       }
     };
     fetchFilters();
   }, []);
-
-  // ─── Auto-select first family ─────────────────────────────────────────────
-  useEffect(() => {
-    if (families.length > 0 && !selectedFamily) {
-      setSelectedFamily(families[0]);
-    }
-  }, [families, selectedFamily]);
-
-  // ─── Auto-select median input size when family changes ────────────────────
-  useEffect(() => {
-    if (inputSizesForFamily.length > 0) {
-      const medianIdx = Math.floor(inputSizesForFamily.length / 2);
-      setSelectedInputSize(inputSizesForFamily[medianIdx]);
-    }
-  }, [inputSizesForFamily]);
-
-  // ─── Fetch chart data for selected family ─────────────────────────────────
-  useEffect(() => {
-    if (!selectedFamily) return;
-
-    let cancelled = false;
-    setChartLoading(true);
-    setChartData([]);
-
-    fetch(`${API_URL}/api/benchmarks?circuit=${encodeURIComponent(selectedFamily)}&limit=500`)
-      .then((r) => r.json())
-      .then((r) => {
-        if (!cancelled) {
-          setChartData(Array.isArray(r.data) ? r.data as BenchmarkData[] : []);
-          setChartLoading(false);
-        }
-      })
-      .catch(() => { if (!cancelled) setChartLoading(false); });
-
-    return () => { cancelled = true; };
-  }, [selectedFamily]);
 
   // ─── Fetch table data ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -310,77 +219,6 @@ export default function BenchmarksPage() {
           </div>
         </div>
 
-        {/* ── Chart Section ─────────────────────────────────────────────── */}
-        {families.length > 0 && (
-          <div className="mb-6 rounded-lg border border-[#E0DEDB] bg-white p-5 shadow-sm space-y-5">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-[#37322F]">Performance Charts</h2>
-              {chartLoading && (
-                <span className="text-xs text-[#605A57]">Loading chart data…</span>
-              )}
-            </div>
-
-            {/* Circuit family + input size selector */}
-            <CircuitTabs
-              families={families}
-              selectedFamily={selectedFamily}
-              onFamilyChange={(f) => {
-                setSelectedFamily(f);
-                setHiddenProvers(new Set());
-              }}
-              inputSizes={inputSizesForFamily}
-              selectedInputSize={selectedInputSize}
-              onInputSizeChange={setSelectedInputSize}
-              unit={''}
-            />
-
-            {/* Framework visibility legend */}
-            {allProvers.length > 0 && (
-              <SeriesToggleLegend
-                provers={allProvers}
-                hidden={hiddenProvers}
-                colorMap={colorMap}
-                onToggle={toggleProver}
-              />
-            )}
-
-            {!chartLoading && (
-              <>
-                {/* Bar charts — at selected input size */}
-                {selectedInputSize > 0 && (
-                  <div>
-                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#605A57]">
-                      At {selectedInputSize} {''}
-                    </h3>
-                    <BarCharts
-                      data={chartDataAtSelectedSize}
-                      hiddenProvers={hiddenProvers}
-                      colorMap={colorMap}
-                    />
-                  </div>
-                )}
-
-                {/* Line charts — trends across all input sizes */}
-                {inputSizesForFamily.length > 1 && (
-                  <div>
-                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#605A57]">
-                      Trends Across Input Sizes
-                    </h3>
-                    <LineCharts
-                      data={chartData}
-                      hiddenProvers={hiddenProvers}
-                      colorMap={colorMap}
-                      onToggle={toggleProver}
-                      unit={''}
-                    />
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
         {/* ── Benchmark Table ───────────────────────────────────────────── */}
         <div className="bg-white rounded-lg shadow-sm border border-[#E0DEDB] overflow-hidden">
           {loading ? (
@@ -398,6 +236,7 @@ export default function BenchmarksPage() {
                 <thead className="bg-[#F7F5F3]">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Circuit</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Input Size</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Framework</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Language</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Platform</th>
@@ -416,6 +255,7 @@ export default function BenchmarksPage() {
                           onClick={() => toggleRow(item.id || index.toString())}
                         >
                           <td className="px-6 py-4 text-sm font-semibold text-[#37322F]">{item.circuit}</td>
+                          <td className="px-6 py-4 text-sm text-[#605A57]">{item.inputSize ?? '—'}</td>
                           <td className="px-6 py-4">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                               {item.framework}
@@ -438,7 +278,7 @@ export default function BenchmarksPage() {
 
                         {isExpanded && (
                           <tr>
-                            <td colSpan={7} className="px-6 py-4 bg-[#F7F5F3]">
+                            <td colSpan={8} className="px-6 py-4 bg-[#F7F5F3]">
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
                                   <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
@@ -565,24 +405,6 @@ export default function BenchmarksPage() {
                                   </div>
                                 </div>
 
-                                {item.customInputs && Object.keys(item.customInputs).length > 0 && (
-                                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
-                                    <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
-                                      <svg className="w-4 h-4 mr-1.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                      </svg>
-                                      Custom Inputs
-                                    </h4>
-                                    <div className="space-y-1.5 text-xs">
-                                      {Object.entries(item.customInputs).map(([key, value]) => (
-                                        <div key={key} className="flex justify-between">
-                                          <span className="text-[#605A57]">{key}:</span>
-                                          <span className="font-medium text-[#37322F]">{value}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
 
                                 <div className="bg-white rounded-lg p-3 shadow-sm md:col-span-2 lg:col-span-3">
                                   <div className="flex items-center justify-between text-xs">

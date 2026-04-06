@@ -4,7 +4,17 @@ import type { BenchmarkData } from '@/app/types'
 
 /** The unit of comparison — one "line" per prover key in charts. */
 export function getProverKey(b: BenchmarkData): string {
-  return `${b.framework} / ${b.language}`
+  const device = b.deviceInfo?.device ?? 'Unknown'
+  const platform = b.deviceInfo?.platform ?? ''
+  const backend = b.language ?? ''
+  const deviceStr = platform ? `${device} (${platform})` : device
+  return backend ? `${deviceStr} / ${backend}` : deviceStr
+}
+
+export function getDeviceKey(b: BenchmarkData): string {
+  const device = b.deviceInfo?.device ?? 'Unknown'
+  const platform = b.deviceInfo?.platform ?? ''
+  return platform ? `${device} (${platform})` : device
 }
 
 // ─── Color palette ──────────────────────────────────────────────────────────
@@ -79,17 +89,9 @@ export const METRICS: MetricConfig[] = [
   },
   {
     key: 'peak_memory',
-    label: 'Peak Memory',
-    description: 'Maximum RAM consumed during proof generation (lower is better).',
-    getValue: (b) => b.deviceInfo?.memory?.peakMemoryUsage ?? null,
-    formatValue: formatBytes,
-    logScale: false,
-  },
-  {
-    key: 'proof_size',
-    label: 'Proof Size',
-    description: 'Size of the generated proof artifact (lower is better).',
-    getValue: (b) => (b.proofSize > 0 ? b.proofSize : null),
+    label: 'Memory Consumed',
+    description: 'RAM consumed by proof generation (lower is better).',
+    getValue: (b) => b.deviceInfo?.memory?.memoryConsumedByProof ?? null,
     formatValue: formatBytes,
     logScale: false,
   },
