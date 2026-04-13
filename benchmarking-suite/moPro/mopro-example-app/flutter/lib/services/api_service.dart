@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String benchmarkEndpoint = 'https://deimos-fork.onrender.com/api/benchmark-result';
+  static const String benchmarkEndpoint = 'http://3.86.145.121/api/benchmark-result';
 
   static Future<bool> sendBenchmarkData(Map<String, dynamic> benchmarkData) async {
     try {

@@ -260,6 +260,16 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
     );
   }
 
+  int _computeInputSize(String inputName, int rawCount) {
+    final suffix = inputName.trim().split(' ').last;
+    if (suffix.endsWith('u')) {
+      return rawCount * 4;
+    } else if (suffix.endsWith('m')) {
+      return (rawCount * 31 / 254).ceil();
+    }
+    return rawCount;
+  }
+
   Future<void> _pushToDatabase() async {
     setState(() {
       _isPushing = true;
@@ -287,7 +297,7 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
           'memory': result.memoryInfo,
           'battery': result.batteryInfo,
           'proofSize': result.proofSize,
-          'inputSize': inputData.values.length,
+          'inputSize': _computeInputSize(result.inputName, inputData.values.length),
           'customInputs': customInputs,
           'proofBackend': (result.framework == 'arkworks' || result.framework == 'rapidsnark') ? result.framework : 'N/A',
           'timestamp': DateTime.now().toIso8601String(),

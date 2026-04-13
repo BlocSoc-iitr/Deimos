@@ -5,7 +5,7 @@ class CircuitRegistry {
     final List<BenchmarkResult> suite = [];
 
     // Arkworks
-    final groth16Algos = ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'RescuePrime'];
+    final groth16Algos = ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'Poseidon2', 'RescuePrime'];
     for (var algo in groth16Algos) {
       final inputName = algo.contains('MiMC') || algo.contains('Poseidon') || algo.contains('Rescue') 
           ? 'Input 1f' 
@@ -113,7 +113,7 @@ class CircuitRegistry {
     switch (framework) {
       case 'arkworks':
       case 'rapidsnark':
-        return ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'RescuePrime'];
+        return ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'Poseidon2', 'RescuePrime'];
       case 'barretenberg':
         return ['SHA256', 'Keccak256', 'Poseidon', 'Poseidon2', 'MiMC', 'Blake2', 'Blake3', 'RescuePrime', 'Anemoi'];
       case 'risc0':
@@ -121,7 +121,7 @@ class CircuitRegistry {
       case 'cairo':
         return ['SHA256', 'Blake2s256', 'Blake3', 'Keccak256', 'MiMC', 'Poseidon2', 'RescuePrime'];
       case 'imp1':
-        return ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'RescuePrime'];
+        return ['SHA256', 'Keccak256', 'Blake2s256', 'Blake3', 'MiMC256', 'Pedersen', 'Poseidon', 'Poseidon2', 'RescuePrime'];
       case 'provekit':
         return ['Anemoi', 'MiMC', 'Poseidon', 'RescuePrime'];
       default:

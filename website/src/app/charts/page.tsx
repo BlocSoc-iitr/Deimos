@@ -44,8 +44,8 @@ export default function ChartsPage() {
       if (!match) continue;
       const suffix = match[1];
       if (suffix === 'f') return 'field elements';
-      if (suffix === 'm') return 'M31 fields';
-      if (suffix === 'u') return 'U32 elements';
+      if (suffix === 'm') return 'field elements'; // M31 count normalized to BN254-equivalent
+      if (suffix === 'u') return 'bytes';          // U32 count normalized to bytes (* 4)
       return 'bytes';
     }
     return '';

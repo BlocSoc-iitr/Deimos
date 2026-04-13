@@ -1255,7 +1255,7 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       
       // Additional metadata
       'proofSize': _getProofSize(),
-      'inputSize': widget.selectedInputData.values.length,
+      'inputSize': _computeInputSize(widget.selectedInputName, widget.selectedInputData.values.length),
       'customInputs': customInputs,
       'proofBackend': (widget.framework == 'arkworks' || widget.framework == 'rapidsnark') ? widget.framework : 'N/A',
 
@@ -1263,6 +1263,18 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     };
   }
   
+  int _computeInputSize(String inputName, int rawCount) {
+    final suffix = inputName.trim().split(' ').last;
+    if (suffix.endsWith('u')) {
+      // U32: each element = 4 bytes
+      return rawCount * 4;
+    } else if (suffix.endsWith('m')) {
+      // M31: convert to BN254-equivalent field element count
+      return (rawCount * 31 / 254).ceil();
+    }
+    return rawCount;
+  }
+
   int _getProofSize() {
     if (_circomProofResult != null) {
       return _proofData?.length ?? 0;
