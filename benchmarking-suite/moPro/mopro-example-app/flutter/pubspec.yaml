@@ -1,5 +1,7 @@
 name: Deimos
 description: "zK Benchmarking on your mobile phones"
+# versionName+versionCode for store releases (bump the build number each upload).
+version: 1.0.0+1
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -35,6 +37,7 @@ dependencies:
   http: ^1.2.0
   system_info2: ^4.0.0
   battery_plus: ^6.0.3
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   integration_test:

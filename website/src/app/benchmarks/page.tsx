@@ -336,23 +336,23 @@ export default function BenchmarksPage() {
                                     <div className="space-y-1.5 text-xs">
                                       <div className="flex justify-between">
                                         <span className="text-[#605A57]">Total RAM:</span>
-                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.totalPhysicalMemory)}</span>
+                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.totalPhysicalMemory ?? 0)}</span>
                                       </div>
                                       <div className="flex justify-between">
                                         <span className="text-[#605A57]">Peak Usage:</span>
-                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.peakMemoryUsage)}</span>
+                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.peakMemoryUsage ?? 0)}</span>
                                       </div>
                                       <div className="flex justify-between">
                                         <span className="text-[#605A57]">Consumed:</span>
-                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.memoryConsumedByProof)}</span>
+                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.memoryConsumedByProof ?? 0)}</span>
                                       </div>
                                       <div className="flex justify-between">
                                         <span className="text-[#605A57]">Peak Load:</span>
-                                        <span className="font-semibold text-[#37322F]">{item.deviceInfo.memory.peakMemoryLoadInPercentage.toFixed(1)}%</span>
+                                        <span className="font-semibold text-[#37322F]">{(item.deviceInfo.memory.peakMemoryLoadInPercentage ?? 0).toFixed(1)}%</span>
                                       </div>
                                       <div className="flex justify-between">
                                         <span className="text-[#605A57]">Consumed %:</span>
-                                        <span className="font-semibold text-[#37322F]">{item.deviceInfo.memory.memoryConsumedInPercentage.toFixed(1)}%</span>
+                                        <span className="font-semibold text-[#37322F]">{(item.deviceInfo.memory.memoryConsumedInPercentage ?? 0).toFixed(1)}%</span>
                                       </div>
                                     </div>
                                   </div>
@@ -382,11 +382,11 @@ export default function BenchmarksPage() {
                                       <>
                                         <div className="flex justify-between pt-1.5 border-t border-[rgba(55,50,47,0.12)]">
                                           <span className="text-[#605A57]">CPU Time:</span>
-                                          <span className="font-medium text-[#37322F]">{(item.deviceInfo.cpu.cpuTimeMs / 1000).toFixed(3)}s</span>
+                                          <span className="font-medium text-[#37322F]">{((item.deviceInfo.cpu.cpuTimeMs ?? 0) / 1000).toFixed(3)}s</span>
                                         </div>
                                         <div className="flex justify-between">
                                           <span className="text-[#605A57]">CPU Usage:</span>
-                                          <span className="font-semibold text-[#37322F]">{item.deviceInfo.cpu.cpuPercent.toFixed(1)}%</span>
+                                          <span className="font-semibold text-[#37322F]">{(item.deviceInfo.cpu.cpuPercent ?? 0).toFixed(1)}%</span>
                                         </div>
                                       </>
                                     )}

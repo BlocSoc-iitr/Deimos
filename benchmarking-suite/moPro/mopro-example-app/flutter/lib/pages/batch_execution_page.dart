@@ -4,8 +4,11 @@ import '../models/benchmark_item.dart';
 import '../services/benchmark_service.dart';
 import '../utils/circuit_registry.dart';
 import '../utils/circuit_utils.dart';
+import '../utils/benchmark_references.dart';
 import '../services/api_service.dart';
 import '../services/device_stats_service.dart';
+import 'package:Deimos/theme/app_theme.dart';
+import 'package:Deimos/widgets/instrument_widgets.dart';
 
 class BatchExecutionPage extends StatefulWidget {
   final List<InputData> allInputs;
@@ -26,11 +29,11 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
   Stopwatch _totalStopwatch = Stopwatch();
   ScrollController _scrollController = ScrollController();
 
-  // Progressive upload: flush completed results to the backend in chunks during
-  // the run so a mid-batch crash doesn't lose everything captured so far.
+  // Progressive upload: flush completed results in chunks during the run so a
+  // mid-batch crash doesn't lose everything captured so far.
   static const int _uploadChunkSize = 10;
   final List<Map<String, dynamic>> _pendingUpload = [];
-  Map<String, dynamic>? _deviceInfo; // collected once per run, reused per result
+  Map<String, dynamic>? _deviceInfo; // collected once per run
   int _uploadedCount = 0;
 
   @override
@@ -54,21 +57,17 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
     for (int i = 0; i < _results.length; i++) {
       if (!mounted) break;
 
-      // Let memory from the previous circuit's proof release before we snapshot
-      // the baseline for this one (device/process memory settles between runs).
+      // Let memory from the previous circuit's proof release before the next baseline.
       if (i > 0) await Future.delayed(const Duration(milliseconds: 300));
 
       final item = _results[i];
-      // Find appropriate input data
       final inputData = _findInputForitem(item);
 
-      // Update status to Proving
       setState(() {
         _results[i] = item.copyWith(status: BenchmarkStatus.proving);
       });
       _scrollToItem(i);
 
-      // Run benchmark
       final result = await _benchmarkService.runBenchmark(_results[i], inputData);
 
       if (!mounted) break;
@@ -91,8 +90,7 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
       }
     }
 
-    // Flush whatever is left after the run.
-    await _flushPending();
+    await _flushPending(); // flush the remainder
 
     _totalStopwatch.stop();
     if (mounted) {
@@ -102,7 +100,8 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
     }
   }
 
-  /// Builds the upload payload for one completed result.
+  /// Builds the upload payload for one completed result (memory + cpu nested
+  /// under deviceInfo so the backend persists them).
   Map<String, dynamic> _buildPayload(BenchmarkResult result, Map<String, dynamic> deviceInfo) {
     final inputData = _findInputForitem(result);
     return {
@@ -111,7 +110,6 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
       'language': result.framework,
       'provingTimeMiliSeconds': result.provingTime?.inMilliseconds ?? 0,
       'verificationTimeMiliSeconds': result.verificationTime?.inMilliseconds ?? 0,
-      // memory/cpu nested under deviceInfo so the backend persists them.
       'deviceInfo': {
         ...deviceInfo,
         'memory': result.memoryInfo,
@@ -125,9 +123,8 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
     };
   }
 
-  /// Uploads the pending buffer. On failure the chunk is re-queued so the next
-  /// flush (or the end-of-run flush / manual button) retries it. Duplicates are
-  /// deduped server-side, so retries never create double rows.
+  /// Uploads the pending buffer; re-queues on failure so a later flush retries
+  /// (server dedups, so retries never create duplicate rows).
   Future<void> _flushPending() async {
     if (_pendingUpload.isEmpty) return;
     final chunk = List<Map<String, dynamic>>.from(_pendingUpload);
@@ -141,7 +138,6 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
         _uploadedCount += inserted;
       }
     } else {
-      // Upload failed — put the chunk back to retry later.
       _pendingUpload.insertAll(0, chunk);
     }
   }
@@ -160,176 +156,11 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
   void _scrollToItem(int index) {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
-        index * 72.0,
+        index * 120.0,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final progress = _results.length > 0 ? (_completedCount + _failedCount) / _results.length : 0.0;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Batch Execution Dashboard'),
-        actions: [
-          if (!_isExecuting)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: () {
-                setState(() {
-                  _results = CircuitRegistry.getFullBenchmarkSuite();
-                });
-                _startBatch();
-              },
-            ),
-        ],
-      ),
-      body: Column(
-        children: [
-          _buildProgressHeader(progress),
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              itemCount: _results.length,
-              itemBuilder: (context, index) {
-                return _buildResultTile(_results[index]);
-              },
-            ),
-          ),
-          if (!_isExecuting) _buildSummaryFooter(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressHeader(double progress) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      color: Colors.white,
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Overall Progress: ${(_completedCount + _failedCount)}/${_results.length}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text('${(progress * 100).toInt()}%'),
-            ],
-          ),
-          const SizedBox(height: 10),
-          LinearProgressIndicator(
-            value: progress,
-            backgroundColor: Colors.grey[200],
-            valueColor: AlwaysStoppedAnimation<Color>(
-              _failedCount > 0 ? Colors.orange : Colors.blue,
-            ),
-          ),
-          if (_isExecuting) ...[
-            const SizedBox(height: 10),
-            Text('Executing batch sequentially… (uploaded $_uploadedCount)',
-                style: const TextStyle(fontStyle: FontStyle.italic)),
-          ]
-        ],
-      ),
-    );
-  }
-
-  Widget _buildResultTile(BenchmarkResult result) {
-    IconData statusIcon;
-    Color statusColor;
-    Widget trailing = const SizedBox.shrink();
-
-    switch (result.status) {
-      case BenchmarkStatus.pending:
-        statusIcon = Icons.hourglass_empty;
-        statusColor = Colors.grey;
-        break;
-      case BenchmarkStatus.proving:
-        statusIcon = Icons.settings;
-        statusColor = Colors.blue;
-        trailing = const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2));
-        break;
-      case BenchmarkStatus.verifying:
-        statusIcon = Icons.verified_user_outlined;
-        statusColor = Colors.cyan;
-        trailing = const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2));
-        break;
-      case BenchmarkStatus.completed:
-        statusIcon = Icons.check_circle;
-        statusColor = Colors.green;
-        trailing = Text('${result.provingTime?.inMilliseconds}ms / ${result.verificationTime?.inMilliseconds}ms');
-        break;
-      case BenchmarkStatus.failed:
-        statusIcon = Icons.error;
-        statusColor = Colors.red;
-        trailing = IconButton(
-          icon: const Icon(Icons.info_outline, size: 20),
-          onPressed: () => _showError(result.error),
-        );
-        break;
-    }
-
-    return ListTile(
-      leading: Icon(statusIcon, color: statusColor),
-      title: Text('${CircuitRegistry.getFrameworkDisplayName(result.framework)} - ${result.algorithm}'),
-      subtitle: Text(result.status.name.toUpperCase()),
-      trailing: trailing,
-    );
-  }
-
-  Widget _buildSummaryFooter() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStat('Total', _results.length.toString()),
-              _buildStat('Success', _completedCount.toString(), color: Colors.green),
-              _buildStat('Failed', _failedCount.toString(), color: Colors.red),
-              _buildStat('Uploaded', _uploadedCount.toString(), color: Colors.blue),
-            ],
-          ),
-          const SizedBox(height: 15),
-          Text(
-            'Total Time: ${_totalStopwatch.elapsed.inSeconds}.${(_totalStopwatch.elapsed.inMilliseconds % 1000).toString().padLeft(3, '0')}s',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          if (_isPushing)
-             const CircularProgressIndicator()
-          else
-            ElevatedButton.icon(
-              onPressed: _completedCount > 0 ? _pushToDatabase : null,
-              icon: const Icon(Icons.cloud_upload),
-              label: const Text('Send Data to Database'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                 minimumSize: const Size(double.infinity, 50),
-              ),
-            ),
-          const SizedBox(height: 10),
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-             style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 50),
-            ),
-            child: const Text('Back to Home'),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _pushToDatabase() async {
@@ -337,7 +168,6 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
       _isPushing = true;
     });
 
-    // Device is the same for the whole batch; reuse what the run already collected.
     final deviceInfo = _deviceInfo ??= await DeviceStatsService.collectDeviceInfo({});
 
     // Catch-all: re-send every completed result in one request. Progressive
@@ -361,39 +191,268 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
       final Color color;
       if (batch.isEmpty) {
         message = 'No completed results to push.';
-        color = Colors.orange;
+        color = AppTheme.warning;
       } else if (summary == null) {
         message = 'Database push failed.';
-        color = Colors.red;
+        color = AppTheme.warning;
       } else {
-        final inserted = summary['inserted'] ?? 0;
-        final skipped = summary['skipped'] ?? 0;
-        message = 'Database Push: $inserted saved, $skipped duplicate(s).';
-        color = Colors.green;
+        message = 'Database Push: ${summary['inserted'] ?? 0} saved, ${summary['skipped'] ?? 0} duplicate(s).';
+        color = AppTheme.success;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: color),
+        SnackBar(
+          content: SIMono(message, color: AppTheme.background),
+          backgroundColor: color,
+        ),
       );
     }
   }
 
-  Widget _buildStat(String label, String value, {Color? color}) {
-
-    return Column(
-      children: [
-        Text(label, style: const TextStyle(color: Colors.grey)),
-        Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-      ],
-    );
+  // Returns the index of the fastest completed result, or -1 if none.
+  int _winnerIndex() {
+    int best = -1;
+    int bestMs = -1;
+    for (int i = 0; i < _results.length; i++) {
+      final r = _results[i];
+      if (r.status != BenchmarkStatus.completed) continue;
+      final ms = (r.provingTime?.inMilliseconds ?? 0) + (r.verificationTime?.inMilliseconds ?? 0);
+      if (bestMs == -1 || ms < bestMs) {
+        bestMs = ms;
+        best = i;
+      }
+    }
+    return best;
   }
 
-  void _showError(String? error) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Benchmark Error'),
-        content: Text(error ?? 'Unknown error'),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+  @override
+  Widget build(BuildContext context) {
+    int maxTime = 1;
+    for (var r in _results) {
+      if (r.status == BenchmarkStatus.completed) {
+        final t = (r.provingTime?.inMilliseconds ?? 0) + (r.verificationTime?.inMilliseconds ?? 0);
+        if (t > maxTime) maxTime = t;
+      }
+    }
+
+    final winnerIdx = !_isExecuting ? _winnerIndex() : -1;
+
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SIBar(
+              title: '// CROSS-FRAMEWORK',
+              onBack: () => Navigator.pop(context),
+              right: !_isExecuting
+                  ? GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _results = CircuitRegistry.getFullBenchmarkSuite();
+                        });
+                        _startBatch();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(border: Border.all(color: AppTheme.border)),
+                        child: const SIMono('RESTART', fontSize: 10, letterSpacing: 1.5),
+                      ),
+                    )
+                  : null,
+            ),
+            
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SIMono('${_results.length} FRAMEWORKS BENCHED', fontSize: 10, letterSpacing: 2, color: AppTheme.textDim),
+                  const SizedBox(height: 6),
+                  SIMono(
+                    _isExecuting ? 'Benchmarking in progress...' : 'Batch execution complete.',
+                    fontSize: 22,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.5,
+                  ),
+                ],
+              ),
+            ),
+
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(20),
+                itemCount: _results.length,
+                itemBuilder: (context, index) {
+                  final r = _results[index];
+                  final fwName = CircuitRegistry.getFrameworkDisplayName(r.framework);
+                  final totalMs = (r.provingTime?.inMilliseconds ?? 0) + (r.verificationTime?.inMilliseconds ?? 0);
+
+                  final isWinner = !_isExecuting && index == winnerIdx;
+                  final isActive = r.status == BenchmarkStatus.proving || r.status == BenchmarkStatus.verifying;
+                  final isFailed = r.status == BenchmarkStatus.failed;
+                  final isDone = r.status == BenchmarkStatus.completed;
+
+                  Color borderColor = isWinner
+                      ? AppTheme.accent
+                      : (isActive ? AppTheme.accent : AppTheme.border);
+                  if (isFailed) borderColor = AppTheme.danger;
+
+                  final widthPct = (isDone && maxTime > 0)
+                      ? (totalMs / maxTime).clamp(0.0, 1.0)
+                      : 0.0;
+
+                  // Memory consumed in MB from memoryInfo (process-level).
+                  final memConsumedMb = isDone && r.memoryInfo != null
+                      ? ((r.memoryInfo!['memoryConsumedByProof'] as int? ?? 0).abs()) /
+                          (1024 * 1024)
+                      : null;
+
+                  // Proof size in KB
+                  final proofKb = isDone && (r.proofSize ?? 0) > 0
+                      ? r.proofSize! / 1024.0
+                      : null;
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      border: Border.all(color: borderColor),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  SIMono(
+                                    '#${(index + 1).toString().padLeft(2, '0')}',
+                                    fontSize: 11,
+                                    letterSpacing: 1,
+                                    color: isWinner ? AppTheme.accent : (isActive ? AppTheme.accent : AppTheme.textDim),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: SIMono(
+                                      '$fwName · ${r.algorithm}',
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (isWinner) ...[
+                                    const SizedBox(width: 8),
+                                    const SITag(text: 'FASTEST', invert: true),
+                                  ],
+                                  if (isActive) ...[
+                                    const SizedBox(width: 8),
+                                    const SITag(text: 'RUNNING'),
+                                  ],
+                                  if (isFailed) ...[
+                                    const SizedBox(width: 8),
+                                    const SITag(text: 'FAILED', accent: true),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            if (isDone)
+                              SIMono(
+                                BenchmarkReferences.formatMs(totalMs),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: AppTheme.background,
+                            border: Border.all(color: AppTheme.border),
+                          ),
+                          alignment: Alignment.centerLeft,
+                          child: FractionallySizedBox(
+                            widthFactor: isActive ? 1.0 : widthPct,
+                            child: Container(
+                              color: isFailed
+                                  ? AppTheme.danger
+                                  : (isWinner ? AppTheme.accent : (isActive ? AppTheme.accent : AppTheme.text)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            SIMono('GEN ${r.provingTime?.inMilliseconds ?? 0}ms', fontSize: 10, color: AppTheme.textDim),
+                            const SizedBox(width: 14),
+                            SIMono('VER ${r.verificationTime?.inMilliseconds ?? 0}ms', fontSize: 10, color: AppTheme.textDim),
+                            if (memConsumedMb != null) ...[
+                              const SizedBox(width: 14),
+                              SIMono('MEM ${memConsumedMb.toStringAsFixed(1)}MB', fontSize: 10, color: AppTheme.textDim),
+                            ],
+                            if (proofKb != null) ...[
+                              const SizedBox(width: 14),
+                              SIMono('PROOF ${proofKb.toStringAsFixed(2)}KB', fontSize: 10, color: AppTheme.textDim),
+                            ],
+                          ],
+                        ),
+                        if (isFailed && r.error != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: SIMono(
+                              'ERR: ${r.error}',
+                              fontSize: 10,
+                              color: AppTheme.danger,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            if (!_isExecuting)
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  border: Border(top: BorderSide(color: AppTheme.border)),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        SIMono('SUCCESS: $_completedCount', color: AppTheme.success),
+                        SIMono('FAILED: $_failedCount', color: AppTheme.danger),
+                        SIMono('TOTAL: ${_totalStopwatch.elapsed.inSeconds}s', color: AppTheme.text),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: _completedCount > 0 && !_isPushing ? _pushToDatabase : null,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        color: _completedCount > 0 && !_isPushing ? AppTheme.text : AppTheme.surface2,
+                        alignment: Alignment.center,
+                        child: _isPushing 
+                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.background))
+                            : SIMono('▸ SEND DATA TO DATABASE', fontSize: 12, letterSpacing: 2, color: _completedCount > 0 ? AppTheme.background : AppTheme.textMuted),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

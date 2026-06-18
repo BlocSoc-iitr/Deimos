@@ -23,7 +23,7 @@ class BenchmarkService {
       final provingTime = stopwatch.elapsed;
 
       // Capture resource usage for the proving window before verification runs.
-      final resources = await monitor.finish(provingTime.inMilliseconds);
+      final resources = await monitor.finish();
 
       stopwatch.reset();
       stopwatch.start();

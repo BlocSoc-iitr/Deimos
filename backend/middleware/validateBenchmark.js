@@ -7,7 +7,7 @@ const LIMITS = {
   id: 200, // deviceId
   shortStr: 50, // platform / systemVersion
   timeMs: 3_600_000, // 1 hour
-  bytes: 2_000_000_000, // ~2 GB
+  bytes: 137_438_953_472, // 128 GiB — device RAM / process memory headroom
   inputSize: 100_000_000,
   cpuMs: 3_600_000,
   cpuPercent: 6_400, // up to ~64 cores at 100%
