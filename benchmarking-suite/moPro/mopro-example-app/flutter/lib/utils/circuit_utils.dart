@@ -82,4 +82,19 @@ class CircuitUtils {
 
     return (circuitPath: assetPath, srsPath: srsPath, onChain: onChain, vk: vk, targetInputSize: targetInputSize);
   }
+
+  /// Normalizes a raw input element count to a comparable input size.
+  /// The unit is inferred from the input name suffix:
+  ///   - `*u` (U32): each element is 4 bytes
+  ///   - `*m` (M31): converted to BN254-equivalent field element count
+  ///   - otherwise: the raw count is used as-is
+  static int computeInputSize(String inputName, int rawCount) {
+    final suffix = inputName.trim().split(' ').last;
+    if (suffix.endsWith('u')) {
+      return rawCount * 4;
+    } else if (suffix.endsWith('m')) {
+      return (rawCount * 31 / 254).ceil();
+    }
+    return rawCount;
+  }
 }

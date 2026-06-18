@@ -39,6 +39,9 @@ CREATE TABLE IF NOT EXISTS benchmarks (
   battery_consumed SMALLINT
 );
 
+-- Migrations for existing databases (CREATE TABLE above only applies to new ones)
+ALTER TABLE benchmarks ADD COLUMN IF NOT EXISTS input_size INTEGER;
+
 -- Indexes for common filter queries
 CREATE INDEX IF NOT EXISTS idx_benchmarks_circuit ON benchmarks(circuit);
 CREATE INDEX IF NOT EXISTS idx_benchmarks_framework ON benchmarks(framework);
@@ -46,7 +49,8 @@ CREATE INDEX IF NOT EXISTS idx_benchmarks_language ON benchmarks(language);
 CREATE INDEX IF NOT EXISTS idx_benchmarks_platform ON benchmarks(platform);
 CREATE INDEX IF NOT EXISTS idx_benchmarks_timestamp ON benchmarks(timestamp DESC);
 
--- Composite index for duplicate detection
+-- Composite index for duplicate detection (keyed on input_size too)
+DROP INDEX IF EXISTS idx_benchmarks_duplicate_check;
 CREATE INDEX IF NOT EXISTS idx_benchmarks_duplicate_check
-  ON benchmarks(device_id, circuit, framework, language)
+  ON benchmarks(device_id, circuit, framework, language, input_size)
   WHERE device_id IS NOT NULL;

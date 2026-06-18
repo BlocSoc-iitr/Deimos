@@ -8,30 +8,36 @@ export const receiveBenchmarkResult = async (req, res) => {
   try {
     const data = req.body;
 
-    // Check for duplicate based on combination of circuit, framework, language, and deviceId
+    // Check for duplicate based on combination of circuit, framework, language, input size and deviceId
     const deviceId = data.deviceInfo?.deviceId;
     const circuit = data.circuit;
     const framework = data.framework;
     const language = data.language;
+    const inputSize = data.inputSize ?? null;
 
     if (deviceId && circuit && framework && language) {
+      // input_size is part of the uniqueness key so results for different
+      // input sizes aren't rejected as duplicates. NULL is matched explicitly
+      // since `= NULL` never holds in SQL.
       const existing = await query(
         `SELECT id FROM benchmarks
          WHERE device_id = $1 AND circuit = $2 AND framework = $3 AND language = $4
+           AND input_size IS NOT DISTINCT FROM $5
          LIMIT 1`,
-        [deviceId, circuit, framework, language]
+        [deviceId, circuit, framework, language, inputSize]
       );
 
       if (existing.rows.length > 0) {
-        logger.info(`Duplicate benchmark detected - Circuit: ${circuit}, Framework: ${framework}, Language: ${language}, DeviceId: ${deviceId}`);
+        logger.info(`Duplicate benchmark detected - Circuit: ${circuit}, Framework: ${framework}, Language: ${language}, InputSize: ${inputSize}, DeviceId: ${deviceId}`);
         return res.status(200).json({
           success: false,
-          message: 'Benchmark data already exists for this circuit/framework/language/device combination',
+          message: 'Benchmark data already exists for this circuit/framework/language/inputSize/device combination',
           duplicate: true,
           deviceId,
           circuit,
           framework,
-          language
+          language,
+          inputSize
         });
       }
     }
@@ -62,7 +68,7 @@ export const receiveBenchmarkResult = async (req, res) => {
         circuit,
         framework,
         language,
-        data.inputSize ?? null,
+        inputSize,
         data.provingTimeMiliSeconds,
         data.verificationTimeMiliSeconds,
         data.proofSize,

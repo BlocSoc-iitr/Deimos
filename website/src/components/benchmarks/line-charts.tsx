@@ -18,15 +18,15 @@ const AXIS_TICK_STYLE = { fontSize: 11, fill: '#605A57' }
 function generateLogTicks(min: number, max: number, isTime: boolean): number[] {
   if (min <= 0 || max <= 0 || min === max) return []
 
-  const ms = 1
   const sec = 1_000
   const min_ = 60_000
   const kb = 1_024
   const mb = kb * 1_024
   const gb = mb * 1_024
 
+  // Strictly increasing magnitudes so axis ticks never duplicate.
   const magnitudes = isTime
-    ? [1, 10, 100, ms, 10, 100, sec, 10 * sec, 60 * sec, min_]
+    ? [1, 10, 100, sec, 10 * sec, min_]
     : [1, kb, 10 * kb, 100 * kb, mb, 10 * mb, 100 * mb, gb]
 
   const valid = magnitudes.filter((m) => m > 0 && m >= min * 0.5 && m <= max * 2)

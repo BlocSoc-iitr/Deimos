@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { Info } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,19 +14,22 @@ const HOVER_OPEN_DELAY = 200
 const HOVER_CLOSE_DELAY = 300
 
 interface InfoPopoverProps {
-  children: React.ReactNode
+  children: ReactNode
   content: string
 }
 
 export function InfoPopover({ children, content }: InfoPopoverProps) {
   const [open, setOpen] = useState(false)
-  const openTimer = useRef<ReturnType<typeof setTimeout>>(null)
-  const closeTimer = useRef<ReturnType<typeof setTimeout>>(null)
+  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const clearTimers = useCallback(() => {
     if (openTimer.current) clearTimeout(openTimer.current)
     if (closeTimer.current) clearTimeout(closeTimer.current)
   }, [])
+
+  // Clear any pending timeouts on unmount
+  useEffect(() => clearTimers, [clearTimers])
 
   const handleEnter = useCallback(() => {
     clearTimers()
@@ -61,8 +65,8 @@ export function InfoPopover({ children, content }: InfoPopoverProps) {
 interface ChartCardProps {
   title: string
   description: string
-  children: React.ReactNode
-  footer?: React.ReactNode
+  children: ReactNode
+  footer?: ReactNode
   className?: string
 }
 

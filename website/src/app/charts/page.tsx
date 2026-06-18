@@ -6,7 +6,6 @@ import {
   buildProverColorMap,
 } from '@/components/benchmarks/metrics';
 import { CircuitTabs } from '@/components/benchmarks/circuit-tabs';
-import { SeriesToggleLegend } from '@/components/benchmarks/shared';
 import { BarCharts } from '@/components/benchmarks/bar-charts';
 import { LineCharts } from '@/components/benchmarks/line-charts';
 import { cn } from '@/lib/utils';
@@ -78,8 +77,6 @@ export default function ChartsPage() {
     const keys = [...new Set(chartData.map(getDeviceKey))].sort();
     return buildProverColorMap(keys);
   }, [chartData]);
-
-  const lineProvers = useMemo<string[]>(() => Object.keys(lineColorMap).sort(), [lineColorMap]);
 
   // ─── Bar charts: series = backend, fixed device ───────────────────────────
   // Data filtered to selected device + selected input size

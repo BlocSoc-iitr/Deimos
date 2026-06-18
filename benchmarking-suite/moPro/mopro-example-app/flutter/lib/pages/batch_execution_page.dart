@@ -3,6 +3,7 @@ import 'dart:async';
 import '../models/benchmark_item.dart';
 import '../services/benchmark_service.dart';
 import '../utils/circuit_registry.dart';
+import '../utils/circuit_utils.dart';
 import '../services/api_service.dart';
 import '../services/device_stats_service.dart';
 
@@ -260,16 +261,6 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
     );
   }
 
-  int _computeInputSize(String inputName, int rawCount) {
-    final suffix = inputName.trim().split(' ').last;
-    if (suffix.endsWith('u')) {
-      return rawCount * 4;
-    } else if (suffix.endsWith('m')) {
-      return (rawCount * 31 / 254).ceil();
-    }
-    return rawCount;
-  }
-
   Future<void> _pushToDatabase() async {
     setState(() {
       _isPushing = true;
@@ -297,7 +288,7 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
           'memory': result.memoryInfo,
           'battery': result.batteryInfo,
           'proofSize': result.proofSize,
-          'inputSize': _computeInputSize(result.inputName, inputData.values.length),
+          'inputSize': CircuitUtils.computeInputSize(result.inputName, inputData.values.length),
           'customInputs': customInputs,
           'proofBackend': (result.framework == 'arkworks' || result.framework == 'rapidsnark') ? result.framework : 'N/A',
           'timestamp': DateTime.now().toIso8601String(),
