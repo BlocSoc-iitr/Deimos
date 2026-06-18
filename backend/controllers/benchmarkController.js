@@ -10,11 +10,8 @@ function rowToApiFormat(row) {
 
   const hasMemoryData = [
     row.total_physical_memory,
-    row.memory_used_before_proof,
     row.peak_memory_usage,
-    row.memory_consumed_by_proof,
     row.peak_memory_load_percentage,
-    row.memory_consumed_percentage,
   ].some((value) => value != null);
 
   const hasCpuData = [row.cpu_time_ms, row.cpu_percent].some((value) => value != null);
@@ -27,11 +24,8 @@ function rowToApiFormat(row) {
   if (hasMemoryData) {
     deviceInfo.memory = {
       totalPhysicalMemory: toNumberOrNull(row.total_physical_memory),
-      memoryUsedBeforeProof: toNumberOrNull(row.memory_used_before_proof),
       peakMemoryUsage: toNumberOrNull(row.peak_memory_usage),
-      memoryConsumedByProof: toNumberOrNull(row.memory_consumed_by_proof),
       peakMemoryLoadInPercentage: toFloatOrNull(row.peak_memory_load_percentage),
-      memoryConsumedInPercentage: toFloatOrNull(row.memory_consumed_percentage),
     };
   }
 
@@ -51,6 +45,9 @@ function rowToApiFormat(row) {
     provingTimeMiliSeconds: row.proving_time_ms,
     verificationTimeMiliSeconds: row.verification_time_ms,
     proofSize: row.proof_size,
+    preprocessingSize: row.preprocessing_size != null ? Number(row.preprocessing_size) : undefined,
+    temperatureC: row.temperature_c != null ? parseFloat(row.temperature_c) : undefined,
+    sampleCount: row.sample_count != null ? Number(row.sample_count) : undefined,
     timestamp: row.timestamp?.toISOString(),
     createdAt: row.created_at?.toISOString(),
     customInputs: row.custom_inputs || undefined,

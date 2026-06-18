@@ -6,18 +6,55 @@ import { validateBenchmark } from '../middleware/validateBenchmark.js';
 // bulk endpoints so the two can never drift.
 const INSERT_COLUMNS = [
   'circuit', 'framework', 'language', 'input_size', 'proving_time_ms', 'verification_time_ms',
-  'proof_size', 'timestamp', 'created_at', 'custom_inputs',
+  'proof_size', 'preprocessing_size', 'timestamp', 'created_at', 'custom_inputs',
   'platform', 'device', 'manufacturer', 'device_id', 'system_version',
-  'total_physical_memory', 'memory_used_before_proof', 'peak_memory_usage',
-  'memory_consumed_by_proof', 'peak_memory_load_percentage', 'memory_consumed_percentage',
-  'cpu_time_ms', 'cpu_percent',
+  'total_physical_memory', 'peak_memory_usage', 'peak_memory_load_percentage',
+  'cpu_time_ms', 'cpu_percent', 'temperature_c',
 ];
 
-// Conflict target = the partial unique index in schema.sql. Lets ON CONFLICT
-// dedupe on (device_id, circuit, framework, language, input_size) for rows that
-// have a device_id.
+// On conflict (same device_id, circuit, framework, language, input_size) we
+// fold the incoming metrics into a running mean rather than reject them:
+//   new_avg = (old_avg * sample_count + incoming) / (sample_count + 1)
+// Each averaging expression is null-safe — a NULL on either side keeps the
+// other value — so optional metrics (preprocessing, temperature) don't poison
+// the row. Integer/bigint columns round to whole numbers; decimals to 2 places.
+const avg = (col, decimals) => {
+  const expr =
+    `(benchmarks.${col}::numeric * benchmarks.sample_count + EXCLUDED.${col}) ` +
+    `/ (benchmarks.sample_count + 1)`;
+  const rounded = decimals != null ? `ROUND(${expr}, ${decimals})` : `ROUND(${expr})`;
+  return `${col} = CASE
+      WHEN EXCLUDED.${col} IS NULL THEN benchmarks.${col}
+      WHEN benchmarks.${col} IS NULL THEN EXCLUDED.${col}
+      ELSE ${rounded}
+    END`;
+};
+
+const AGGREGATE_SET = [
+  avg('proving_time_ms'),
+  avg('verification_time_ms'),
+  avg('proof_size'),
+  avg('preprocessing_size'),
+  avg('peak_memory_usage'),
+  avg('cpu_time_ms'),
+  avg('peak_memory_load_percentage', 2),
+  avg('cpu_percent', 2),
+  avg('temperature_c', 2),
+  // Bump the sample count and surface the latest contribution's timestamp.
+  'sample_count = benchmarks.sample_count + 1',
+  'timestamp = EXCLUDED.timestamp',
+].join(',\n    ');
+
+// Conflict target = the partial unique index in schema.sql (rows with a
+// device_id). DO UPDATE turns a re-upload into an aggregation step.
 const ON_CONFLICT =
-  'ON CONFLICT (device_id, circuit, framework, language, input_size) WHERE device_id IS NOT NULL DO NOTHING';
+  `ON CONFLICT (device_id, circuit, framework, language, input_size) ` +
+  `WHERE device_id IS NOT NULL DO UPDATE SET\n    ${AGGREGATE_SET}`;
+
+// Conflict key used to collapse duplicates *within a single bulk request*:
+// Postgres forbids a DO UPDATE touching the same row twice in one statement.
+const conflictKey = (data) =>
+  `${data.deviceInfo?.deviceId}|${data.circuit}|${data.framework}|${data.language}|${data.inputSize ?? ''}`;
 
 /**
  * Maps an incoming benchmark payload to the ordered value array matching
@@ -35,6 +72,7 @@ function extractRowValues(data, nowIso) {
     data.provingTimeMiliSeconds,
     data.verificationTimeMiliSeconds,
     data.proofSize,
+    data.preprocessingSize ?? null,
     data.timestamp || nowIso,
     nowIso,
     data.customInputs ? JSON.stringify(data.customInputs) : null,
@@ -45,13 +83,11 @@ function extractRowValues(data, nowIso) {
     deviceInfo.systemVersion || null,
     // Use ?? (not ||) so a legitimate 0 isn't turned into NULL.
     memory.totalPhysicalMemory ?? null,
-    memory.memoryUsedBeforeProof ?? null,
     memory.peakMemoryUsage ?? null,
-    memory.memoryConsumedByProof ?? null,
     memory.peakMemoryLoadInPercentage ?? null,
-    memory.memoryConsumedInPercentage ?? null,
     cpu.cpuTimeMs ?? null,
     cpu.cpuPercent ?? null,
+    data.temperatureC ?? null,
   ];
 }
 
@@ -72,37 +108,32 @@ export const receiveBenchmarkResult = async (req, res) => {
     const values = extractRowValues(data, nowIso);
     const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
 
-    // ON CONFLICT makes the insert idempotent on the dedup key; an empty result
-    // means the row already existed.
+    // ON CONFLICT folds a re-upload into the existing row's running mean and
+    // returns it (sample_count > 1 ⇒ this was an aggregation, not a fresh row).
     const result = await query(
       `INSERT INTO benchmarks (${INSERT_COLUMNS.join(', ')})
        VALUES (${placeholders})
        ${ON_CONFLICT}
-       RETURNING id`,
+       RETURNING id, sample_count`,
       values
     );
 
-    if (result.rows.length === 0) {
-      logger.info(`Duplicate benchmark detected - Circuit: ${data.circuit}, Framework: ${data.framework}, Language: ${data.language}, InputSize: ${data.inputSize ?? null}, DeviceId: ${data.deviceInfo?.deviceId}`);
-      return res.status(200).json({
-        success: false,
-        message: 'Benchmark data already exists for this circuit/framework/language/inputSize/device combination',
-        duplicate: true,
-        deviceId: data.deviceInfo?.deviceId,
-        circuit: data.circuit,
-        framework: data.framework,
-        language: data.language,
-        inputSize: data.inputSize ?? null,
-      });
+    const row = result.rows[0];
+    const aggregated = row.sample_count > 1;
+    if (aggregated) {
+      logger.info(`Benchmark aggregated into ID ${row.id} (now mean of ${row.sample_count} runs) - ${data.circuit}/${data.framework}/${data.language}/${data.inputSize ?? null}`);
+    } else {
+      logger.info(`Benchmark data saved successfully with ID: ${row.id}`);
     }
-
-    const insertedId = result.rows[0].id;
-    logger.info(`Benchmark data saved successfully with ID: ${insertedId}`);
 
     res.status(201).json({
       success: true,
-      message: 'Benchmark result received and saved successfully',
-      documentId: insertedId.toString(),
+      message: aggregated
+        ? `Benchmark averaged into existing record (now mean of ${row.sample_count} runs)`
+        : 'Benchmark result received and saved successfully',
+      documentId: row.id.toString(),
+      aggregated,
+      sampleCount: row.sample_count,
       receivedAt: nowIso,
     });
   } catch (error) {
@@ -117,8 +148,9 @@ const MAX_ROWS_PER_INSERT = Math.floor(60000 / INSERT_COLUMNS.length);
 /**
  * Receive many benchmark results in one request (batch "Prove and Verify All"
  * flow). Body: { results: [ ...same shape as the single endpoint... ] }.
- * Inserts in a single multi-row statement (chunked if very large); duplicates
- * on the dedup key are skipped via ON CONFLICT DO NOTHING.
+ * Inserts in a single multi-row statement (chunked if very large); a row that
+ * collides with an existing one on the dedup key is folded into its running
+ * mean via ON CONFLICT DO UPDATE.
  */
 export const receiveBenchmarkResults = async (req, res) => {
   try {
@@ -139,12 +171,26 @@ export const receiveBenchmarkResults = async (req, res) => {
       return res.status(400).json({ error: 'No valid benchmark results', total: incoming.length, rejected });
     }
 
-    const nowIso = new Date().toISOString();
-    const colCount = INSERT_COLUMNS.length;
-    let inserted = 0;
+    // Collapse duplicates within this payload (DO UPDATE can't touch a row twice
+    // in one statement). Keep the last occurrence; rows without a device_id never
+    // conflict, so they pass through untouched. Cross-request re-uploads still
+    // aggregate at the database.
+    const deduped = [];
+    const seen = new Map();
+    for (const data of results) {
+      if (!data.deviceInfo?.deviceId) { deduped.push(data); continue; }
+      const key = conflictKey(data);
+      if (seen.has(key)) deduped[seen.get(key)] = data;
+      else { seen.set(key, deduped.length); deduped.push(data); }
+    }
+    const collapsed = results.length - deduped.length;
 
-    for (let start = 0; start < results.length; start += MAX_ROWS_PER_INSERT) {
-      const chunk = results.slice(start, start + MAX_ROWS_PER_INSERT);
+    const nowIso = new Date().toISOString();
+    let insertedNew = 0;
+    let aggregated = 0;
+
+    for (let start = 0; start < deduped.length; start += MAX_ROWS_PER_INSERT) {
+      const chunk = deduped.slice(start, start + MAX_ROWS_PER_INSERT);
       const params = [];
       const rowsSql = chunk.map((data) => {
         const values = extractRowValues(data, nowIso);
@@ -157,20 +203,23 @@ export const receiveBenchmarkResults = async (req, res) => {
         `INSERT INTO benchmarks (${INSERT_COLUMNS.join(', ')})
          VALUES ${rowsSql.join(', ')}
          ${ON_CONFLICT}
-         RETURNING id`,
+         RETURNING id, sample_count`,
         params
       );
-      inserted += result.rows.length;
+      for (const r of result.rows) {
+        if (r.sample_count > 1) aggregated++;
+        else insertedNew++;
+      }
     }
 
-    const skipped = results.length - inserted; // duplicates among valid items
-    logger.info(`Bulk benchmark upload: ${inserted} inserted, ${skipped} duplicate, ${rejected} rejected of ${incoming.length}`);
+    logger.info(`Bulk benchmark upload: ${insertedNew} new, ${aggregated} aggregated, ${collapsed} collapsed in-payload, ${rejected} rejected of ${incoming.length}`);
 
     res.status(201).json({
       success: true,
-      message: `Saved ${inserted} of ${incoming.length} benchmark results`,
-      inserted,
-      skipped,
+      message: `Saved ${insertedNew} new and aggregated ${aggregated} of ${incoming.length} benchmark results`,
+      inserted: insertedNew,
+      aggregated,
+      collapsed,
       rejected,
       total: incoming.length,
       receivedAt: nowIso,

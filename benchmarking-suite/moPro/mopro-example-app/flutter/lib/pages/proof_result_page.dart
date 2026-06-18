@@ -34,7 +34,6 @@ class ProofResultPage extends StatefulWidget {
 
 class _ProofResultPageState extends State<ProofResultPage> {
   bool _isGenerating = false;
-  bool _isVerifying = false;
   bool? _isValid;
   String? _proofData;
   String? _error;
@@ -69,6 +68,18 @@ class _ProofResultPageState extends State<ProofResultPage> {
   // Display values, set after capture for the results UI.
   int _peakMemoryUsage = 0;
   double _cpuPercent = 0;
+  int _preprocessingSize = 0; // prover-artifact bytes copied during proving
+  double? _temperatureC;
+
+  // Per run: 1 warmup (discarded) + N measured; the median-by-proving-time run's
+  // metrics are kept for display/upload.
+  static const int _warmupRuns = 1;
+  static const int _measuredRuns = 3;
+
+  // Live label for the run currently executing (warmup / measured i of N),
+  // shown in the running overlay. The proof-time field is not updated until
+  // the whole sequence finishes and the median is chosen.
+  String _runLabel = '';
 
   // Timer to keep UI responsive
   Timer? _uiUpdateTimer;
@@ -112,7 +123,7 @@ class _ProofResultPageState extends State<ProofResultPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isGenerating && _proofData == null) {
+    if (_isGenerating) {
       return _buildRunningState();
     }
     return _buildResultsState();
@@ -146,7 +157,11 @@ class _ProofResultPageState extends State<ProofResultPage> {
                       color: AppTheme.accent,
                     ),
                     const SizedBox(height: 4),
-                    SIMono('Constraints compile → witness gen → prove.', fontSize: 14, color: AppTheme.textDim),
+                    SIMono(
+                      _runLabel.isNotEmpty ? _runLabel : 'Constraints compile → witness gen → prove.',
+                      fontSize: 14,
+                      color: AppTheme.textDim,
+                    ),
                     
                     const SizedBox(height: 32),
                     Row(
@@ -301,39 +316,22 @@ class _ProofResultPageState extends State<ProofResultPage> {
                             children: [
                               SIMono('VERIFY', fontSize: 10, letterSpacing: 1.5, color: AppTheme.textDim),
                               const SizedBox(height: 4),
-                              if (_isVerifying)
-                                const SizedBox(
-                                  height: 28,
-                                  child: Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: SizedBox(
-                                      width: 14, height: 14,
-                                      child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.secondary),
-                                    ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  SIMono(
+                                    _proofVerificationTime != null ? _proofVerificationTime!.inMilliseconds.toString() : '—',
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppTheme.secondary,
                                   ),
-                                )
-                              else
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                                  textBaseline: TextBaseline.alphabetic,
-                                  children: [
-                                    SIMono(
-                                      _proofVerificationTime != null ? _proofVerificationTime!.inMilliseconds.toString() : '—',
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppTheme.secondary,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    SIMono('ms', fontSize: 14, color: AppTheme.textDim),
-                                  ],
-                                ),
+                                  const SizedBox(width: 4),
+                                  SIMono('ms', fontSize: 14, color: AppTheme.textDim),
+                                ],
+                              ),
                               const SizedBox(height: 4),
-                              if (_isValid == null && !_isVerifying)
-                                GestureDetector(
-                                  onTap: _verifyProof,
-                                  child: SIMono('tap to verify', fontSize: 11, color: AppTheme.textDim),
-                                )
-                              else if (_isValid != null)
+                              if (_isValid != null)
                                 Row(
                                   children: [
                                     Icon(_isValid! ? Icons.check : Icons.close, size: 10, color: _isValid! ? AppTheme.success : AppTheme.danger),
@@ -347,7 +345,17 @@ class _ProofResultPageState extends State<ProofResultPage> {
                       ),
                     ],
                   ),
-                  
+
+                  // Methodology note
+                  const SizedBox(height: 12),
+                  SIMono(
+                    'Each circuit is proven & verified 4×: the first run is discarded '
+                    '(warm-up) and the median of the remaining 3 is reported.',
+                    fontSize: 10,
+                    letterSpacing: 0.3,
+                    color: AppTheme.textDim,
+                  ),
+
                   // Metrics
                   const SizedBox(height: 20),
                   Container(
@@ -515,9 +523,68 @@ class _ProofResultPageState extends State<ProofResultPage> {
         });
       }
       
-      // Generate actual proof using MoPro framework 
-      _proofData = await _generateRealProof();
-      
+      // One warmup (prove only, discarded) + N measured runs. Each measured run
+      // does prove + verify; we keep the median proving time and median
+      // verification time (computed independently). The median-proving run also
+      // carries the representative resource metrics. The overlay stays up for the
+      // whole sequence so the time fields are only written once, at the end.
+      const totalRuns = _warmupRuns + _measuredRuns;
+      var completedRuns = 0;
+      // Maps run progress into the 0.4–0.9 band of the overall bar.
+      void stepProgress(String label) {
+        if (!mounted) return;
+        setState(() {
+          _runLabel = label;
+          _progress = 0.4 + (completedRuns / totalRuns) * 0.5;
+        });
+      }
+
+      for (int w = 0; w < _warmupRuns; w++) {
+        stepProgress('Warm-up run (discarded)…');
+        await _generateRealProof();
+        if (!mounted) return;
+        completedRuns++;
+      }
+      final measured = <Map<String, dynamic>>[];
+      var allValid = true;
+      for (int m = 0; m < _measuredRuns; m++) {
+        if (m > 0) await Future.delayed(const Duration(milliseconds: 300));
+        stepProgress('Measured run ${m + 1} of $_measuredRuns (prove + verify)…');
+        _proofData = await _generateRealProof();
+        if (!mounted) return;
+        final isValid = await _performRealVerification();
+        if (!mounted) return;
+        if (!isValid) allValid = false;
+        completedRuns++;
+        measured.add({
+          'time': _proofGenerationTime ?? Duration.zero,
+          'verify': _proofVerificationTime ?? Duration.zero,
+          'resources': _resources,
+          'peak': _peakMemoryUsage,
+          'cpu': _cpuPercent,
+          'preproc': _preprocessingSize,
+          'temp': _temperatureC,
+        });
+      }
+      if (measured.isNotEmpty) {
+        // Median proving-time run supplies the representative resource metrics.
+        measured.sort((a, b) =>
+            (a['time'] as Duration).inMicroseconds.compareTo((b['time'] as Duration).inMicroseconds));
+        final med = measured[measured.length ~/ 2];
+        _proofGenerationTime = med['time'] as Duration;
+        _resources = med['resources'] as Map<String, dynamic>?;
+        _peakMemoryUsage = med['peak'] as int;
+        _cpuPercent = med['cpu'] as double;
+        _preprocessingSize = med['preproc'] as int;
+        _temperatureC = med['temp'] as double?;
+
+        // Verification time is medianed independently across the measured runs.
+        final verifyTimes = measured.map((e) => e['verify'] as Duration).toList()
+          ..sort((a, b) => a.inMicroseconds.compareTo(b.inMicroseconds));
+        _proofVerificationTime = verifyTimes[verifyTimes.length ~/ 2];
+        _isValid = allValid;
+      }
+
       // Update stage: Finalizing
       if (mounted) {
         setState(() {
@@ -526,7 +593,7 @@ class _ProofResultPageState extends State<ProofResultPage> {
         });
       }
       await Future.delayed(const Duration(milliseconds: 200));
-      
+
       if (mounted) {
         // Stop the timer
         _uiUpdateTimer?.cancel();
@@ -534,6 +601,13 @@ class _ProofResultPageState extends State<ProofResultPage> {
           _isGenerating = false;
           _currentStage = 'Complete!';
           _progress = 1.0;
+        });
+      }
+
+      // Auto-upload the median result once the whole sequence has verified.
+      if (_isValid == true) {
+        _sendDataToBackend().catchError((error) {
+          debugPrint('Error sending data to backend: $error');
         });
       }
     } catch (e) {
@@ -786,43 +860,6 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
   }
 
 
-  void _verifyProof() async {
-    setState(() {
-      _isVerifying = true;
-    });
-    
-    // Give the UI a chance to update and show the loading indicator
-    await Future.delayed(const Duration(milliseconds: 100));
-    
-    try {
-      // Perform actual verification using MoPro framework
-      final isValid = await _performRealVerification();
-      
-      // Update UI immediately after verification
-      if (mounted) {
-        setState(() {
-          _isVerifying = false;
-          _isValid = isValid;
-        });
-      }
-      
-      // Send data to backend asynchronously without blocking UI
-      if (isValid) {
-        _sendDataToBackend().catchError((error) {
-          debugPrint('Error sending data to backend: $error');
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() { 
-          _isVerifying = false;
-          _isValid = false;
-          _error = e.toString();
-        });
-      }
-    }
-  }
-
   Future<bool> _performRealVerification() async {
     final moproFlutterPlugin = MoproFlutter();
     
@@ -976,12 +1013,16 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
   // Begin process memory + CPU capture before setup + proof generation, so
   // `consumed` reflects the full memory cost (circuit/SRS load + proving).
   Future<void> _beginResourceCapture() async {
-    await _resourceMonitor.start();
+    MoproFlutter.resetPreprocessing();
+    // Single run = no sampling timer; peak comes from one VmHWM read at finish.
+    await _resourceMonitor.start(poll: false);
   }
 
   // Finish capture (CPU% is averaged over the monitor's own window).
   Future<void> _endResourceCapture() async {
     _resources = await _resourceMonitor.finish();
+    _preprocessingSize = MoproFlutter.preprocessingBytes;
+    _temperatureC = await DeviceStatsService.getBatteryTemperatureC();
     final mem = _resources?['memory'] as Map<String, dynamic>?;
     final cpu = _resources?['cpu'] as Map<String, dynamic>?;
     _peakMemoryUsage = (mem?['peakMemoryUsage'] as int?) ?? 0;
@@ -1009,6 +1050,8 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       
       // Additional metadata
       'proofSize': _getProofSize(),
+      'preprocessingSize': _preprocessingSize > 0 ? _preprocessingSize : null,
+      'temperatureC': _temperatureC,
       'inputSize': CircuitUtils.computeInputSize(widget.selectedInputName, widget.selectedInputData.values.length),
       'customInputs': customInputs, // Add custom inputs here
       'proofBackend': (widget.framework == 'arkworks' || widget.framework == 'rapidsnark') ? widget.framework : 'N/A',

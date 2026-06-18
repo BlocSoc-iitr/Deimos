@@ -53,6 +53,9 @@ export function validateBenchmark(data) {
   num(e, 'verificationTimeMiliSeconds', data.verificationTimeMiliSeconds, { max: LIMITS.timeMs, integer: true });
   num(e, 'proofSize', data.proofSize, { max: LIMITS.bytes, integer: true });
   if (data.inputSize != null) num(e, 'inputSize', data.inputSize, { max: LIMITS.inputSize, integer: true });
+  if (data.preprocessingSize != null) num(e, 'preprocessingSize', data.preprocessingSize, { max: LIMITS.bytes, integer: true });
+  // Battery temperature in °C (Android only); allow a wide physical range.
+  if (data.temperatureC != null) num(e, 'temperatureC', data.temperatureC, { min: -50, max: 150, required: false });
   if (data.timestamp != null && (typeof data.timestamp !== 'string' || Number.isNaN(Date.parse(data.timestamp)))) {
     e.push('timestamp must be an ISO date string');
   }
@@ -74,11 +77,8 @@ export function validateBenchmark(data) {
     if (!isObj(m)) e.push('deviceInfo.memory must be an object');
     else {
       num(e, 'memory.totalPhysicalMemory', m.totalPhysicalMemory, { max: LIMITS.bytes, required: false });
-      num(e, 'memory.memoryUsedBeforeProof', m.memoryUsedBeforeProof, { max: LIMITS.bytes, required: false });
       num(e, 'memory.peakMemoryUsage', m.peakMemoryUsage, { max: LIMITS.bytes, required: false });
-      num(e, 'memory.memoryConsumedByProof', m.memoryConsumedByProof, { min: null, max: LIMITS.bytes, required: false });
       num(e, 'memory.peakMemoryLoadInPercentage', m.peakMemoryLoadInPercentage, { max: LIMITS.pct, required: false });
-      num(e, 'memory.memoryConsumedInPercentage', m.memoryConsumedInPercentage, { min: null, max: LIMITS.pct, required: false });
     }
   }
   if (di.cpu != null) {

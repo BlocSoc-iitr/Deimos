@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS benchmarks (
   proving_time_ms INTEGER NOT NULL,
   verification_time_ms INTEGER NOT NULL,
   proof_size INTEGER NOT NULL,
+  preprocessing_size BIGINT,  -- prover artifact size (zkey / SRS+circuit / program)
   timestamp TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   custom_inputs JSONB,
@@ -24,19 +25,27 @@ CREATE TABLE IF NOT EXISTS benchmarks (
 
   -- Memory info (process-level)
   total_physical_memory BIGINT,
-  memory_used_before_proof BIGINT,
   peak_memory_usage BIGINT,
-  memory_consumed_by_proof BIGINT,
   peak_memory_load_percentage DECIMAL(5,2),
-  memory_consumed_percentage DECIMAL(5,2),
 
   -- CPU info
   cpu_time_ms INTEGER,                  -- process CPU time consumed by proving
-  cpu_percent DECIMAL(7,2)             -- avg CPU utilisation (>100% = multi-core)
+  cpu_percent DECIMAL(7,2),            -- avg CPU utilisation (>100% = multi-core)
+
+  -- Thermal (battery temperature at run time, °C; proxy for device thermal state)
+  temperature_c DECIMAL(5,2),
+
+  -- How many uploads have been averaged into this row. Re-uploading the same
+  -- (device, circuit, framework, language, input_size) folds the new metrics
+  -- into a running mean instead of being rejected as a duplicate.
+  sample_count INTEGER NOT NULL DEFAULT 1
 );
 
 -- Migrations for existing databases (CREATE TABLE above only applies to new ones)
 ALTER TABLE benchmarks ADD COLUMN IF NOT EXISTS input_size INTEGER;
+ALTER TABLE benchmarks ADD COLUMN IF NOT EXISTS preprocessing_size BIGINT;
+ALTER TABLE benchmarks ADD COLUMN IF NOT EXISTS temperature_c DECIMAL(5,2);
+ALTER TABLE benchmarks ADD COLUMN IF NOT EXISTS sample_count INTEGER NOT NULL DEFAULT 1;
 
 -- Indexes for common filter queries
 CREATE INDEX IF NOT EXISTS idx_benchmarks_circuit ON benchmarks(circuit);

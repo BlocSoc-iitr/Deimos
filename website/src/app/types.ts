@@ -2,11 +2,8 @@
 
 export interface MemoryInfo {
   totalPhysicalMemory: number;
-  memoryUsedBeforeProof: number;
   peakMemoryUsage: number;
-  memoryConsumedByProof: number;
   peakMemoryLoadInPercentage: number;
-  memoryConsumedInPercentage: number;
 }
 
 export interface CpuInfo {
@@ -34,6 +31,8 @@ export interface BenchmarkData {
   verificationTimeMiliSeconds: number;
   deviceInfo: DeviceInfo;
   proofSize: number;
+  preprocessingSize?: number;
+  temperatureC?: number;
   timestamp: string;
   createdAt?: string;
   customInputs?: { [key: string]: string };

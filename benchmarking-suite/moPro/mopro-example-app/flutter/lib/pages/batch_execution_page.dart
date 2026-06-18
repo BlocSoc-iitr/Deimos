@@ -29,6 +29,11 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
   Stopwatch _totalStopwatch = Stopwatch();
   ScrollController _scrollController = ScrollController();
 
+  // Per combo: 1 warmup (discarded — eats cold-path/un-boosted-clock cost) +
+  // N measured; the median-by-proving-time run is kept.
+  static const int _warmupRuns = 1;
+  static const int _measuredRuns = 3;
+
   // Progressive upload: flush completed results in chunks during the run so a
   // mid-batch crash doesn't lose everything captured so far.
   static const int _uploadChunkSize = 10;
@@ -68,7 +73,7 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
       });
       _scrollToItem(i);
 
-      final result = await _benchmarkService.runBenchmark(_results[i], inputData);
+      final result = await _runWithMedian(_results[i], inputData);
 
       if (!mounted) break;
 
@@ -116,6 +121,8 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
         'cpu': result.cpuInfo,
       },
       'proofSize': result.proofSize,
+      'preprocessingSize': result.preprocessingSize,
+      'temperatureC': result.temperatureC,
       'inputSize': CircuitUtils.computeInputSize(result.inputName, inputData.values.length),
       'customInputs': {result.inputName: '[${inputData.values.join(', ')}]'},
       'proofBackend': (result.framework == 'arkworks' || result.framework == 'rapidsnark') ? result.framework : 'N/A',
@@ -140,6 +147,27 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
     } else {
       _pendingUpload.insertAll(0, chunk);
     }
+  }
+
+  // Runs 1 warmup (discarded) + N measured proofs and returns the
+  // median-by-proving-time completed run (a self-consistent record), or a
+  // failed result if none completed.
+  Future<BenchmarkResult> _runWithMedian(BenchmarkResult item, InputData inputData) async {
+    for (int w = 0; w < _warmupRuns; w++) {
+      await _benchmarkService.runBenchmark(item, inputData);
+      if (!mounted) return item.copyWith(status: BenchmarkStatus.failed);
+    }
+    final runs = <BenchmarkResult>[];
+    for (int m = 0; m < _measuredRuns; m++) {
+      if (m > 0) await Future.delayed(const Duration(milliseconds: 300));
+      final r = await _benchmarkService.runBenchmark(item, inputData);
+      if (!mounted) break;
+      if (r.status == BenchmarkStatus.completed) runs.add(r);
+    }
+    if (runs.isEmpty) return item.copyWith(status: BenchmarkStatus.failed);
+    runs.sort((a, b) =>
+        (a.provingTime?.inMicroseconds ?? 0).compareTo(b.provingTime?.inMicroseconds ?? 0));
+    return runs[runs.length ~/ 2];
   }
 
   InputData _findInputForitem(BenchmarkResult item) {
@@ -275,6 +303,15 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
                     fontWeight: FontWeight.w500,
                     letterSpacing: -0.5,
                   ),
+                  const SizedBox(height: 10),
+                  const SIMono(
+                    'Note: running every circuit back-to-back keeps the process warm, so '
+                    'peak-memory and CPU figures here are indicative and run slightly high '
+                    'versus a single isolated proof.',
+                    fontSize: 10,
+                    letterSpacing: 0.3,
+                    color: AppTheme.textDim,
+                  ),
                 ],
               ),
             ),
@@ -303,10 +340,9 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
                       ? (totalMs / maxTime).clamp(0.0, 1.0)
                       : 0.0;
 
-                  // Memory consumed in MB from memoryInfo (process-level).
+                  // Peak memory in MB from memoryInfo (process-level).
                   final memConsumedMb = isDone && r.memoryInfo != null
-                      ? ((r.memoryInfo!['memoryConsumedByProof'] as int? ?? 0).abs()) /
-                          (1024 * 1024)
+                      ? ((r.memoryInfo!['peakMemoryUsage'] as int? ?? 0)) / (1024 * 1024)
                       : null;
 
                   // Proof size in KB

@@ -14,6 +14,8 @@ class BenchmarkService {
 
   Future<BenchmarkResult> runBenchmark(BenchmarkResult item, InputData inputData) async {
     final monitor = ResourceMonitor();
+    // Track the prover-artifact size copied during proving (preprocessing size).
+    MoproFlutter.resetPreprocessing();
     await monitor.start();
 
     final stopwatch = Stopwatch()..start();
@@ -24,6 +26,8 @@ class BenchmarkService {
 
       // Capture resource usage for the proving window before verification runs.
       final resources = await monitor.finish();
+      final preprocessingSize = MoproFlutter.preprocessingBytes;
+      final temperatureC = await DeviceStatsService.getBatteryTemperatureC();
 
       stopwatch.reset();
       stopwatch.start();
@@ -38,6 +42,8 @@ class BenchmarkService {
         provingTime: provingTime,
         verificationTime: verificationTime,
         proofSize: proofSize,
+        preprocessingSize: preprocessingSize > 0 ? preprocessingSize : null,
+        temperatureC: temperatureC,
         memoryInfo: resources['memory'] as Map<String, dynamic>,
         cpuInfo: resources['cpu'] as Map<String, dynamic>,
       );

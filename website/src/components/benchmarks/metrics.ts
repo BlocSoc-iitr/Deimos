@@ -45,7 +45,7 @@ export function buildProverColorMap(provers: string[]): Record<string, string> {
 
 // ─── Metric configuration ────────────────────────────────────────────────────
 
-export type MetricKey = 'proving_time' | 'verify_time' | 'peak_memory' | 'cpu_time' | 'proof_size'
+export type MetricKey = 'proving_time' | 'verify_time' | 'peak_memory' | 'cpu_time' | 'proof_size' | 'preprocessing_size'
 
 export interface MetricConfig {
   key: MetricKey
@@ -89,9 +89,9 @@ export const METRICS: MetricConfig[] = [
   },
   {
     key: 'peak_memory',
-    label: 'Memory Consumed',
-    description: 'RAM consumed by proof generation (lower is better).',
-    getValue: (b) => b.deviceInfo?.memory?.memoryConsumedByProof ?? null,
+    label: 'Peak Memory',
+    description: 'Peak process RAM during proof generation (lower is better).',
+    getValue: (b) => b.deviceInfo?.memory?.peakMemoryUsage ?? null,
     formatValue: formatBytes,
     logScale: false,
   },
@@ -101,6 +101,22 @@ export const METRICS: MetricConfig[] = [
     description: 'Total CPU time consumed by proof generation, summed across all cores (lower is better).',
     getValue: (b) => (b.deviceInfo?.cpu?.cpuTimeMs ?? null),
     formatValue: formatDuration,
+    logScale: true,
+  },
+  {
+    key: 'proof_size',
+    label: 'Proof Size',
+    description: 'Size of the generated proof (smaller is better).',
+    getValue: (b) => (b.proofSize > 0 ? b.proofSize : null),
+    formatValue: formatBytes,
+    logScale: false,
+  },
+  {
+    key: 'preprocessing_size',
+    label: 'Preprocessing Size',
+    description: 'Size of the prover artifact loaded before proving (zkey / SRS+circuit / program). Lower is better.',
+    getValue: (b) => (b.preprocessingSize != null && b.preprocessingSize > 0 ? b.preprocessingSize : null),
+    formatValue: formatBytes,
     logScale: true,
   },
 ]

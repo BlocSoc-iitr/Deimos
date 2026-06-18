@@ -188,4 +188,10 @@ class MethodChannelMoproFlutter extends MoproFlutterPlatform {
       'cpuTimeMs': result['cpuTimeMs'] as int? ?? 0,
     };
   }
+
+  @override
+  Future<double?> getBatteryTemperature() async {
+    final result = await methodChannel.invokeMethod<dynamic>('getBatteryTemperature');
+    return (result as num?)?.toDouble();
+  }
 }

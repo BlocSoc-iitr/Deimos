@@ -113,14 +113,29 @@ class MoproFlutterPlugin : FlutterPlugin, MethodCallHandler {
     // Single-threaded: proofs are invoked sequentially and shouldn't run concurrently.
     private val executor = Executors.newSingleThreadExecutor()
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var appContext: android.content.Context? = null
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        appContext = flutterPluginBinding.applicationContext
         channel = MethodChannel(
             flutterPluginBinding.binaryMessenger,
             "mopro_flutter",
             StandardMethodCodec.INSTANCE
         )
         channel.setMethodCallHandler(this)
+    }
+
+    /// Current battery temperature in °C (proxy for device thermal state), or
+    /// null if unavailable. Uses the sticky ACTION_BATTERY_CHANGED intent — no
+    /// permission required.
+    private fun batteryTemperatureC(): Double? {
+        val ctx = appContext ?: return null
+        val intent = ctx.registerReceiver(
+            null,
+            android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED)
+        ) ?: return null
+        val tenths = intent.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE)
+        return if (tenths == Int.MIN_VALUE) null else tenths / 10.0
     }
 
     override fun onMethodCall(call: MethodCall, result: Result) {
@@ -408,6 +423,8 @@ class MoproFlutterPlugin : FlutterPlugin, MethodCallHandler {
                 result.error("PROVEKIT_VERIFY_ERROR", "Failed to verify ProveKit proof: ${e.message}", null)
             }
 
+        } else if (call.method == "getBatteryTemperature") {
+            result.success(batteryTemperatureC())
         } else {
             result.notImplemented()
         }

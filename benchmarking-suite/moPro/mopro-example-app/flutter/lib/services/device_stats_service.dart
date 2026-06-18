@@ -108,24 +108,31 @@ class DeviceStatsService {
     return 0;
   }
 
-  /// Builds the canonical memory metric map shared by single-run and batch flows.
-  /// All inputs are process-level bytes; percentages are relative to device total.
+  /// Builds the memory metric map: just the peak (process RSS at its highest)
+  /// and its share of device RAM. The "before/consumed" delta was dropped — it
+  /// was residency-sensitive and misleading across a long-lived process.
   static Map<String, dynamic> buildMemoryInfo({
     required int totalPhysicalMemory,
-    required int usedBeforeProof,
     required int peakUsedMemory,
   }) {
-    final consumed = peakUsedMemory - usedBeforeProof;
     return {
       'totalPhysicalMemory': totalPhysicalMemory,
-      'memoryUsedBeforeProof': usedBeforeProof,
       'peakMemoryUsage': peakUsedMemory,
-      'memoryConsumedByProof': consumed,
       'peakMemoryLoadInPercentage':
           totalPhysicalMemory > 0 ? (peakUsedMemory / totalPhysicalMemory * 100) : 0.0,
-      'memoryConsumedInPercentage':
-          totalPhysicalMemory > 0 ? (consumed / totalPhysicalMemory * 100) : 0.0,
     };
+  }
+
+  /// Battery temperature in °C (proxy for device thermal state), or null if
+  /// unavailable. Android only.
+  static Future<double?> getBatteryTemperatureC() async {
+    if (!Platform.isAndroid) return null;
+    try {
+      return await MoproFlutter().getBatteryTemperature();
+    } catch (e) {
+      print('Error reading battery temperature: $e');
+      return null;
+    }
   }
 
   static String _mapIOSDeviceName(String machineId) {
@@ -145,19 +152,20 @@ class DeviceStatsService {
   }
 }
 
-/// Captures process-level memory (peak) and CPU time across a single measured
-/// operation (one proof). Usage: [start] immediately before, [finish] right after.
+/// Captures process-level peak memory and CPU time across one measured operation.
+/// Usage: [start] immediately before, [finish] right after.
 ///
-/// Peak memory is found by sampling the process's resident set every 100 ms for
-/// the duration of the window, on BOTH platforms. (We previously used Android's
-/// kernel `VmHWM` high-water mark, but it is monotonic since process start and
-/// resetting it via `/proc/self/clear_refs` is unreliable — often blocked by
-/// SELinux — so across a batch every run reported the same lifetime-max peak.)
+/// Two peak-memory modes:
+/// - poll=true (batch "Prove & Verify All"): sample RSS every 100 ms for the peak.
+///   Required there because the kernel `VmHWM` high-water mark is monotonic since
+///   process start and can't be reset per-proof (clear_refs is SELinux-blocked).
+/// - poll=false (single run): read `VmHWM` once at the end — no sampling timer,
+///   a clean single measurement. Fine for a single proof per page launch.
 class ResourceMonitor {
   Timer? _timer;
+  bool _poll = true;
   final Stopwatch _window = Stopwatch();
   int _total = 0;
-  int _usedBefore = 0;
   int _cpuBefore = 0;
   int _peakUsed = 0;
 
@@ -172,36 +180,46 @@ class ResourceMonitor {
     return 0;
   }
 
-  Future<void> start() async {
+  Future<void> start({bool poll = true}) async {
+    _poll = poll;
     _cpuBefore = await DeviceStatsService.getProcessCpuMs();
     if (Platform.isAndroid) {
       _total = SysInfo.getTotalPhysicalMemory();
     } else if (Platform.isIOS) {
       _total = (await DeviceStatsService.getMemorySnapshot()).total;
     }
-    _usedBefore = await _currentUsedBytes();
-    _peakUsed = _usedBefore;
+    _peakUsed = await _currentUsedBytes();
     _window
       ..reset()
       ..start();
 
-    // Sample resident memory during the window to capture the per-run peak.
-    _timer = Timer.periodic(const Duration(milliseconds: 100), (_) async {
-      final used = await _currentUsedBytes();
-      if (used > _peakUsed) _peakUsed = used;
-    });
+    if (_poll) {
+      // Sample resident memory during the window to capture the per-run peak.
+      _timer = Timer.periodic(const Duration(milliseconds: 100), (_) async {
+        final used = await _currentUsedBytes();
+        if (used > _peakUsed) _peakUsed = used;
+      });
+    }
   }
 
-  /// Returns `{ 'memory': {...6 fields}, 'cpu': { cpuTimeMs, cpuPercent } }`.
-  /// CPU utilisation is averaged over the monitor's own window (start→finish),
-  /// so it stays consistent regardless of what the caller times separately.
+  /// Returns `{ 'memory': { totalPhysicalMemory, peakMemoryUsage,
+  /// peakMemoryLoadInPercentage }, 'cpu': { cpuTimeMs, cpuPercent } }`.
+  /// CPU utilisation is averaged over the monitor's own window.
   Future<Map<String, dynamic>> finish() async {
-    _timer?.cancel();
-    _timer = null;
     _window.stop();
-    // Final sample, in case the peak occurred just before finishing.
-    final last = await _currentUsedBytes();
-    if (last > _peakUsed) _peakUsed = last;
+    if (_poll) {
+      _timer?.cancel();
+      _timer = null;
+      final last = await _currentUsedBytes();
+      if (last > _peakUsed) _peakUsed = last;
+    } else if (Platform.isAndroid) {
+      // No-poll: one kernel high-water-mark read is the peak for this run.
+      final hwm = DeviceStatsService._readProcStatusBytes('VmHWM:');
+      if (hwm > _peakUsed) _peakUsed = hwm;
+    } else {
+      final last = await _currentUsedBytes();
+      if (last > _peakUsed) _peakUsed = last;
+    }
 
     final cpuAfter = await DeviceStatsService.getProcessCpuMs();
     final cpuTimeMs = (cpuAfter - _cpuBefore) < 0 ? 0 : (cpuAfter - _cpuBefore);
@@ -211,7 +229,6 @@ class ResourceMonitor {
     return {
       'memory': DeviceStatsService.buildMemoryInfo(
         totalPhysicalMemory: _total,
-        usedBeforeProof: _usedBefore,
         peakUsedMemory: _peakUsed,
       ),
       'cpu': {
