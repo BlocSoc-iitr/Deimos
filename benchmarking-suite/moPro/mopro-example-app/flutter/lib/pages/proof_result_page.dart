@@ -2,12 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:typed_data';
 import 'dart:async';
-import 'dart:io';
 import 'package:mopro_flutter/mopro_flutter.dart';
 import 'package:mopro_flutter/mopro_types.dart';
-import 'package:device_info_plus/device_info_plus.dart';
-import 'package:system_info2/system_info2.dart';
-import 'package:battery_plus/battery_plus.dart';
 
 import 'package:Deimos/channels/imp1_channel.dart';
 import 'package:Deimos/models/benchmark_item.dart';
@@ -70,16 +66,10 @@ class _ProofResultPageState extends State<ProofResultPage> {
   Duration? _proofGenerationTime;
   Duration? _proofVerificationTime;
   
-  // Memory tracking during proof generation
-  int _freeMemoryBeforeProof = 0;
-  int _minFreeMemoryDuringProof = 0;
-  int _freeMemoryAfterProof = 0;
-  int _peakMemoryUsage = 0;
-  
-  // Battery tracking
-  int _batteryBeforeProof = 0;
-  int _batteryAfterProof = 0;
-  
+  // Process-level memory + CPU capture for the proving window.
+  final ResourceMonitor _resourceMonitor = ResourceMonitor();
+  Map<String, dynamic>? _resources;
+
   // Timer to keep UI responsive
   Timer? _uiUpdateTimer;
   
@@ -730,34 +720,23 @@ class _ProofResultPageState extends State<ProofResultPage> {
     // Get the appropriate zkey path based on algorithm
     final zkeyAssetPath = CircuitUtils.getZkeyPath(widget.algorithm, widget.selectedInputName);
 
-    // Capture memory and battery BEFORE proof generation
-    final memSnapshotBefore = await DeviceStatsService.getMemorySnapshot();
-    _freeMemoryBeforeProof = memSnapshotBefore.free;
-    final battery = Battery();
-    _batteryBeforeProof = await battery.batteryLevel;
-    // Start timing
+    // Capture process memory + CPU around proof generation
+    await _beginResourceCapture();
     final stopwatch = Stopwatch()..start();
-    
-    // Start memory monitoring in background
-    _startMemoryMonitoring();
-    
+
     // Generate proof using actual MoPro
     final _proofLib = widget.framework == 'rapidsnark'
         ? ProofLib.rapidsnark
         : ProofLib.arkworks;
     final proofResult = await plugin.generateGroth16Proof(
-      zkeyAssetPath, 
-            inputs, 
+      zkeyAssetPath,
+            inputs,
       _proofLib
     );
-    
+
     stopwatch.stop();
-    
-    // Capture memory and battery AFTER proof generation
-    final memSnapshotAfter = await DeviceStatsService.getMemorySnapshot();
-    _freeMemoryAfterProof = memSnapshotAfter.free;
-    _batteryAfterProof = await battery.batteryLevel;
-    
+    await _endResourceCapture(stopwatch.elapsed);
+
     if (proofResult == null) {
       throw Exception('Failed to generate Groth16 proof');
     }
@@ -778,18 +757,10 @@ class _ProofResultPageState extends State<ProofResultPage> {
     final settings = await CircuitUtils.getNoirSettings(plugin, widget.algorithm, widget.selectedInputName);
     final List<String> noirInputs = CircuitUtils.inputDataToNoirInput(inputData, settings.targetInputSize);
     
-    // Capture memory and battery BEFORE proof generation
-    final memSnapshotBefore = await DeviceStatsService.getMemorySnapshot();
-    _freeMemoryBeforeProof = memSnapshotBefore.free;
-    final battery = Battery();
-    _batteryBeforeProof = await battery.batteryLevel;
-    
-    // Start timing
+    // Capture process memory + CPU around proof generation
+    await _beginResourceCapture();
     final stopwatch = Stopwatch()..start();
-    
-    // Start memory monitoring in background
-    _startMemoryMonitoring();
-    
+
     // Generate proof using actual MoPro with selected inputs
     final proof = await plugin.generateBarretenbergProof(
       settings.circuitPath,
@@ -799,15 +770,11 @@ class _ProofResultPageState extends State<ProofResultPage> {
       settings.vk,
       false // lowMemoryMode
     );
-    
+
     // Stop timing and store
     stopwatch.stop();
-    
-    // Capture memory and battery AFTER proof generation
-    final memSnapshotAfter = await DeviceStatsService.getMemorySnapshot();
-    _freeMemoryAfterProof = memSnapshotAfter.free;
-    _batteryAfterProof = await battery.batteryLevel;
-    
+    await _endResourceCapture(stopwatch.elapsed);
+
     // Store the proof result for verification
     setState(() {
       _noirProofResult = proof;
@@ -824,29 +791,17 @@ class _ProofResultPageState extends State<ProofResultPage> {
     // For risc0, we expect a numeric input - use first value or parse from joined string
     int numericInput = int.tryParse(inputData.first) ?? 17; // Default to 17 if parsing fails
     
-    // Capture memory and battery BEFORE proof generation
-    final memSnapshotBefore = await DeviceStatsService.getMemorySnapshot();
-    _freeMemoryBeforeProof = memSnapshotBefore.free;
-    final battery = Battery();
-    _batteryBeforeProof = await battery.batteryLevel;
-    
-    // Start timing
+    // Capture process memory + CPU around proof generation
+    await _beginResourceCapture();
     final stopwatch = Stopwatch()..start();
-    
-    // Start memory monitoring in background
-    _startMemoryMonitoring();
-    
+
     // Generate proof using actual MoPro
     final proofResult = await plugin.generateRisc0Proof(numericInput);
-    
+
     // Stop timing and store
     stopwatch.stop();
-    
-    // Capture memory and battery AFTER proof generation
-    final memSnapshotAfter = await DeviceStatsService.getMemorySnapshot();
-    _freeMemoryAfterProof = memSnapshotAfter.free;
-    _batteryAfterProof = await battery.batteryLevel;
-    
+    await _endResourceCapture(stopwatch.elapsed);
+
     // Store the proof result for verification
     setState(() {
       _risc0ProofResult = proofResult;
@@ -861,29 +816,19 @@ class _ProofResultPageState extends State<ProofResultPage> {
     // Get circuit name (lowercase)
     final circuitName = CircuitUtils.getImp1CircuitName(widget.algorithm, widget.selectedInputName);
     
-    // Capture memory and battery BEFORE proof generation
-    _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
-    final battery = Battery();
-    _batteryBeforeProof = await battery.batteryLevel;
-    
-    // Start timing
+    // Capture process memory + CPU around proof generation
+    await _beginResourceCapture();
     final stopwatch = Stopwatch()..start();
-    
-    // Start memory monitoring in background
-    _startMemoryMonitoring();
-    
+
     // Generate proof using IMP1
     final proofResult = await IMP1Channel.generateProof(
       circuitName: circuitName,
     );
-    
+
     // Stop timing
     stopwatch.stop();
-    
-    // Capture memory and battery AFTER proof generation
-    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
-    _batteryAfterProof = await battery.batteryLevel;
-    
+    await _endResourceCapture(stopwatch.elapsed);
+
     // Store the proof result for verification
     setState(() {
       _imp1ProofResult = proofResult;
@@ -1160,78 +1105,26 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
   }
   
   Future<Map<String, dynamic>> _collectSystemInfo() async {
-    try {
-      // Get memory information
-      final memSnapshot = await DeviceStatsService.getMemorySnapshot();
-      final totalPhysicalMemory = memSnapshot.total;
-      
-      // Calculate memory used during proof generation
-      final memoryUsedBeforeProof = totalPhysicalMemory - _freeMemoryBeforeProof;
-      final memoryUsedAfterProof = totalPhysicalMemory - _freeMemoryAfterProof;
-      
-      // Calculate memory consumed by proof generation
-      final memoryConsumedByProof = _peakMemoryUsage - memoryUsedBeforeProof;
-      
-      return {
-        'memory': {
-          'totalPhysicalMemory': totalPhysicalMemory,
-          
-          // Memory BEFORE proof generation
-          'memoryUsedBeforeProof': memoryUsedBeforeProof,
-          
-          // Memory DURING proof generation (peak usage)
-          'peakMemoryUsage': _peakMemoryUsage,
-          
-          // Memory consumed specifically by proof generation
-          'memoryConsumedByProof': memoryConsumedByProof,
-
-          // Peak memory load during percentage
-          'peakMemoryLoadInPercentage': totalPhysicalMemory > 0 
-              ? (_peakMemoryUsage / totalPhysicalMemory * 100) 
-              : 0.0,
-
-          // Memory consumed percentage
-          'memoryConsumedInPercentage': totalPhysicalMemory > 0 
-              ? (memoryConsumedByProof / totalPhysicalMemory * 100) 
-              : 0.0,
-        },
-        'battery': {
-          'batteryBeforeProof': _batteryBeforeProof,
-          'batteryAfterProof': _batteryAfterProof,
-          'batteryConsumed': _batteryBeforeProof - _batteryAfterProof,
-        },
-      };
-    } catch (e) {
-      // Silently handle errors and return minimal info
-      return {
-        'memory': {'error': e.toString()},
-      };
+    // Process-level memory + CPU captured around proof generation by the
+    // ResourceMonitor (see _beginResourceCapture / _endResourceCapture).
+    final resources = _resources;
+    if (resources == null) {
+      return {'memory': {'error': 'Resource capture did not run'}};
     }
+    return {
+      'memory': resources['memory'],
+      'cpu': resources['cpu'],
+    };
   }
   
-  // Monitor memory usage during proof generation
-  void _startMemoryMonitoring() {
-    _peakMemoryUsage = 0;
-    _minFreeMemoryDuringProof = 0;
-    
-    // Sample memory every 100ms during proof generation
-    Timer.periodic(const Duration(milliseconds: 100), (timer) async {
-      if (_isGenerating) {
-        // Skip memory monitoring on non-Android platforms, except iOS now supported
-        if (!Platform.isAndroid && !Platform.isIOS) return;
-        
-        final memSnapshot = await DeviceStatsService.getMemorySnapshot();
-        final currentUsedMemory = memSnapshot.total - memSnapshot.free;
-        
-        // Track peak memory usage
-        if (currentUsedMemory > _peakMemoryUsage) {
-          _peakMemoryUsage = currentUsedMemory;
-          _minFreeMemoryDuringProof = memSnapshot.free;
-        }
-      } else {
-        timer.cancel();
-      }
-    });
+  // Begin process-level memory + CPU capture just before proof generation.
+  Future<void> _beginResourceCapture() async {
+    await _resourceMonitor.start();
+  }
+
+  // Finish capture; [provingTime] is the proving wall-clock for CPU utilisation.
+  Future<void> _endResourceCapture(Duration provingTime) async {
+    _resources = await _resourceMonitor.finish(provingTime.inMilliseconds);
   }
   
   Map<String, dynamic> _prepareBenchmarkData(Map<String, dynamic> deviceInfo) {
@@ -1329,16 +1222,9 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
       inputsJson = '[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 1]'; 
     }
     
-    // Capture memory and battery BEFORE proof generation
-    _freeMemoryBeforeProof = SysInfo.getFreePhysicalMemory();
-    final battery = Battery();
-    _batteryBeforeProof = await battery.batteryLevel;
-
-    // Start timing
+    // Capture process memory + CPU around proof generation
+    await _beginResourceCapture();
     final stopwatch = Stopwatch()..start();
-    
-    // Start memory monitoring in background
-    _startMemoryMonitoring();
 
     final proofResult = await plugin.generateCairoProof(
       programPath,
@@ -1347,9 +1233,7 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     );
 
     stopwatch.stop();
-    // Capture memory and battery AFTER proof generation
-    _freeMemoryAfterProof = SysInfo.getFreePhysicalMemory();
-    _batteryAfterProof = await battery.batteryLevel;
+    await _endResourceCapture(stopwatch.elapsed);
 
     setState(() {
       _cairoProofResult = proofResult;
@@ -1424,21 +1308,14 @@ Timestamp: ${DateTime.now().millisecondsSinceEpoch}
     final inputValues = _getInputDataForAlgorithm();
     final inputToml = 'input = [${inputValues.map((v) => '"$v"').join(', ')}]\n';
 
-    final memSnapshotBefore = await DeviceStatsService.getMemorySnapshot();
-    _freeMemoryBeforeProof = memSnapshotBefore.free;
-    final battery = Battery();
-    _batteryBeforeProof = await battery.batteryLevel;
-    
+    await _beginResourceCapture();
     final stopwatch = Stopwatch()..start();
-    _startMemoryMonitoring();
-    
+
     final proofResult = await plugin.generateProveKitProof(pkpPath, inputToml);
-    
+
     stopwatch.stop();
-    final memSnapshotAfter = await DeviceStatsService.getMemorySnapshot();
-    _freeMemoryAfterProof = memSnapshotAfter.free;
-    _batteryAfterProof = await battery.batteryLevel;
-    
+    await _endResourceCapture(stopwatch.elapsed);
+
     setState(() {
       _provekitProofResult = proofResult;
       _proofGenerationTime = stopwatch.elapsed;

@@ -115,4 +115,8 @@ class MoproFlutter {
   Future<Map<String, int>> getIOSMemoryUsage() async {
     return await MoproFlutterPlatform.instance.getIOSMemoryUsage();
   }
+
+  Future<Map<String, int>> getIOSCpuUsage() async {
+    return await MoproFlutterPlatform.instance.getIOSCpuUsage();
+  }
 }

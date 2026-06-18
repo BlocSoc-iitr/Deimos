@@ -25,7 +25,7 @@ class BenchmarkResult {
   
   final int? proofSize;
   final Map<String, dynamic>? memoryInfo;
-  final Map<String, dynamic>? batteryInfo;
+  final Map<String, dynamic>? cpuInfo;
 
   BenchmarkResult({
     required this.framework,
@@ -37,7 +37,7 @@ class BenchmarkResult {
     this.error,
     this.proofSize,
     this.memoryInfo,
-    this.batteryInfo,
+    this.cpuInfo,
   });
 
   BenchmarkResult copyWith({
@@ -47,7 +47,7 @@ class BenchmarkResult {
     String? error,
     int? proofSize,
     Map<String, dynamic>? memoryInfo,
-    Map<String, dynamic>? batteryInfo,
+    Map<String, dynamic>? cpuInfo,
   }) {
     return BenchmarkResult(
       framework: framework,
@@ -59,7 +59,7 @@ class BenchmarkResult {
       error: error ?? this.error,
       proofSize: proofSize ?? this.proofSize,
       memoryInfo: memoryInfo ?? this.memoryInfo,
-      batteryInfo: batteryInfo ?? this.batteryInfo,
+      cpuInfo: cpuInfo ?? this.cpuInfo,
     );
   }
 }

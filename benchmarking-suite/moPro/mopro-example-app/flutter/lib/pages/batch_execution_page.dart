@@ -44,6 +44,10 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
     for (int i = 0; i < _results.length; i++) {
       if (!mounted) break;
 
+      // Let memory from the previous circuit's proof release before we snapshot
+      // the baseline for this one (device/process memory settles between runs).
+      if (i > 0) await Future.delayed(const Duration(milliseconds: 300));
+
       final item = _results[i];
       // Find appropriate input data
       final inputData = _findInputForitem(item);
@@ -284,9 +288,12 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
           'language': result.framework,
           'provingTimeMiliSeconds': result.provingTime?.inMilliseconds ?? 0,
           'verificationTimeMiliSeconds': result.verificationTime?.inMilliseconds ?? 0,
-          'deviceInfo': deviceInfo,
-          'memory': result.memoryInfo,
-          'battery': result.batteryInfo,
+          // memory/cpu nested under deviceInfo so the backend persists them.
+          'deviceInfo': {
+            ...deviceInfo,
+            'memory': result.memoryInfo,
+            'cpu': result.cpuInfo,
+          },
           'proofSize': result.proofSize,
           'inputSize': CircuitUtils.computeInputSize(result.inputName, inputData.values.length),
           'customInputs': customInputs,

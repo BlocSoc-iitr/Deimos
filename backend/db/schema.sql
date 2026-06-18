@@ -17,15 +17,12 @@ CREATE TABLE IF NOT EXISTS benchmarks (
 
   -- Device info
   platform VARCHAR(20) NOT NULL,
-  device VARCHAR(100) NOT NULL,
+  device VARCHAR(100) NOT NULL,         -- device/model name, e.g. SM-A525F / iPhone 13
   manufacturer VARCHAR(100),
-  device_version VARCHAR(20), -- basically model_code => Galaxy A52 → SM-A525F
-  device_id VARCHAR(100), -- the unique identifier
-  system_name VARCHAR(50),
-  system_version VARCHAR(20),
-  is_physical_device BOOLEAN,
+  device_id VARCHAR(100),               -- the unique identifier
+  system_version VARCHAR(20),           -- OS version
 
-  -- Memory info
+  -- Memory info (process-level)
   total_physical_memory BIGINT,
   memory_used_before_proof BIGINT,
   peak_memory_usage BIGINT,
@@ -33,10 +30,9 @@ CREATE TABLE IF NOT EXISTS benchmarks (
   peak_memory_load_percentage DECIMAL(5,2),
   memory_consumed_percentage DECIMAL(5,2),
 
-  -- Battery info
-  battery_before_proof SMALLINT,
-  battery_after_proof SMALLINT,
-  battery_consumed SMALLINT
+  -- CPU info
+  cpu_time_ms INTEGER,                  -- process CPU time consumed by proving
+  cpu_percent DECIMAL(7,2)             -- avg CPU utilisation (>100% = multi-core)
 );
 
 -- Migrations for existing databases (CREATE TABLE above only applies to new ones)

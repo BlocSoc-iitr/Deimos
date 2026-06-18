@@ -291,9 +291,7 @@ export default function BenchmarksPage() {
                                     <div className="flex justify-between">
                                       <span className="text-[#605A57]">Device:</span>
                                       <span className="font-medium text-[#37322F]">
-                                        {item.deviceInfo?.platform === 'Android'
-                                          ? item.deviceInfo.deviceVersion || 'N/A'
-                                          : item.deviceInfo?.device || 'N/A'}
+                                        {item.deviceInfo?.device || 'N/A'}
                                       </span>
                                     </div>
                                     {item.deviceInfo?.manufacturer && (
@@ -306,12 +304,6 @@ export default function BenchmarksPage() {
                                       <div className="flex justify-between">
                                         <span className="text-[#605A57]">Android Version:</span>
                                         <span className="font-medium text-[#37322F]">{item.deviceInfo.systemVersion}</span>
-                                      </div>
-                                    )}
-                                    {item.deviceInfo?.platform === 'iOS' && item.deviceInfo?.systemName && (
-                                      <div className="flex justify-between">
-                                        <span className="text-[#605A57]">System Name:</span>
-                                        <span className="font-medium text-[#37322F]">{item.deviceInfo.systemName}</span>
                                       </div>
                                     )}
                                     {item.deviceInfo?.platform === 'iOS' && item.deviceInfo?.systemVersion && (
@@ -386,19 +378,15 @@ export default function BenchmarksPage() {
                                       <span className="text-[#605A57]">Total Time:</span>
                                       <span className="font-semibold text-[#37322F]">{((item.provingTimeMiliSeconds + item.verificationTimeMiliSeconds) / 1000).toFixed(3)}s</span>
                                     </div>
-                                    {item.deviceInfo?.battery && (
+                                    {item.deviceInfo?.cpu && (
                                       <>
                                         <div className="flex justify-between pt-1.5 border-t border-[rgba(55,50,47,0.12)]">
-                                          <span className="text-[#605A57]">Battery Before:</span>
-                                          <span className="font-medium text-[#37322F]">{item.deviceInfo.battery.batteryBeforeProof}%</span>
+                                          <span className="text-[#605A57]">CPU Time:</span>
+                                          <span className="font-medium text-[#37322F]">{(item.deviceInfo.cpu.cpuTimeMs / 1000).toFixed(3)}s</span>
                                         </div>
                                         <div className="flex justify-between">
-                                          <span className="text-[#605A57]">Battery After:</span>
-                                          <span className="font-medium text-[#37322F]">{item.deviceInfo.battery.batteryAfterProof}%</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-[#605A57]">Consumed:</span>
-                                          <span className="font-semibold text-[#37322F]">{item.deviceInfo.battery.batteryConsumed}%</span>
+                                          <span className="text-[#605A57]">CPU Usage:</span>
+                                          <span className="font-semibold text-[#37322F]">{item.deviceInfo.cpu.cpuPercent.toFixed(1)}%</span>
                                         </div>
                                       </>
                                     )}

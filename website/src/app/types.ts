@@ -9,23 +9,19 @@ export interface MemoryInfo {
   memoryConsumedInPercentage: number;
 }
 
-export interface BatteryInfo {
-  batteryBeforeProof: number;
-  batteryAfterProof: number;
-  batteryConsumed: number;
+export interface CpuInfo {
+  cpuTimeMs: number;
+  cpuPercent: number;
 }
 
 export interface DeviceInfo {
   platform: string;
   device: string;
   manufacturer?: string;
-  deviceVersion?: string;
   deviceId?: string;
-  systemName?: string;
   systemVersion?: string;
-  isPhysicalDevice?: boolean;
   memory: MemoryInfo;
-  battery: BatteryInfo;
+  cpu?: CpuInfo;
 }
 
 export interface BenchmarkData {

@@ -177,4 +177,15 @@ class MethodChannelMoproFlutter extends MoproFlutterPlatform {
       'total': result['total'] as int? ?? 0,
     };
   }
+
+  @override
+  Future<Map<String, int>> getIOSCpuUsage() async {
+    final result = await methodChannel.invokeMethod<Map<Object?, Object?>>('getIOSCpuUsage');
+    if (result == null) {
+      return {'cpuTimeMs': 0};
+    }
+    return {
+      'cpuTimeMs': result['cpuTimeMs'] as int? ?? 0,
+    };
+  }
 }

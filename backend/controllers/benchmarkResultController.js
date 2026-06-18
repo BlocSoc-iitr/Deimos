@@ -44,25 +44,22 @@ export const receiveBenchmarkResult = async (req, res) => {
 
     const deviceInfo = data.deviceInfo || {};
     const memory = deviceInfo.memory || {};
-    const battery = deviceInfo.battery || {};
+    const cpu = deviceInfo.cpu || {};
 
     const result = await query(
       `INSERT INTO benchmarks (
         circuit, framework, language, input_size, proving_time_ms, verification_time_ms,
         proof_size, timestamp, created_at, custom_inputs,
-        platform, device, manufacturer, device_version, device_id,
-        system_name, system_version, is_physical_device,
+        platform, device, manufacturer, device_id, system_version,
         total_physical_memory, memory_used_before_proof, peak_memory_usage,
         memory_consumed_by_proof, peak_memory_load_percentage, memory_consumed_percentage,
-        battery_before_proof, battery_after_proof, battery_consumed
+        cpu_time_ms, cpu_percent
       ) VALUES (
         $1, $2, $3, $4, $5,
         $6, $7, $8, $9, $10,
         $11, $12, $13, $14, $15,
         $16, $17, $18, $19, $20,
-        $21, $22, $23,
-        $24, $25, $26,
-        $27
+        $21, $22, $23
       ) RETURNING id`,
       [
         circuit,
@@ -78,20 +75,16 @@ export const receiveBenchmarkResult = async (req, res) => {
         deviceInfo.platform,
         deviceInfo.device,
         deviceInfo.manufacturer || null,
-        deviceInfo.deviceVersion || null,
         deviceId || null,
-        deviceInfo.systemName || null,
         deviceInfo.systemVersion || null,
-        deviceInfo.isPhysicalDevice ?? null,
         memory.totalPhysicalMemory || null,
         memory.memoryUsedBeforeProof || null,
         memory.peakMemoryUsage || null,
         memory.memoryConsumedByProof || null,
         memory.peakMemoryLoadInPercentage || null,
         memory.memoryConsumedInPercentage || null,
-        battery.batteryBeforeProof || null,
-        battery.batteryAfterProof || null,
-        battery.batteryConsumed ?? null,
+        cpu.cpuTimeMs ?? null,
+        cpu.cpuPercent ?? null,
       ]
     );
 

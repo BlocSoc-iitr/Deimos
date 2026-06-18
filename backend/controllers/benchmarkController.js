@@ -17,11 +17,7 @@ function rowToApiFormat(row) {
     row.memory_consumed_percentage,
   ].some((value) => value != null);
 
-  const hasBatteryData = [
-    row.battery_before_proof,
-    row.battery_after_proof,
-    row.battery_consumed,
-  ].some((value) => value != null);
+  const hasCpuData = [row.cpu_time_ms, row.cpu_percent].some((value) => value != null);
 
   const deviceInfo = {
     platform: row.platform,
@@ -39,11 +35,10 @@ function rowToApiFormat(row) {
     };
   }
 
-  if (hasBatteryData) {
-    deviceInfo.battery = {
-      batteryBeforeProof: row.battery_before_proof,
-      batteryAfterProof: row.battery_after_proof,
-      batteryConsumed: row.battery_consumed,
+  if (hasCpuData) {
+    deviceInfo.cpu = {
+      cpuTimeMs: toNumberOrNull(row.cpu_time_ms),
+      cpuPercent: toFloatOrNull(row.cpu_percent),
     };
   }
 
@@ -62,14 +57,9 @@ function rowToApiFormat(row) {
     deviceInfo,
   };
 
-  
   result.deviceInfo.manufacturer = row.manufacturer;
-  result.deviceInfo.deviceVersion = row.device_version;
   result.deviceInfo.deviceId = row.device_id;
-  result.deviceInfo.systemName = row.system_name;
   result.deviceInfo.systemVersion = row.system_version;
-  result.deviceInfo.isPhysicalDevice = row.is_physical_device;
-
 
   return result;
 }
