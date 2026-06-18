@@ -45,8 +45,11 @@ CREATE INDEX IF NOT EXISTS idx_benchmarks_language ON benchmarks(language);
 CREATE INDEX IF NOT EXISTS idx_benchmarks_platform ON benchmarks(platform);
 CREATE INDEX IF NOT EXISTS idx_benchmarks_timestamp ON benchmarks(timestamp DESC);
 
--- Composite index for duplicate detection (keyed on input_size too)
+-- Unique index for duplicate detection + ON CONFLICT target.
+-- Partial (only rows with a device_id) and NULLS NOT DISTINCT so a NULL
+-- input_size is treated as a single value rather than always-distinct.
 DROP INDEX IF EXISTS idx_benchmarks_duplicate_check;
-CREATE INDEX IF NOT EXISTS idx_benchmarks_duplicate_check
+CREATE UNIQUE INDEX IF NOT EXISTS idx_benchmarks_duplicate_check
   ON benchmarks(device_id, circuit, framework, language, input_size)
+  NULLS NOT DISTINCT
   WHERE device_id IS NOT NULL;

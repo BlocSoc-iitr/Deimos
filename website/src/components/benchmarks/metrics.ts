@@ -45,7 +45,7 @@ export function buildProverColorMap(provers: string[]): Record<string, string> {
 
 // ─── Metric configuration ────────────────────────────────────────────────────
 
-export type MetricKey = 'proving_time' | 'verify_time' | 'peak_memory' | 'proof_size'
+export type MetricKey = 'proving_time' | 'verify_time' | 'peak_memory' | 'cpu_time' | 'proof_size'
 
 export interface MetricConfig {
   key: MetricKey
@@ -94,5 +94,13 @@ export const METRICS: MetricConfig[] = [
     getValue: (b) => b.deviceInfo?.memory?.memoryConsumedByProof ?? null,
     formatValue: formatBytes,
     logScale: false,
+  },
+  {
+    key: 'cpu_time',
+    label: 'CPU Consumed',
+    description: 'Total CPU time consumed by proof generation, summed across all cores (lower is better).',
+    getValue: (b) => (b.deviceInfo?.cpu?.cpuTimeMs ?? null),
+    formatValue: formatDuration,
+    logScale: true,
   },
 ]

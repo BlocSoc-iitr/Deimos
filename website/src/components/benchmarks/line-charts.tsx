@@ -75,7 +75,8 @@ function SingleLineChart({
     if (allValues.length === 0) return undefined
     const min = Math.min(...allValues)
     const max = Math.max(...allValues)
-    return metric.logScale ? generateLogTicks(min, max, metric.key === 'proving_time' || metric.key === 'verify_time') : undefined
+    const isTimeMetric = metric.key === 'proving_time' || metric.key === 'verify_time' || metric.key === 'cpu_time'
+    return metric.logScale ? generateLogTicks(min, max, isTimeMetric) : undefined
   }, [allValues, metric])
 
   const xTickFormatter = useCallback(

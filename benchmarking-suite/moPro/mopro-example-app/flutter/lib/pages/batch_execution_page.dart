@@ -26,6 +26,13 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
   Stopwatch _totalStopwatch = Stopwatch();
   ScrollController _scrollController = ScrollController();
 
+  // Progressive upload: flush completed results to the backend in chunks during
+  // the run so a mid-batch crash doesn't lose everything captured so far.
+  static const int _uploadChunkSize = 10;
+  final List<Map<String, dynamic>> _pendingUpload = [];
+  Map<String, dynamic>? _deviceInfo; // collected once per run, reused per result
+  int _uploadedCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -38,7 +45,10 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
       _isExecuting = true;
       _completedCount = 0;
       _failedCount = 0;
+      _uploadedCount = 0;
     });
+    _pendingUpload.clear();
+    _deviceInfo ??= await DeviceStatsService.collectDeviceInfo({});
     _totalStopwatch.start();
 
     for (int i = 0; i < _results.length; i++) {
@@ -71,13 +81,68 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
           _failedCount++;
         }
       });
+
+      // Buffer completed results and flush in chunks for crash resilience.
+      if (result.status == BenchmarkStatus.completed) {
+        _pendingUpload.add(_buildPayload(result, _deviceInfo!));
+        if (_pendingUpload.length >= _uploadChunkSize) {
+          await _flushPending();
+        }
+      }
     }
+
+    // Flush whatever is left after the run.
+    await _flushPending();
 
     _totalStopwatch.stop();
     if (mounted) {
       setState(() {
         _isExecuting = false;
       });
+    }
+  }
+
+  /// Builds the upload payload for one completed result.
+  Map<String, dynamic> _buildPayload(BenchmarkResult result, Map<String, dynamic> deviceInfo) {
+    final inputData = _findInputForitem(result);
+    return {
+      'circuit': result.algorithm,
+      'framework': 'MoPro',
+      'language': result.framework,
+      'provingTimeMiliSeconds': result.provingTime?.inMilliseconds ?? 0,
+      'verificationTimeMiliSeconds': result.verificationTime?.inMilliseconds ?? 0,
+      // memory/cpu nested under deviceInfo so the backend persists them.
+      'deviceInfo': {
+        ...deviceInfo,
+        'memory': result.memoryInfo,
+        'cpu': result.cpuInfo,
+      },
+      'proofSize': result.proofSize,
+      'inputSize': CircuitUtils.computeInputSize(result.inputName, inputData.values.length),
+      'customInputs': {result.inputName: '[${inputData.values.join(', ')}]'},
+      'proofBackend': (result.framework == 'arkworks' || result.framework == 'rapidsnark') ? result.framework : 'N/A',
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+  }
+
+  /// Uploads the pending buffer. On failure the chunk is re-queued so the next
+  /// flush (or the end-of-run flush / manual button) retries it. Duplicates are
+  /// deduped server-side, so retries never create double rows.
+  Future<void> _flushPending() async {
+    if (_pendingUpload.isEmpty) return;
+    final chunk = List<Map<String, dynamic>>.from(_pendingUpload);
+    _pendingUpload.clear();
+    final summary = await ApiService.sendBenchmarkBatch(chunk);
+    if (summary != null) {
+      final inserted = (summary['inserted'] ?? 0) as int;
+      if (mounted) {
+        setState(() => _uploadedCount += inserted);
+      } else {
+        _uploadedCount += inserted;
+      }
+    } else {
+      // Upload failed — put the chunk back to retry later.
+      _pendingUpload.insertAll(0, chunk);
     }
   }
 
@@ -166,7 +231,8 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
           ),
           if (_isExecuting) ...[
             const SizedBox(height: 10),
-            const Text('Executing batch sequentially...', style: TextStyle(fontStyle: FontStyle.italic)),
+            Text('Executing batch sequentially… (uploaded $_uploadedCount)',
+                style: const TextStyle(fontStyle: FontStyle.italic)),
           ]
         ],
       ),
@@ -231,6 +297,7 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
               _buildStat('Total', _results.length.toString()),
               _buildStat('Success', _completedCount.toString(), color: Colors.green),
               _buildStat('Failed', _failedCount.toString(), color: Colors.red),
+              _buildStat('Uploaded', _uploadedCount.toString(), color: Colors.blue),
             ],
           ),
           const SizedBox(height: 15),
@@ -270,44 +337,19 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
       _isPushing = true;
     });
 
-    final deviceInfo = await DeviceStatsService.collectDeviceInfo({}); // We can pass a basic system info if needed, but it's handled inside device_stats_service now
-    
-    int pushSuccess = 0;
-    int pushFailed = 0;
+    // Device is the same for the whole batch; reuse what the run already collected.
+    final deviceInfo = _deviceInfo ??= await DeviceStatsService.collectDeviceInfo({});
 
-    for (final result in _results) {
-       if (result.status == BenchmarkStatus.completed) {
-         final inputData = _findInputForitem(result);
-         final customInputs = {
-           result.inputName: '[${inputData.values.join(', ')}]'
-         };
+    // Catch-all: re-send every completed result in one request. Progressive
+    // upload already sent most during the run; duplicates dedupe server-side.
+    final List<Map<String, dynamic>> batch = [
+      for (final result in _results)
+        if (result.status == BenchmarkStatus.completed) _buildPayload(result, deviceInfo),
+    ];
 
-         final benchmarkData = {
-          'circuit': result.algorithm,
-          'framework': 'MoPro',
-          'language': result.framework,
-          'provingTimeMiliSeconds': result.provingTime?.inMilliseconds ?? 0,
-          'verificationTimeMiliSeconds': result.verificationTime?.inMilliseconds ?? 0,
-          // memory/cpu nested under deviceInfo so the backend persists them.
-          'deviceInfo': {
-            ...deviceInfo,
-            'memory': result.memoryInfo,
-            'cpu': result.cpuInfo,
-          },
-          'proofSize': result.proofSize,
-          'inputSize': CircuitUtils.computeInputSize(result.inputName, inputData.values.length),
-          'customInputs': customInputs,
-          'proofBackend': (result.framework == 'arkworks' || result.framework == 'rapidsnark') ? result.framework : 'N/A',
-          'timestamp': DateTime.now().toIso8601String(),
-         };
-
-         final success = await ApiService.sendBenchmarkData(benchmarkData);
-         if (success) {
-           pushSuccess++;
-         } else {
-           pushFailed++;
-         }
-       }
+    Map<String, dynamic>? summary;
+    if (batch.isNotEmpty) {
+      summary = await ApiService.sendBenchmarkBatch(batch);
     }
 
     setState(() {
@@ -315,11 +357,22 @@ class _BatchExecutionPageState extends State<BatchExecutionPage> {
     });
 
     if (mounted) {
-       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Database Push: $pushSuccess successful, $pushFailed failed.'),
-          backgroundColor: pushFailed > 0 ? Colors.orange : Colors.green,
-        ),
+      final String message;
+      final Color color;
+      if (batch.isEmpty) {
+        message = 'No completed results to push.';
+        color = Colors.orange;
+      } else if (summary == null) {
+        message = 'Database push failed.';
+        color = Colors.red;
+      } else {
+        final inserted = summary['inserted'] ?? 0;
+        final skipped = summary['skipped'] ?? 0;
+        message = 'Database Push: $inserted saved, $skipped duplicate(s).';
+        color = Colors.green;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: color),
       );
     }
   }
