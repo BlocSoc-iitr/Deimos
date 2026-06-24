@@ -2,7 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import type { BenchmarkData } from '../types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+// Empty = fetch same-origin (/api/...), which the Next rewrite proxies to the
+// backend (see next.config.ts). Set NEXT_PUBLIC_API_URL only to hit a backend
+// directly (e.g. local dev).
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export default function BenchmarksPage() {
   // ─── Table filters & pagination ─────────────────────────────────────────
@@ -238,7 +241,6 @@ export default function BenchmarksPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Circuit</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Input Size</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Framework</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Language</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Platform</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Device</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Proving Time (s)</th>
@@ -258,11 +260,6 @@ export default function BenchmarksPage() {
                           <td className="px-6 py-4 text-sm text-[#605A57]">{item.inputSize ?? '—'}</td>
                           <td className="px-6 py-4">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                              {item.framework}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                               {item.language}
                             </span>
                           </td>
@@ -322,6 +319,12 @@ export default function BenchmarksPage() {
                                       <span className="text-[#605A57]">Proof Size:</span>
                                       <span className="font-medium text-[#37322F]">{formatBytes(item.proofSize)}</span>
                                     </div>
+                                    {item.preprocessingSize != null && item.preprocessingSize > 0 && (
+                                      <div className="flex justify-between">
+                                        <span className="text-[#605A57]">Preprocessing Size:</span>
+                                        <span className="font-medium text-[#37322F]">{formatBytes(item.preprocessingSize)}</span>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
 
@@ -343,16 +346,8 @@ export default function BenchmarksPage() {
                                         <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.peakMemoryUsage ?? 0)}</span>
                                       </div>
                                       <div className="flex justify-between">
-                                        <span className="text-[#605A57]">Consumed:</span>
-                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.memoryConsumedByProof ?? 0)}</span>
-                                      </div>
-                                      <div className="flex justify-between">
                                         <span className="text-[#605A57]">Peak Load:</span>
                                         <span className="font-semibold text-[#37322F]">{(item.deviceInfo.memory.peakMemoryLoadInPercentage ?? 0).toFixed(1)}%</span>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <span className="text-[#605A57]">Consumed %:</span>
-                                        <span className="font-semibold text-[#37322F]">{(item.deviceInfo.memory.memoryConsumedInPercentage ?? 0).toFixed(1)}%</span>
                                       </div>
                                     </div>
                                   </div>
@@ -389,6 +384,12 @@ export default function BenchmarksPage() {
                                           <span className="font-semibold text-[#37322F]">{(item.deviceInfo.cpu.cpuPercent ?? 0).toFixed(1)}%</span>
                                         </div>
                                       </>
+                                    )}
+                                    {item.temperatureC != null && (
+                                      <div className="flex justify-between pt-1.5 border-t border-[rgba(55,50,47,0.12)]">
+                                        <span className="text-[#605A57]">Battery Temp:</span>
+                                        <span className="font-semibold text-[#37322F]">{item.temperatureC.toFixed(1)}°C</span>
+                                      </div>
                                     )}
                                   </div>
                                 </div>
@@ -539,9 +540,9 @@ export default function BenchmarksPage() {
             <div className="bg-white rounded-lg p-5 shadow-sm border border-[#E0DEDB]">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-xs font-medium text-[#605A57] uppercase tracking-wider mb-2">Avg Memory Used</p>
+                  <p className="text-xs font-medium text-[#605A57] uppercase tracking-wider mb-2">Avg Peak Memory</p>
                   <p className="text-2xl font-bold text-[#37322F]">
-                    {(benchmarkData.reduce((sum, item) => sum + (item.deviceInfo?.memory?.memoryConsumedInPercentage || 0), 0) / benchmarkData.length).toFixed(1)}%
+                    {(benchmarkData.reduce((sum, item) => sum + (item.deviceInfo?.memory?.peakMemoryLoadInPercentage || 0), 0) / benchmarkData.length).toFixed(1)}%
                   </p>
                 </div>
                 <div className="p-2 rounded-lg bg-[#F7F5F3]">
