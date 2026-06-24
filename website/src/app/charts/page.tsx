@@ -10,7 +10,10 @@ import { BarCharts } from '@/components/benchmarks/bar-charts';
 import { LineCharts } from '@/components/benchmarks/line-charts';
 import { cn } from '@/lib/utils';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+// Empty = fetch same-origin (/api/...), which the Next rewrite proxies to the
+// backend (see next.config.ts). Set NEXT_PUBLIC_API_URL only to hit a backend
+// directly (e.g. local dev).
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export default function ChartsPage() {
   const [circuits, setCircuits] = useState<string[]>([]);
