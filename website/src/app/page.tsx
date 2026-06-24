@@ -33,6 +33,11 @@ export default function LandingPage() {
                         Benchmarks
                       </div>
                     </Link>
+                    <Link href="/charts" className="flex justify-start items-center group">
+                      <div className="flex flex-col justify-center text-[rgba(49,45,43,0.80)] text-xs md:text-[13px] font-medium leading-[14px] font-sans hover:text-[#37322F] transition-all duration-200 group-hover:scale-105">
+                        Charts
+                      </div>
+                    </Link>
                     <Link href="/docs" className="flex justify-start items-center group">
                       <div className="flex flex-col justify-center text-[rgba(49,45,43,0.80)] text-xs md:text-[13px] font-medium leading-[14px] font-sans hover:text-[#37322F] transition-all duration-200 group-hover:scale-105">
                         Docs
