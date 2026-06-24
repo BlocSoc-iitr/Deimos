@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:mopro_flutter/mopro_flutter.dart';
 import 'package:mopro_flutter/mopro_types.dart';
-import 'package:battery_plus/battery_plus.dart';
 import 'package:Deimos/channels/imp1_channel.dart';
 import '../models/benchmark_item.dart';
 import '../utils/circuit_utils.dart';
@@ -15,47 +13,39 @@ class BenchmarkService {
 
 
   Future<BenchmarkResult> runBenchmark(BenchmarkResult item, InputData inputData) async {
-    final battery = Battery();
-    final batteryBefore = await battery.batteryLevel;
-    final memSnapshotBefore = await DeviceStatsService.getMemorySnapshot();
-    
+    final monitor = ResourceMonitor();
+    // Track the prover-artifact size copied during proving (preprocessing size).
+    MoproFlutter.resetPreprocessing();
+    await monitor.start();
+
     final stopwatch = Stopwatch()..start();
-    
+
     try {
-      final updatedItem = item.copyWith(status: BenchmarkStatus.proving);
-      
       final proofData = await _generateProof(item.framework, item.algorithm, item.inputName, inputData);
       final provingTime = stopwatch.elapsed;
+
+      // Capture resource usage for the proving window before verification runs.
+      final resources = await monitor.finish();
+      final preprocessingSize = MoproFlutter.preprocessingBytes;
+      final temperatureC = await DeviceStatsService.getBatteryTemperatureC();
+
       stopwatch.reset();
       stopwatch.start();
-      
-      final batteryAfter = await battery.batteryLevel;
-      final memSnapshotAfter = await DeviceStatsService.getMemorySnapshot();
 
       final isValid = await _verifyProof(item.framework, item.algorithm, item.inputName, proofData);
       final verificationTime = stopwatch.elapsed;
-      
+
       final proofSize = _getProofSize(item.framework, proofData);
-
-      final memoryInfo = {
-        'totalPhysicalMemory': memSnapshotBefore.total,
-        'memoryUsedBeforeProof': memSnapshotBefore.total - memSnapshotBefore.free,
-        'memoryUsedAfterProof': memSnapshotAfter.total - memSnapshotAfter.free,
-      };
-
-      final batteryInfo = {
-        'batteryBeforeProof': batteryBefore,
-        'batteryAfterProof': batteryAfter,
-        'batteryConsumed': batteryBefore - batteryAfter,
-      };
 
       return item.copyWith(
         status: isValid ? BenchmarkStatus.completed : BenchmarkStatus.failed,
         provingTime: provingTime,
         verificationTime: verificationTime,
         proofSize: proofSize,
-        memoryInfo: memoryInfo,
-        batteryInfo: batteryInfo,
+        preprocessingSize: preprocessingSize > 0 ? preprocessingSize : null,
+        temperatureC: temperatureC,
+        memoryInfo: resources['memory'] as Map<String, dynamic>,
+        cpuInfo: resources['cpu'] as Map<String, dynamic>,
       );
     } catch (e) {
       return item.copyWith(

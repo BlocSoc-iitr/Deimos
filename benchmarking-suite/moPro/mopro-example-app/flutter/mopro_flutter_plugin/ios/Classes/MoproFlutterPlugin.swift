@@ -376,9 +376,44 @@ public class MoproFlutterPlugin: NSObject, FlutterPlugin {
     case "getIOSMemoryUsage":
         let memoryInfo = getMemoryUsage()
         result(memoryInfo)
+
+    case "getIOSCpuUsage":
+        result(getCpuUsage())
     default:
       result(FlutterMethodNotImplemented)
     }
+  }
+
+  /// Total process CPU time (user + system) across all live threads, in ms.
+  func getCpuUsage() -> [String: Int] {
+      var threadsList: thread_act_array_t?
+      var threadCount: mach_msg_type_number_t = 0
+      guard task_threads(mach_task_self_, &threadsList, &threadCount) == KERN_SUCCESS,
+            let threads = threadsList else {
+          return ["cpuTimeMs": 0]
+      }
+
+      var totalMicros: Int64 = 0
+      for i in 0..<Int(threadCount) {
+          var info = thread_basic_info()
+          var count = mach_msg_type_number_t(MemoryLayout<thread_basic_info_data_t>.size / MemoryLayout<natural_t>.size)
+          let kerr: kern_return_t = withUnsafeMutablePointer(to: &info) {
+              $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+                  thread_info(threads[i], thread_flavor_t(THREAD_BASIC_INFO), $0, &count)
+              }
+          }
+          if kerr == KERN_SUCCESS {
+              totalMicros += Int64(info.user_time.seconds) * 1_000_000 + Int64(info.user_time.microseconds)
+              totalMicros += Int64(info.system_time.seconds) * 1_000_000 + Int64(info.system_time.microseconds)
+          }
+      }
+
+      // Release the thread port array allocated by task_threads.
+      vm_deallocate(mach_task_self_,
+                    vm_address_t(UInt(bitPattern: UnsafeRawPointer(threads))),
+                    vm_size_t(Int(threadCount) * MemoryLayout<thread_t>.stride))
+
+      return ["cpuTimeMs": Int(totalMicros / 1000)]
   }
 
   func getMemoryUsage() -> [String: Int64] {

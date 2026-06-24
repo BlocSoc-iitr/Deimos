@@ -76,4 +76,12 @@ abstract class MoproFlutterPlatform extends PlatformInterface {
   Future<Map<String, int>> getIOSMemoryUsage() {
     throw UnimplementedError('getIOSMemoryUsage() has not been implemented.');
   }
+
+  Future<Map<String, int>> getIOSCpuUsage() {
+    throw UnimplementedError('getIOSCpuUsage() has not been implemented.');
+  }
+
+  Future<double?> getBatteryTemperature() {
+    throw UnimplementedError('getBatteryTemperature() has not been implemented.');
+  }
 }

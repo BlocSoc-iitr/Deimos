@@ -5,6 +5,7 @@ import type { BenchmarkData } from '../types';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function BenchmarksPage() {
+  // ─── Table filters & pagination ─────────────────────────────────────────
   const [filterCircuit, setFilterCircuit] = useState<string>('all');
   const [filterFramework, setFilterFramework] = useState<string>('all');
   const [filterLanguage, setFilterLanguage] = useState<string>('all');
@@ -19,24 +20,22 @@ export default function BenchmarksPage() {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  const [circuits, setCircuits] = useState<string[]>(['all']);
+  const [circuits, setCircuits] = useState<string[]>([]);
   const [frameworks, setFrameworks] = useState<string[]>(['all']);
   const [languages, setLanguages] = useState<string[]>(['all']);
   const [platforms, setPlatforms] = useState<string[]>(['all']);
 
-  // Fetch filter options
+  // ─── Fetch filter options ─────────────────────────────────────────────────
   useEffect(() => {
     const fetchFilters = async () => {
       try {
         const response = await fetch(`${API_URL}/api/filters`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch filters');
-        }
+        if (!response.ok) throw new Error('Failed to fetch filters');
         const data = await response.json();
-        setCircuits(data.circuits);
-        setFrameworks(data.frameworks);
-        setLanguages(data.languages);
-        setPlatforms(data.platforms);
+        setCircuits((data.circuits ?? []).filter((c: string) => c !== 'all'));
+        setFrameworks(data.frameworks ?? ['all']);
+        setLanguages(data.languages ?? ['all']);
+        setPlatforms(data.platforms ?? ['all']);
       } catch (err) {
         console.error('Error fetching filters:', err);
       }
@@ -44,7 +43,7 @@ export default function BenchmarksPage() {
     fetchFilters();
   }, []);
 
-  // Fetch benchmark data
+  // ─── Fetch table data ─────────────────────────────────────────────────────
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -81,19 +80,16 @@ export default function BenchmarksPage() {
     fetchData();
   }, [filterCircuit, filterFramework, filterLanguage, filterPlatform, currentPage, itemsPerPage]);
 
-  // Reset to page 1 when filters change
   const handleFilterChange = (setter: (value: string) => void, value: string) => {
     setter(value);
     setCurrentPage(1);
   };
 
-  // Reset to page 1 when items per page changes
   const handleItemsPerPageChange = (value: number) => {
     setItemsPerPage(value);
     setCurrentPage(1);
   };
 
-  // Generate page numbers to display
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
     const maxPagesToShow = 5;
@@ -161,11 +157,9 @@ export default function BenchmarksPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F5F3]">
-      {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 pt-4">
 
-
-        {/* Filters */}
+        {/* ── Filters ───────────────────────────────────────────────────── */}
         <div className="mb-4 bg-white rounded-lg shadow-sm p-4 border border-[#E0DEDB]">
           <div className="flex flex-wrap gap-3">
             <div className="flex-1 min-w-[180px]">
@@ -174,10 +168,9 @@ export default function BenchmarksPage() {
                 onChange={(e) => handleFilterChange(setFilterCircuit, e.target.value)}
                 className="w-full px-4 py-2 text-sm border border-[#E0DEDB] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white transition-all"
               >
+                <option value="all">All Circuits</option>
                 {circuits.map(circuit => (
-                  <option key={circuit} value={circuit}>
-                    {circuit === 'all' ? 'All Circuits' : circuit}
-                  </option>
+                  <option key={circuit} value={circuit}>{circuit}</option>
                 ))}
               </select>
             </div>
@@ -226,7 +219,7 @@ export default function BenchmarksPage() {
           </div>
         </div>
 
-        {/* Benchmark Table */}
+        {/* ── Benchmark Table ───────────────────────────────────────────── */}
         <div className="bg-white rounded-lg shadow-sm border border-[#E0DEDB] overflow-hidden">
           {loading ? (
             <div className="p-8 text-center">
@@ -243,6 +236,7 @@ export default function BenchmarksPage() {
                 <thead className="bg-[#F7F5F3]">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Circuit</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Input Size</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Framework</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Language</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#37322F] uppercase tracking-wider">Platform</th>
@@ -256,12 +250,12 @@ export default function BenchmarksPage() {
                     const isExpanded = expandedRows.has(item.id || index.toString());
                     return (
                       <React.Fragment key={item.id || index}>
-                        {/* Main Row */}
                         <tr
                           className="hover:bg-[#F7F5F3] cursor-pointer transition-colors"
                           onClick={() => toggleRow(item.id || index.toString())}
                         >
                           <td className="px-6 py-4 text-sm font-semibold text-[#37322F]">{item.circuit}</td>
+                          <td className="px-6 py-4 text-sm text-[#605A57]">{item.inputSize ?? '—'}</td>
                           <td className="px-6 py-4">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                               {item.framework}
@@ -273,8 +267,7 @@ export default function BenchmarksPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.deviceInfo?.platform === 'Android' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                              }`}>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.deviceInfo?.platform === 'Android' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
                               {item.deviceInfo?.platform || 'Unknown'}
                             </span>
                           </td>
@@ -283,12 +276,10 @@ export default function BenchmarksPage() {
                           <td className="px-6 py-4 text-sm font-semibold text-[#37322F]">{(item.verificationTimeMiliSeconds / 1000).toFixed(2)}</td>
                         </tr>
 
-                        {/* Expanded Details Row */}
                         {isExpanded && (
                           <tr>
-                            <td colSpan={7} className="px-6 py-4 bg-[#F7F5F3]">
+                            <td colSpan={8} className="px-6 py-4 bg-[#F7F5F3]">
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {/* Device Info */}
                                 <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
                                   <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
                                     <svg className="w-4 h-4 mr-1.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -300,9 +291,7 @@ export default function BenchmarksPage() {
                                     <div className="flex justify-between">
                                       <span className="text-[#605A57]">Device:</span>
                                       <span className="font-medium text-[#37322F]">
-                                        {item.deviceInfo?.platform === 'Android'
-                                          ? item.deviceInfo.deviceVersion || 'N/A'
-                                          : item.deviceInfo?.device || 'N/A'}
+                                        {item.deviceInfo?.device || 'N/A'}
                                       </span>
                                     </div>
                                     {item.deviceInfo?.manufacturer && (
@@ -315,12 +304,6 @@ export default function BenchmarksPage() {
                                       <div className="flex justify-between">
                                         <span className="text-[#605A57]">Android Version:</span>
                                         <span className="font-medium text-[#37322F]">{item.deviceInfo.systemVersion}</span>
-                                      </div>
-                                    )}
-                                    {item.deviceInfo?.platform === 'iOS' && item.deviceInfo?.systemName && (
-                                      <div className="flex justify-between">
-                                        <span className="text-[#605A57]">System Name:</span>
-                                        <span className="font-medium text-[#37322F]">{item.deviceInfo.systemName}</span>
                                       </div>
                                     )}
                                     {item.deviceInfo?.platform === 'iOS' && item.deviceInfo?.systemVersion && (
@@ -342,7 +325,6 @@ export default function BenchmarksPage() {
                                   </div>
                                 </div>
 
-                                {/* Memory Info */}
                                 {item.deviceInfo?.memory && (
                                   <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
                                     <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
@@ -354,29 +336,28 @@ export default function BenchmarksPage() {
                                     <div className="space-y-1.5 text-xs">
                                       <div className="flex justify-between">
                                         <span className="text-[#605A57]">Total RAM:</span>
-                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.totalPhysicalMemory)}</span>
+                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.totalPhysicalMemory ?? 0)}</span>
                                       </div>
                                       <div className="flex justify-between">
                                         <span className="text-[#605A57]">Peak Usage:</span>
-                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.peakMemoryUsage)}</span>
+                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.peakMemoryUsage ?? 0)}</span>
                                       </div>
                                       <div className="flex justify-between">
                                         <span className="text-[#605A57]">Consumed:</span>
-                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.memoryConsumedByProof)}</span>
+                                        <span className="font-medium text-[#37322F]">{formatBytes(item.deviceInfo.memory.memoryConsumedByProof ?? 0)}</span>
                                       </div>
                                       <div className="flex justify-between">
                                         <span className="text-[#605A57]">Peak Load:</span>
-                                        <span className="font-semibold text-[#37322F]">{item.deviceInfo.memory.peakMemoryLoadInPercentage.toFixed(1)}%</span>
+                                        <span className="font-semibold text-[#37322F]">{(item.deviceInfo.memory.peakMemoryLoadInPercentage ?? 0).toFixed(1)}%</span>
                                       </div>
                                       <div className="flex justify-between">
                                         <span className="text-[#605A57]">Consumed %:</span>
-                                        <span className="font-semibold text-[#37322F]">{item.deviceInfo.memory.memoryConsumedInPercentage.toFixed(1)}%</span>
+                                        <span className="font-semibold text-[#37322F]">{(item.deviceInfo.memory.memoryConsumedInPercentage ?? 0).toFixed(1)}%</span>
                                       </div>
                                     </div>
                                   </div>
                                 )}
 
-                                {/* Battery & Timing Info */}
                                 <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
                                   <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
                                     <svg className="w-4 h-4 mr-1.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -397,46 +378,22 @@ export default function BenchmarksPage() {
                                       <span className="text-[#605A57]">Total Time:</span>
                                       <span className="font-semibold text-[#37322F]">{((item.provingTimeMiliSeconds + item.verificationTimeMiliSeconds) / 1000).toFixed(3)}s</span>
                                     </div>
-                                    {item.deviceInfo?.battery && (
+                                    {item.deviceInfo?.cpu && (
                                       <>
                                         <div className="flex justify-between pt-1.5 border-t border-[rgba(55,50,47,0.12)]">
-                                          <span className="text-[#605A57]">Battery Before:</span>
-                                          <span className="font-medium text-[#37322F]">{item.deviceInfo.battery.batteryBeforeProof}%</span>
+                                          <span className="text-[#605A57]">CPU Time:</span>
+                                          <span className="font-medium text-[#37322F]">{((item.deviceInfo.cpu.cpuTimeMs ?? 0) / 1000).toFixed(3)}s</span>
                                         </div>
                                         <div className="flex justify-between">
-                                          <span className="text-[#605A57]">Battery After:</span>
-                                          <span className="font-medium text-[#37322F]">{item.deviceInfo.battery.batteryAfterProof}%</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-[#605A57]">Consumed:</span>
-                                          <span className="font-semibold text-[#37322F]">{item.deviceInfo.battery.batteryConsumed}%</span>
+                                          <span className="text-[#605A57]">CPU Usage:</span>
+                                          <span className="font-semibold text-[#37322F]">{(item.deviceInfo.cpu.cpuPercent ?? 0).toFixed(1)}%</span>
                                         </div>
                                       </>
                                     )}
                                   </div>
                                 </div>
 
-                                {/* Custom Inputs */}
-                                {item.customInputs && Object.keys(item.customInputs).length > 0 && (
-                                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[rgba(55,50,47,0.12)]">
-                                    <h4 className="text-xs font-bold text-[#37322F] mb-2 flex items-center">
-                                      <svg className="w-4 h-4 mr-1.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                      </svg>
-                                      Custom Inputs
-                                    </h4>
-                                    <div className="space-y-1.5 text-xs">
-                                      {Object.entries(item.customInputs).map(([key, value]) => (
-                                        <div key={key} className="flex justify-between">
-                                          <span className="text-[#605A57]">{key}:</span>
-                                          <span className="font-medium text-[#37322F]">{value}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
 
-                                {/* Timestamp */}
                                 <div className="bg-white rounded-lg p-3 shadow-sm md:col-span-2 lg:col-span-3">
                                   <div className="flex items-center justify-between text-xs">
                                     <div className="flex items-center text-[#605A57]">
@@ -461,15 +418,13 @@ export default function BenchmarksPage() {
             <div className="p-8 text-center">
               <p className="text-sm text-[#605A57]">No benchmark data matches the selected filters</p>
             </div>
-          )
-          }
+          )}
         </div>
 
-        {/* Pagination Controls */}
+        {/* ── Pagination ────────────────────────────────────────────────── */}
         {!loading && !error && totalCount > 0 && (
           <div className="mt-4 bg-white rounded-lg shadow-sm p-4 border border-[#E0DEDB]">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-              {/* Items per page selector */}
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-[#37322F]">Show</span>
                 <select
@@ -486,16 +441,13 @@ export default function BenchmarksPage() {
                 <span className="text-xs font-medium text-[#37322F]">per page</span>
               </div>
 
-              {/* Page info */}
               <div className="text-xs text-[#605A57]">
                 Showing <span className="font-bold text-[#37322F]">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
                 <span className="font-bold text-[#37322F]">{Math.min(currentPage * itemsPerPage, totalCount)}</span> of{' '}
                 <span className="font-bold text-[#37322F]">{totalCount}</span> results
               </div>
 
-              {/* Page numbers */}
               <div className="flex items-center gap-1">
-                {/* Previous button */}
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
@@ -507,7 +459,6 @@ export default function BenchmarksPage() {
                   Previous
                 </button>
 
-                {/* Page numbers */}
                 {getPageNumbers().map((page, index) => (
                   <button
                     key={index}
@@ -524,7 +475,6 @@ export default function BenchmarksPage() {
                   </button>
                 ))}
 
-                {/* Next button */}
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
@@ -540,7 +490,7 @@ export default function BenchmarksPage() {
           </div>
         )}
 
-        {/* Summary Stats */}
+        {/* ── Summary Stats ─────────────────────────────────────────────── */}
         {!loading && !error && benchmarkData.length > 0 && (
           <div className="my-6 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white rounded-lg p-5 shadow-sm border border-[#E0DEDB]">

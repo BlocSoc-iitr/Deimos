@@ -2,30 +2,23 @@
 
 export interface MemoryInfo {
   totalPhysicalMemory: number;
-  memoryUsedBeforeProof: number;
   peakMemoryUsage: number;
-  memoryConsumedByProof: number;
   peakMemoryLoadInPercentage: number;
-  memoryConsumedInPercentage: number;
 }
 
-export interface BatteryInfo {
-  batteryBeforeProof: number;
-  batteryAfterProof: number;
-  batteryConsumed: number;
+export interface CpuInfo {
+  cpuTimeMs: number;
+  cpuPercent: number;
 }
 
 export interface DeviceInfo {
   platform: string;
   device: string;
   manufacturer?: string;
-  deviceVersion?: string;
   deviceId?: string;
-  systemName?: string;
   systemVersion?: string;
-  isPhysicalDevice?: boolean;
   memory: MemoryInfo;
-  battery: BatteryInfo;
+  cpu?: CpuInfo;
 }
 
 export interface BenchmarkData {
@@ -33,10 +26,13 @@ export interface BenchmarkData {
   circuit: string;
   framework: string;
   language: string;
+  inputSize?: number;
   provingTimeMiliSeconds: number;
   verificationTimeMiliSeconds: number;
   deviceInfo: DeviceInfo;
   proofSize: number;
+  preprocessingSize?: number;
+  temperatureC?: number;
   timestamp: string;
   createdAt?: string;
   customInputs?: { [key: string]: string };

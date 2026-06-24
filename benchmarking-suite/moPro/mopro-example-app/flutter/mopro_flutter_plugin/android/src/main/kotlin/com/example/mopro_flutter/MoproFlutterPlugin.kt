@@ -9,6 +9,9 @@ import io.flutter.plugin.common.MethodChannel.Result
 import uniffi.mopro.*
 
 import io.flutter.plugin.common.StandardMethodCodec
+import android.os.Handler
+import android.os.Looper
+import java.util.concurrent.Executors
 
 class FlutterG1(x: String, y: String, z: String) {
     val x = x
@@ -105,7 +108,15 @@ class MoproFlutterPlugin : FlutterPlugin, MethodCallHandler {
     /// when the Flutter Engine is detached from the Activity
     private lateinit var channel: MethodChannel
 
+    // Proof generation/verification is heavy native work; run it off the Android
+    // main/UI thread so long proofs don't block the UI and trigger an ANR.
+    // Single-threaded: proofs are invoked sequentially and shouldn't run concurrently.
+    private val executor = Executors.newSingleThreadExecutor()
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var appContext: android.content.Context? = null
+
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        appContext = flutterPluginBinding.applicationContext
         channel = MethodChannel(
             flutterPluginBinding.binaryMessenger,
             "mopro_flutter",
@@ -114,7 +125,29 @@ class MoproFlutterPlugin : FlutterPlugin, MethodCallHandler {
         channel.setMethodCallHandler(this)
     }
 
+    /// Current battery temperature in °C (proxy for device thermal state), or
+    /// null if unavailable. Uses the sticky ACTION_BATTERY_CHANGED intent — no
+    /// permission required.
+    private fun batteryTemperatureC(): Double? {
+        val ctx = appContext ?: return null
+        val intent = ctx.registerReceiver(
+            null,
+            android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED)
+        ) ?: return null
+        val tenths = intent.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE)
+        return if (tenths == Int.MIN_VALUE) null else tenths / 10.0
+    }
+
     override fun onMethodCall(call: MethodCall, result: Result) {
+        // Hand off to a background thread; results are marshalled back to the
+        // main thread (Flutter requires Result callbacks on the platform thread).
+        val mainThreadResult = MainThreadResult(result, mainHandler)
+        executor.execute {
+            handleMethodCall(call, mainThreadResult)
+        }
+    }
+
+    private fun handleMethodCall(call: MethodCall, result: Result) {
         if (call.method == "generateGroth16Proof") {
             val zkeyPath = call.argument<String>("zkeyPath") ?: return result.error(
                 "ARGUMENT_ERROR",
@@ -390,6 +423,8 @@ class MoproFlutterPlugin : FlutterPlugin, MethodCallHandler {
                 result.error("PROVEKIT_VERIFY_ERROR", "Failed to verify ProveKit proof: ${e.message}", null)
             }
 
+        } else if (call.method == "getBatteryTemperature") {
+            result.success(batteryTemperatureC())
         } else {
             result.notImplemented()
         }
@@ -397,5 +432,25 @@ class MoproFlutterPlugin : FlutterPlugin, MethodCallHandler {
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
+        executor.shutdown()
+    }
+}
+
+/// Wraps a MethodChannel.Result so its callbacks always run on the main thread,
+/// allowing the actual work to happen on a background thread.
+private class MainThreadResult(
+    private val result: Result,
+    private val handler: Handler,
+) : Result {
+    override fun success(value: Any?) {
+        handler.post { result.success(value) }
+    }
+
+    override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+        handler.post { result.error(errorCode, errorMessage, errorDetails) }
+    }
+
+    override fun notImplemented() {
+        handler.post { result.notImplemented() }
     }
 }

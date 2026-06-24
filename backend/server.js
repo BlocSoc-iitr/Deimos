@@ -10,8 +10,10 @@ const PORT = config.port;
 
 // Middleware
 app.use(corsMiddleware);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Batch uploads (the whole completed suite in one request) can exceed the
+// default 100kb; cap at 10mb (matches the nginx client_max_body_size).
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Request logging middleware
 app.use((req, res, next) => {

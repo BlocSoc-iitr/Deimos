@@ -24,8 +24,10 @@ class BenchmarkResult {
   final String? error;
   
   final int? proofSize;
+  final int? preprocessingSize;
+  final double? temperatureC;
   final Map<String, dynamic>? memoryInfo;
-  final Map<String, dynamic>? batteryInfo;
+  final Map<String, dynamic>? cpuInfo;
 
   BenchmarkResult({
     required this.framework,
@@ -36,8 +38,10 @@ class BenchmarkResult {
     this.verificationTime,
     this.error,
     this.proofSize,
+    this.preprocessingSize,
+    this.temperatureC,
     this.memoryInfo,
-    this.batteryInfo,
+    this.cpuInfo,
   });
 
   BenchmarkResult copyWith({
@@ -46,8 +50,10 @@ class BenchmarkResult {
     Duration? verificationTime,
     String? error,
     int? proofSize,
+    int? preprocessingSize,
+    double? temperatureC,
     Map<String, dynamic>? memoryInfo,
-    Map<String, dynamic>? batteryInfo,
+    Map<String, dynamic>? cpuInfo,
   }) {
     return BenchmarkResult(
       framework: framework,
@@ -58,8 +64,10 @@ class BenchmarkResult {
       verificationTime: verificationTime ?? this.verificationTime,
       error: error ?? this.error,
       proofSize: proofSize ?? this.proofSize,
+      preprocessingSize: preprocessingSize ?? this.preprocessingSize,
+      temperatureC: temperatureC ?? this.temperatureC,
       memoryInfo: memoryInfo ?? this.memoryInfo,
-      batteryInfo: batteryInfo ?? this.batteryInfo,
+      cpuInfo: cpuInfo ?? this.cpuInfo,
     );
   }
 }

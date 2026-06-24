@@ -7,9 +7,23 @@ import 'package:path_provider/path_provider.dart';
 import 'mopro_flutter_platform_interface.dart';
 
 class MoproFlutter {
+  // Tracks the size (bytes) of prover artifacts copied via [copyAssetToFileSystem],
+  // keyed by asset path so an artifact copied more than once in a run (e.g. a
+  // Barretenberg circuit/SRS used for both VK derivation and proving) counts once.
+  // Used to report each proof's "preprocessing size" without any extra I/O.
+  static final Map<String, int> _copiedAssetSizes = {};
+
+  /// Clear the preprocessing-size accounting before a proof.
+  static void resetPreprocessing() => _copiedAssetSizes.clear();
+
+  /// Total bytes of distinct artifacts copied since the last [resetPreprocessing].
+  static int get preprocessingBytes =>
+      _copiedAssetSizes.values.fold(0, (sum, n) => sum + n);
+
   Future<String> copyAssetToFileSystem(String assetPath) async {
     // Load the asset as bytes
     final byteData = await rootBundle.load(assetPath);
+    _copiedAssetSizes[assetPath] = byteData.lengthInBytes;
     // Get the app's document directory (or other accessible directory)
     final directory = await getApplicationDocumentsDirectory();
     //Strip off the initial dirs from the filename
@@ -114,5 +128,13 @@ class MoproFlutter {
 
   Future<Map<String, int>> getIOSMemoryUsage() async {
     return await MoproFlutterPlatform.instance.getIOSMemoryUsage();
+  }
+
+  Future<Map<String, int>> getIOSCpuUsage() async {
+    return await MoproFlutterPlatform.instance.getIOSCpuUsage();
+  }
+
+  Future<double?> getBatteryTemperature() async {
+    return await MoproFlutterPlatform.instance.getBatteryTemperature();
   }
 }
