@@ -1,88 +1,64 @@
-# Deimos — Client-Side Mobile Benchmarking Suite
+<p align="center">
+  <img src="assets/deimos-logo.png" alt="Deimos" width="600">
+</p>
 
-**Deimos** is an open-source benchmarking suite for computing zero-knowledge proofs on mobile devices. It provides consistent, repeatable performance tests across various frameworks, starting with [MoPro](https://github.com/zkmopro/mopro).
+# Deimos : Client-Side Mobile Benchmarking Suite
+
+<p>
+  <a href="https://deimos-werw.vercel.app/"><img src="https://img.shields.io/badge/website-deimos--werw.vercel.app-00d4aa?style=flat-square" alt="Website"></a>
+  <a href="https://deimos-werw.vercel.app/docs"><img src="https://img.shields.io/badge/docs-00d4aa?style=flat-square" alt="Documentation"></a>
+  <a href="https://deimos-werw.vercel.app/benchmarks"><img src="https://img.shields.io/badge/benchmarks-live-6c5ce7?style=flat-square" alt="Benchmarks"></a>
+  <a href="https://deimos-werw.vercel.app/privacy"><img src="https://img.shields.io/badge/privacy-policy-4b5563?style=flat-square" alt="Privacy Policy"></a>
+</p>
+
+**Deimos** is an open-source suite for benchmarking zero-knowledge proving and verification on mobile devices. It combines a Flutter client, Rust proving backends, a benchmark API, and a public dashboard.
 
 ## Overview
 
-The goal of Deimos is to:
-* Benchmark performance of common cryptographic and proof-related functions such as **Poseidon2**, **SHA-256**, **Keccak-256**, and **EdDSA** for mobile-specific environments.
-* Compare multiple benchmarking tools such as DSLs like Circom, Noir and ZkVMs like RiscZero, Cairo
-* Present results via a public **website dashboard**.
-
-> **Note:** This project is under active development and undergoes frequent changes in the `dev` branch.
+Deimos measures proving and verification time, memory usage, CPU usage, proof size, and related device metrics across multiple proving systems and circuit families.
 
 ---
 
 ## Repository Structure
 
 ```
-deimos/
-├── website/                    # Dashboard for displaying benchmark results
-│   ├── src/app/               # Next.js application
-│   └── package.json
-│
-├── benchmarking-suite/        # Core benchmarking implementation
+.
+├── website/                         # Next.js dashboard and documentation
+├── backend/                         # Benchmark API
+│   ├── controllers/                 # Result ingestion and queries
+│   ├── routes/                      # API routes
+│   └── db/                          # PostgreSQL schema
+├── benchmarking-suite/
 │   ├── frameworks/
-│   │   ├── circom/           # Circom circuit implementations
-│   │   │   ├── circuits/     # Hash function circuits
-│   │   │   │   ├── sha256/
-│   │   │   │   ├── keccak256/
-│   │   │   │   ├── blake2s256/
-│   │   │   │   ├── poseidon/
-│   │   │   │   ├── mimc256/
-│   │   │   │   └── pedersen/
-│   │   │   └── inputs/       # Test vectors
-│   │   └── noir/             # Noir implementations 
-│   │
-│   └── moPro/                # MoPro mobile integration
-│       ├── mopro-sha256/     # SHA256 mobile app
-│       ├── mopro-keccack256/ # Keccak256 mobile app
-│       └── mopro-example-app/
-│
-├── .github/workflows/         # CI/CD automation
-│   └── validate-circuits.yml # Circuit validation
-│
-├── README.md
-├── CONTRIBUTING.md
-├── APP_INTEGRATION_GUIDE.md
-└── LICENSE
+│   │   ├── groth16/                 # Circom/Groth16 circuits and inputs
+│   │   ├── barretenberg/            # Noir/UltraHonk circuits
+│   │   └── cairo-m/                 # Cairo-M circuits and compiled programs
+│   └── moPro/                       # Rust workspace and mobile integration
+│       ├── mopro-example-app/
+│       │   ├── src/                 # Arkworks, Rapidsnark, Barretenberg, and FFI
+│       │   └── flutter/              # Android/iOS app and IMP1 channel
+│       ├── cairo-m-prover/          # Cairo-M prover library
+│       ├── provekit-wrapper/         # ProveKit integration
+│       └── risc0-circuit/           # RISC Zero guest and host
+├── assets/                          # Repository assets
+└── .github/workflows/               # CI workflows
 ```
-<!-- --- -->
-<!-- 
-## Benchmarked Frameworks
 
-### Currently Supported
-<!-- * **[MoPro](https://zkmopro.org/)** — Mobile-first ZK proving toolkit -->
+## Supported Frameworks
 
-<!-- ### Planned Integration -->
-<!-- * **[imp1](https://github.com/ingonyama-zk/zkml)** — Ingonyama's mobile proving toolkit
-* **[ProveKit](https://github.com/worldfnd/ProveKit)** — Worldcoin's Noir-based toolkit
+| Framework | Proving system |
+| --- | --- |
+| Arkworks | Groth16 proving for Circom circuits |
+| Rapidsnark | Groth16 proving for Circom circuits |
+| Barretenberg | Noir circuits using UltraHonk |
+| RISC Zero | zkVM guest and host |
+| Cairo-M | STARK proving over the M31 field |
+| IMP1 | Native mobile prover integration |
+| ProveKit | Accelerated Noir proving |
 
-## Benchmarked Primitives
+## Circuit Families
 
-<!-- * **Hash Functions:** Poseidon2, SHA-256, Keccak-256
-* **Digital Signatures:** EdDSA, ECDSA (planned)
-* **Basic Arithmetic:** Fibonacci sequence
-* **Application-Level:** JWT parsing (planned) -->
-
-<!-- ## Measured Metrics -->
-
-<!-- * **Proving Time** — Time to generate ZK proof
-* **Peak Memory Usage** — Maximum RAM consumption during proving
-* **Battery Impact** — Energy consumption per proof (planned)
-* **Proof Size** — Generated proof artifact size -->
-
-<!-- --- -->
-
-<!-- ## Development Status -->
-
-<!-- * **Current focus:** MoPro integration and core hash function benchmarks. -->
-<!-- * **Next milestone:** Database integration and basic web dashboard. -->
-<!-- * **Branch policy:** -->
-  <!-- * `main` → Stable releases only. -->
-  <!-- * `dev` → Active development; frequent breaking changes. --> -->
-
-<!-- --- -->
+The suite includes SHA-256, Keccak-256, Blake2s, Blake3, MiMC, Poseidon, Poseidon2, Rescue Prime, Pedersen, Anemoi, and a RISC Zero Factor program. Circuit availability varies by framework and input size.
 
 ## Getting Started
 
@@ -93,25 +69,25 @@ deimos/
    cd deimos
    ```
 
-2. **Explore the website dashboard**
+2. **Run the dashboard**
    ```bash
    cd website
    npm install
    npm run dev
    ```
 
-3. **Run mobile benchmarks**
-   * Navigate to the corresponding mobile app directory (e.g., `mobile-apps/mopro/sha256/android/`).
-   * Follow the platform-specific README for setup instructions.
-   * Build and run on physical devices for accurate performance measurements.
+3. **Run the mobile app**
+   ```bash
+   cd benchmarking-suite/moPro/mopro-example-app/flutter
+   flutter pub get
+   flutter run
+   ```
+
+For Rust backends and platform-specific setup, see [benchmarking-suite/README.md](benchmarking-suite/README.md) and the [Flutter app README](benchmarking-suite/moPro/mopro-example-app/flutter/README.md).
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](/contributing.md) for:
-* Setting up the development environment
-* Adding new zkVM frameworks
-* Contributing benchmark circuits
-* Reporting issues
+Contributions are welcome through GitHub issues and pull requests.
 
 ## License
 
