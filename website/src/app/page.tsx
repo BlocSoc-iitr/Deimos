@@ -121,6 +121,9 @@ export default function LandingPage() {
                     <Link href="/docs" className="text-[#605A57] hover:text-[#37322F] transition-colors">
                       Docs
                     </Link>
+                    <Link href="/privacy" className="text-[#605A57] hover:text-[#37322F] transition-colors">
+                      Privacy
+                    </Link>
                     <Link href="https://x.com/BlocSocIITR" target="_blank" rel="noopener noreferrer" className="text-[#605A57] hover:text-[#37322F] transition-colors">
                       Twitter
                     </Link>
