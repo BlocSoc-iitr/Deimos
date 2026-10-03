@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
       </Link>
 
       <header className="mt-10 border-b border-[rgba(55,50,47,0.12)] pb-10">
-        <p className="text-sm font-medium text-[#605A57]">Last updated: September 9, 2026</p>
+        <p className="text-sm font-medium text-[#605A57]">Last updated: September 30, 2026</p>
         <h1 className="mt-3 font-serif text-5xl leading-tight sm:text-6xl">Privacy Policy</h1>
         <p className="mt-6 text-lg leading-8 text-[#605A57]">
           This policy explains how Deimos handles information generated when you run
@@ -37,7 +37,7 @@ export default function PrivacyPolicyPage() {
             Deimos backend. That result can include:
           </p>
           <ul className="mt-3 list-disc space-y-2 pl-6">
-            <li>device platform, model, manufacturer, operating-system version, and a device identifier;</li>
+            <li>device platform, model, manufacturer, operating-system version, and an app installation identifier on Android (or an identifier for vendor on iOS);</li>
             <li>device and process performance measurements, including memory, CPU usage, and battery temperature;</li>
             <li>the benchmark&apos;s circuit, framework, input size, proof size, proving and verification times, and timestamp; and</li>
             <li>benchmark input values you choose to run.</li>
@@ -52,8 +52,11 @@ export default function PrivacyPolicyPage() {
           <p className="mt-3">
             We use benchmark data to operate Deimos, compare proving-system performance
             on mobile hardware, display benchmark results, and improve the project. The
-            device identifier is used to group repeat runs of the same benchmark on the
-            same device into an aggregate result.
+            identifier is used to group repeat runs of the same benchmark into an
+            aggregate result. Android groups runs from the same app installation;
+            iOS uses its identifier for vendor. Neither is an Android hardware
+            identifier. Clearing app data or reinstalling the Android app creates
+            a new identifier.
           </p>
         </section>
 
@@ -72,10 +75,11 @@ export default function PrivacyPolicyPage() {
           <p className="mt-3">
             We retain benchmark results while they are useful for the Deimos benchmarking
             dataset and project operations. To request deletion of records associated with
-            your device, email us with the subject “Deimos privacy request” and include
-            the device identifier shown by the app, if available. We will delete or
-            anonymize the matching records unless we need to retain them for security,
-            legal, or operational reasons.
+            your installation, email us with the subject “Deimos privacy request”
+            and include any details that help us locate the records, such as the
+            device model, benchmark circuit, and approximate run time. We will
+            delete or anonymize matching records unless we need to retain them for
+            security, legal, or operational reasons.
           </p>
         </section>
 
